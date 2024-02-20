@@ -1,0 +1,19 @@
+[tool.poetry]
+name = "rsa"
+version = "0.1.0"
+description = ""
+authors = ["Marvin Theiss <marvin.theiss@psychol.uni-giessen.de>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+jupyterlab = "^4.1.2"
+matplotlib = "^3.8.3"
+numpy = "^1.26.4"
+python = "^3.11"
+torch = "^2.2.0"
+torchvision = "^0.17.0"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
