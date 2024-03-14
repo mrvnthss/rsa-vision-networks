@@ -1,0 +1,10 @@
+defaults:
+  - params: lenet
+  - _self_
+
+training:
+  device: ???
+
+logging:
+  epoch_index: 0
+  intra_epoch_updates: 10
