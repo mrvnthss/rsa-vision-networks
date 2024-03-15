@@ -4,11 +4,17 @@ defaults:
 
 hydra:
   run:
-    dir: ../logs/hydra/${now:%Y-%m-%d}/${now:%H-%M-%S}
+    dir: ${paths.logs_hydra}/${now:%Y-%m-%d}/${now:%H-%M-%S}
 
 logging:
   epoch_index: 0
   intra_epoch_updates: 10
+  tb_dir: ${paths.logs_tb}/${now:%Y-%m-%d}/${now:%H-%M-%S}
+
+paths:
+  data: ../data
+  logs_hydra: ../logs/hydra
+  logs_tb: ../logs/tensorboard
 
 training:
   device: ???
