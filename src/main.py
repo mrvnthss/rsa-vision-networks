@@ -1,9 +1,7 @@
 import hydra
+from hydra.utils import instantiate
 import torch
-import torchvision
-from torchvision.transforms import v2 as transforms
 
-from models.lenet import LeNet
 from utils.training import train_model
 
 
@@ -12,26 +10,9 @@ def main(cfg) -> None:
     # Set random seed for reproducibility
     torch.manual_seed(cfg.training.seed)
 
-    # Prepare transform to use for datasets
-    transform = transforms.Compose([
-        transforms.ToImage(),  # convert to Image
-        transforms.ToDtype(torch.float32, scale=True),  # scale data to have values in [0, 1]
-        transforms.Normalize((0.5,), (0.5,))  # normalize
-    ])
-
     # Prepare datasets
-    train_set = torchvision.datasets.FashionMNIST(
-        cfg.paths.data,
-        train=True,
-        transform=transform,
-        download=True
-    )
-    val_set = torchvision.datasets.FashionMNIST(
-        cfg.paths.data,
-        train=False,
-        transform=transform,
-        download=True
-    )
+    train_set = instantiate(cfg.dataset.train)
+    val_set = instantiate(cfg.dataset.val)
 
     # Prepare dataloaders
     train_loader = torch.utils.data.DataLoader(
@@ -55,7 +36,7 @@ def main(cfg) -> None:
     )
 
     # Instantiate model and move to target device
-    model = LeNet().to(cfg.training.device)
+    model = instantiate(cfg.model).to(cfg.training.device)
 
     # Set up loss function and optimizer
     loss_fn = torch.nn.CrossEntropyLoss()
