@@ -2,9 +2,13 @@ defaults:
   - params: lenet
   - _self_
 
-training:
-  device: ???
+hydra:
+  run:
+    dir: ../logs/hydra/${now:%Y-%m-%d}/${now:%H-%M-%S}
 
 logging:
   epoch_index: 0
   intra_epoch_updates: 10
+
+training:
+  device: ???
