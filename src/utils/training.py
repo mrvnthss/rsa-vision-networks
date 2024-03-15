@@ -37,6 +37,10 @@ def train_model(model, train_loader, val_loader, loss_fn, optimizer, cfg):
         # Increment epoch index
         cfg.logging.epoch_index += 1
 
+    # Close TensorBoard writer and inform user of training completion
+    writer.close()
+    print("Training complete!")
+
     return logs
 
 
@@ -110,7 +114,7 @@ def run_epoch(model, dataloader, loss_fn, writer, cfg, optimizer=None):
                 loss.backward()        # compute gradients
                 optimizer.step()       # update weights
 
-            # Log batch loss and accuracy to TensorBoard
+            # Log batch loss and accuracy
             if batch_index in log_indices:
                 # Log to TensorBoard
                 global_step = cfg.logging.epoch_index * num_batches + batch_index + 1
