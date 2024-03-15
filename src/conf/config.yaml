@@ -1,5 +1,7 @@
 defaults:
-  - params: lenet
+  - model: lenet
+  - dataset: fashionmnist
+  - params: ${model}_${dataset}
   - _self_
 
 hydra:
