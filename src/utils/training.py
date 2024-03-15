@@ -1,4 +1,6 @@
 import torch
+from torch.utils.tensorboard import SummaryWriter
+from tqdm import tqdm
 
 
 def train_model(model, train_loader, val_loader, loss_fn, optimizer, cfg):
@@ -16,10 +18,13 @@ def train_model(model, train_loader, val_loader, loss_fn, optimizer, cfg):
         }
     }
 
+    # Initialize TensorBoard writer
+    writer = SummaryWriter(cfg.logging.tb_dir)
+
     for _ in range(cfg.params.num_epochs):
         # Train and validate model
-        train_logs = run_epoch(model, train_loader, loss_fn, cfg, optimizer)
-        val_logs = run_epoch(model, val_loader, loss_fn, cfg)
+        train_logs = run_epoch(model, train_loader, loss_fn, writer, cfg, optimizer)
+        val_logs = run_epoch(model, val_loader, loss_fn, writer, cfg)
 
         # Log results
         logs["train"]["global_step"].extend(train_logs["global_step"])
@@ -35,7 +40,7 @@ def train_model(model, train_loader, val_loader, loss_fn, optimizer, cfg):
     return logs
 
 
-def run_epoch(model, dataloader, loss_fn, cfg, optimizer=None):
+def run_epoch(model, dataloader, loss_fn, writer, cfg, optimizer=None):
     # Initialize dictionary to log intra-epoch results
     logs = {
         "global_step": [],
@@ -60,9 +65,18 @@ def run_epoch(model, dataloader, loss_fn, cfg, optimizer=None):
     if cfg.logging.epoch_index != 0:
         log_indices = log_indices[1:]
 
+    # Set tags for TensorBoard logging
+    tag_loss = f"Loss/{'Train' if is_training else 'Val'}"
+    tag_accuracy = f"Accuracy/{'Train' if is_training else 'Val'}"
+
+    # Prepare progress bar
+    desc = (f"Epoch [{cfg.logging.epoch_index + 1:02}/{cfg.params.num_epochs}]  "
+            f"{'Train' if is_training else 'Val'}")
+    pbar = tqdm(dataloader, desc=desc, leave=False, unit="batch")
+
     # Disable gradients during evaluation
     with (torch.set_grad_enabled(is_training)):
-        for batch_index, (inputs, targets) in enumerate(dataloader):
+        for batch_index, (inputs, targets) in enumerate(pbar):
             inputs = inputs.to(cfg.training.device)
             targets = targets.to(cfg.training.device)
 
@@ -82,6 +96,14 @@ def run_epoch(model, dataloader, loss_fn, cfg, optimizer=None):
             correct = (predictions == targets).sum().item()
             running_correct += correct
 
+            # Update progress bar
+            avg_batch_loss = running_loss / running_samples
+            avg_batch_accuracy = (running_correct / running_samples) * 100  # in pct
+            pbar.set_postfix(
+                loss=avg_batch_loss,
+                accuracy=avg_batch_accuracy
+            )
+
             # Backward pass and optimization
             if is_training:
                 optimizer.zero_grad()  # zero gradients
@@ -90,18 +112,10 @@ def run_epoch(model, dataloader, loss_fn, cfg, optimizer=None):
 
             # Log batch loss and accuracy to TensorBoard
             if batch_index in log_indices:
-                # Compute global step
-                global_step = cfg.logging.epoch_index * num_batches + batch_index + 1
-
-                # Compute average loss and average accuracy per batch
-                avg_batch_loss = running_loss / running_samples
-                avg_batch_accuracy = (running_correct / running_samples) * 100  # in pct
-
                 # Log to TensorBoard
-                tag_loss = f"Loss/{'Train' if is_training else 'Val'}"
-                tag_accuracy = f"Accuracy/{'Train' if is_training else 'Val'}"
-                cfg.logging.writer.add_scalar(tag_loss, avg_batch_loss, global_step)
-                cfg.logging.writer.add_scalar(tag_accuracy, avg_batch_accuracy, global_step)
+                global_step = cfg.logging.epoch_index * num_batches + batch_index + 1
+                writer.add_scalar(tag_loss, avg_batch_loss, global_step)
+                writer.add_scalar(tag_accuracy, avg_batch_accuracy, global_step)
 
                 # Log to dictionary
                 logs["global_step"].append(global_step)
@@ -114,6 +128,6 @@ def run_epoch(model, dataloader, loss_fn, cfg, optimizer=None):
                 running_correct = 0
 
     # Flush writer after epoch for live updates
-    cfg.logging.writer.flush()
+    writer.flush()
 
     return logs
