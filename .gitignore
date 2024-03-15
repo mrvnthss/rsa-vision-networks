@@ -191,3 +191,6 @@ Temporary Items
 
 # Exclude data directory by default
 /data/
+
+# Exclude logs directory
+/logs/
