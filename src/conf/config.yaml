@@ -18,3 +18,4 @@ paths:
 
 training:
   device: ???
+  seed: 42

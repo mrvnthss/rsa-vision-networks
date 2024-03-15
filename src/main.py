@@ -9,12 +9,8 @@ from utils.training import train_model
 
 @hydra.main(version_base=None, config_path="conf", config_name="config")
 def main(cfg) -> None:
-    # Set device
-    cfg.training.device = (
-        "cuda" if torch.cuda.is_available()
-        else "mps" if torch.backends.mps.is_available()
-        else "cpu"
-    )
+    # Set random seed for reproducibility
+    torch.manual_seed(cfg.training.seed)
 
     # Prepare transform to use for datasets
     transform = transforms.Compose([
@@ -49,6 +45,13 @@ def main(cfg) -> None:
         batch_size=cfg.params.batch_size,
         shuffle=False,
         num_workers=cfg.params.num_workers
+    )
+
+    # Set target device
+    cfg.training.device = (
+        "cuda" if torch.cuda.is_available()
+        else "mps" if torch.backends.mps.is_available()
+        else "cpu"
     )
 
     # Instantiate model and move to target device
