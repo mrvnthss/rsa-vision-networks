@@ -74,7 +74,7 @@ def run_epoch(model, dataloader, loss_fn, writer, cfg, optimizer=None):
     tag_accuracy = f"Accuracy/{'Train' if is_training else 'Val'}"
 
     # Prepare progress bar
-    desc = (f"Epoch [{cfg.logging.epoch_index + 1:02}/{cfg.params.num_epochs}]  "
+    desc = (f"Epoch [{cfg.logging.epoch_index + 1}/{cfg.params.num_epochs}]    "
             f"{'Train' if is_training else 'Val'}")
     pbar = tqdm(dataloader, desc=desc, leave=False, unit="batch")
 
