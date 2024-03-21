@@ -14,12 +14,13 @@ class LeNet(nn.Module):
         self.fc3 = nn.Linear(84, num_classes)
 
     def forward(self, x):
-        x = F.relu(self.conv1(x))
-        x = self.pool(x)
-        x = F.relu(self.conv2(x))
-        x = self.pool(x)
-        x = x.view(-1, 16 * 4 * 4)
-        x = F.relu(self.fc1(x))
-        x = F.relu(self.fc2(x))
-        x = self.fc3(x)
+        # Expected input size: 1x28x28
+        x = F.relu(self.conv1(x))   # 1x28x28 -> 6x24x24
+        x = self.pool(x)            # 6x24x24 -> 6x12x12
+        x = F.relu(self.conv2(x))   # 6x12x12 -> 16x8x8
+        x = self.pool(x)            # 16x8x8 -> 16x4x4
+        x = x.view(-1, 16 * 4 * 4)  # 16x4x4 -> 256
+        x = F.relu(self.fc1(x))     # 256 -> 120
+        x = F.relu(self.fc2(x))     # 120 -> 84
+        x = self.fc3(x)             # 84 -> num_classes
         return x
