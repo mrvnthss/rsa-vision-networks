@@ -1,1 +1,2 @@
-_target_: src.models.lenet.LeNet
+_target_: models.LeNet
+num_classes: ${dataset.num_classes}
