@@ -41,7 +41,7 @@ def main(cfg) -> None:
     model = instantiate(cfg.model).to(device)
 
     # Set up loss function and optimizer
-    loss_fn = torch.nn.CrossEntropyLoss()
+    loss_fn = instantiate(cfg.loss)
     optimizer = instantiate(
         cfg.optimizer,
         model.parameters()
