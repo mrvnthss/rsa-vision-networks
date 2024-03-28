@@ -7,7 +7,7 @@ class LeNet(nn.Module):
     def __init__(self, img_size=32, num_classes=10):
         super(LeNet, self).__init__()
         if img_size % 4 != 0:
-            raise ValueError(f"in_size {img_size} is not divisible by 4!")
+            raise ValueError(f"img_size {img_size} is not divisible by 4!")
         out_size = img_size // 4 - 3
         self.conv1 = nn.Conv2d(1, 6, 5)
         self.conv2 = nn.Conv2d(6, 16, 5)
