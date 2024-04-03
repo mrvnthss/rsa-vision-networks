@@ -17,14 +17,14 @@ def main(cfg) -> None:
     # Prepare dataloaders
     train_loader = torch.utils.data.DataLoader(
         train_set,
-        batch_size=cfg.dataset.batch_size,
+        batch_size=cfg.training.batch_size,
         shuffle=True,
         num_workers=cfg.training.num_workers,
         pin_memory=True
     )
     val_loader = torch.utils.data.DataLoader(
         val_set,
-        batch_size=cfg.dataset.batch_size,
+        batch_size=cfg.training.batch_size,
         shuffle=False,
         num_workers=cfg.training.num_workers,
         pin_memory=True
@@ -38,10 +38,12 @@ def main(cfg) -> None:
     )
 
     # Instantiate model and move to target device
-    model = instantiate(cfg.model).to(device)
+    model = instantiate(cfg.model.architecture).to(device)
 
-    # Set up loss function and optimizer
+    # Instantiate loss function
     loss_fn = instantiate(cfg.loss)
+
+    # Instantiate optimizer
     optimizer = instantiate(
         cfg.optimizer,
         model.parameters()

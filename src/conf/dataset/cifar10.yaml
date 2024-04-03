@@ -1,6 +1,7 @@
-batch_size: 1024
-img_size: 32
 num_classes: 10
+stats:
+  mean: [0.5, 0.5, 0.5]
+  std: [0.5, 0.5, 0.5]
 raw_set:
   _target_: torchvision.datasets.CIFAR10
   root: ${paths.data}
@@ -17,16 +18,7 @@ train_set:
   _target_: torchvision.datasets.CIFAR10
   root: ${paths.data}
   train: True
-  transform:
-    _target_: torchvision.transforms.v2.Compose
-    transforms:
-      - _target_: torchvision.transforms.v2.ToImage
-      - _target_: utils.ToDtypeWrapper
-        dtype: float32
-        scale: True
-      - _target_: torchvision.transforms.v2.Normalize
-        mean: [0.5, 0.5, 0.5]
-        std: [0.5, 0.5, 0.5]
+  transform: ${model.preprocessing}
   download: True
 val_set:
   _target_: torchvision.datasets.CIFAR10

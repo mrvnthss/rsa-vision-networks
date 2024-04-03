@@ -1,9 +1,8 @@
 defaults:
-  - dataset: fashionmnist
   - model: lenet
+  - dataset: fashionmnist
   - loss: cross_entropy
   - optimizer: sgd
-  - optional dataset_model: ${dataset}_${model}
   - _self_
 hydra:
   run:
@@ -17,6 +16,7 @@ paths:
   logs_hydra: ../logs/hydra
   logs_tb: ../logs/tensorboard
 training:
+  batch_size: 128
   num_epochs: 10
   num_workers: 0
   seed: 42
