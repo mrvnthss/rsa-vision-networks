@@ -3,12 +3,8 @@ import torch.nn as nn
 
 class LeNet(nn.Module):
     """Modified LeNet-5 architecture (LeCun et al., 1998)."""
-    def __init__(self, img_size=32, num_classes=10):
+    def __init__(self, num_classes=10):
         super(LeNet, self).__init__()
-        # Compute spatial dimension of images after being passed through the feature extractor
-        if img_size % 4 != 0:
-            raise ValueError(f"img_size {img_size} is not divisible by 4!")
-        out_size = img_size // 4 - 3
 
         # Create feature extractor
         self.features = nn.Sequential(
@@ -22,7 +18,7 @@ class LeNet(nn.Module):
 
         # Create classifier
         self.classifier = nn.Sequential(
-            nn.Linear(16 * out_size ** 2, 120),
+            nn.Linear(16 * 5 * 5, 120),
             nn.ReLU(inplace=True),
             nn.Linear(120, 84),
             nn.ReLU(inplace=True),
