@@ -2,7 +2,7 @@ import hydra
 from hydra.utils import instantiate
 import torch
 
-from trainer import Trainer
+from training import Trainer
 
 
 @hydra.main(version_base=None, config_path="conf", config_name="config")
