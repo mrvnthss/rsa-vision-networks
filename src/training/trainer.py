@@ -24,6 +24,13 @@ class Trainer:
         self.writer = SummaryWriter(cfg.logging.tb_dir)
 
     def train(self):
+        # Visualize model architecture in TensorBoard
+        inputs, _ = next(iter(self.train_loader))
+        self.writer.add_graph(self.model, inputs.to(self.device))
+
+        # Visualize sample images in TensorBoard
+        self.writer.add_images("sample_train_images", inputs, 0)
+
         for _ in range(self.cfg.training.num_epochs):
             # Train and validate model
             self._run_epoch(self.train_loader, self.optimizer)
@@ -35,8 +42,6 @@ class Trainer:
         # Close TensorBoard writer and inform user of training completion
         self.writer.close()
         print("Training complete!")
-
-        return
 
     def _run_epoch(
             self,
@@ -119,5 +124,3 @@ class Trainer:
 
         # Flush writer after epoch for live updates
         self.writer.flush()
-
-        return
