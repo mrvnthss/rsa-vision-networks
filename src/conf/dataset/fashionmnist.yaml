@@ -3,7 +3,7 @@ stats:
   mean: [0.5]
   std: [0.5]
 raw_set:
-  _target_: torchvision.datasets.FashionMNIST
+  _target_: datasets.FashionMNIST
   root: ${paths.data}
   train: True
   transform:
@@ -15,13 +15,13 @@ raw_set:
         scale: True
   download: True
 train_set:
-  _target_: torchvision.datasets.FashionMNIST
+  _target_: datasets.FashionMNIST
   root: ${paths.data}
   train: True
   transform: ${model.preprocessing}
   download: True
 val_set:
-  _target_: torchvision.datasets.FashionMNIST
+  _target_: datasets.FashionMNIST
   root: ${paths.data}
   train: False
   transform: ${dataset.train_set.transform}
