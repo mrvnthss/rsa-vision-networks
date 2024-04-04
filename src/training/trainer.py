@@ -1,4 +1,6 @@
+from omegaconf import DictConfig
 import torch
+from torch import nn
 from torch.utils.tensorboard import SummaryWriter
 from tqdm import tqdm
 
@@ -6,14 +8,14 @@ from tqdm import tqdm
 class Trainer:
     def __init__(
             self,
-            model,
-            train_loader,
-            val_loader,
-            loss_fn,
-            optimizer,
-            device,
-            cfg
-    ):
+            model: nn.Module,
+            train_loader: torch.utils.data.DataLoader,
+            val_loader: torch.utils.data.DataLoader,
+            loss_fn: nn.Module,
+            optimizer: torch.optim.Optimizer,
+            device: torch.device,
+            cfg: DictConfig
+    ) -> None:
         self.model = model
         self.train_loader = train_loader
         self.val_loader = val_loader
@@ -23,7 +25,7 @@ class Trainer:
         self.device = device
         self.writer = SummaryWriter(cfg.logging.tb_dir)
 
-    def train(self):
+    def train(self) -> None:
         # Visualize model architecture in TensorBoard
         inputs, _ = next(iter(self.train_loader))
         self.writer.add_graph(self.model, inputs.to(self.device))
@@ -45,9 +47,9 @@ class Trainer:
 
     def _run_epoch(
             self,
-            dataloader,
-            optimizer=None
-    ):
+            dataloader: torch.utils.data.DataLoader,
+            optimizer: torch.optim.Optimizer = None
+    ) -> None:
         # Running totals to report progress to TensorBoard
         running_samples = 0
         running_loss = 0.

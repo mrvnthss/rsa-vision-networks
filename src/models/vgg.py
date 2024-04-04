@@ -1,3 +1,4 @@
+import torch
 import torch.nn as nn
 
 # VGG configurations as described in Simonyan and Zisserman (2015)
@@ -16,11 +17,11 @@ configurations = {
 
 class VGG(nn.Module):
     """VGG architecture introduced by Simonyan and Zisserman (2015)."""
-    def __init__(self, num_layers, num_classes=1000):
+    def __init__(self, num_layers: int, num_classes: int = 1000) -> None:
         super(VGG, self).__init__()
 
         # Create feature extractor
-        self.features = make_layers(num_layers)
+        self._make_layers(num_layers)
 
         # Create classifier
         self.classifier = nn.Sequential(
@@ -39,22 +40,20 @@ class VGG(nn.Module):
                 nn.init.xavier_normal_(m.weight)  # Glorot & Bengio (2010)
                 nn.init.zeros_(m.bias)  # "The biases were initialized with zero."
 
-    def forward(self, x):
+    def _make_layers(self, num_layers: int) -> None:
+        layers = []
+        in_channels = 3
+        for v in configurations[num_layers]:
+            if v == 'M':
+                layers += [nn.MaxPool2d(2, 2)]
+            else:
+                conv2d = nn.Conv2d(in_channels, v, kernel_size=3, padding=1)
+                layers += [conv2d, nn.ReLU(inplace=True)]
+                in_channels = v
+        self.features = nn.Sequential(*layers)
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
         x = self.features(x)
         x = x.view(x.size(0), -1)
         x = self.classifier(x)
         return x
-
-
-def make_layers(num_layers):
-    cfg = configurations[num_layers]
-    layers = []
-    in_channels = 3
-    for v in cfg:
-        if v == 'M':
-            layers += [nn.MaxPool2d(2, 2)]
-        else:
-            conv2d = nn.Conv2d(in_channels, v, kernel_size=3, padding=1)
-            layers += [conv2d, nn.ReLU(inplace=True)]
-            in_channels = v
-    return nn.Sequential(*layers)

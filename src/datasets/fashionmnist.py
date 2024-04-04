@@ -2,6 +2,7 @@ from pathlib import Path
 from typing import Any, Callable, Dict, Optional, Tuple
 
 from PIL import Image
+import torch
 from torchvision.datasets.mnist import read_image_file, read_label_file
 from torchvision.datasets.utils import check_integrity, download_and_extract_archive
 from torchvision.datasets.vision import VisionDataset
@@ -99,7 +100,7 @@ class FashionMNIST(VisionDataset):
                 return False
         return True
 
-    def _load_data(self):
+    def _load_data(self) -> Tuple[torch.Tensor, torch.Tensor]:
         prefix = "train" if self.train else "t10k"
         image_file = f"{prefix}-images-idx3-ubyte"
         data = read_image_file(str(Path(self.raw_folder, image_file)))

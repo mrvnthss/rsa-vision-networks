@@ -28,7 +28,7 @@ class ToDtypeWrapper(Transform):
         to_dtype (ToDtype): An instance of
             torchvision.transforms.v2.ToDtype.
     """
-    def __init__(self, dtype: Union[str, Dict[str, str]], scale: bool):
+    def __init__(self, dtype: Union[str, Dict[str, str]], scale: bool) -> None:
         super().__init__()
 
         dtype_map = {
@@ -79,5 +79,5 @@ class ToDtypeWrapper(Transform):
         # Call the class's constructor that we are wrapping
         self.to_dtype = ToDtype(dtype, scale=scale)
 
-    def __call__(self, img):
-        return self.to_dtype(img)
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        return self.to_dtype(x)

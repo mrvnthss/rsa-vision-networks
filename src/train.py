@@ -1,12 +1,13 @@
 import hydra
 from hydra.utils import instantiate
+from omegaconf import DictConfig
 import torch
 
 from training import Trainer
 
 
 @hydra.main(version_base=None, config_path="conf", config_name="config")
-def main(cfg) -> None:
+def main(cfg: DictConfig) -> None:
     # Set random seed for reproducibility
     torch.manual_seed(cfg.training.seed)
 

@@ -1,9 +1,10 @@
+import torch
 import torch.nn as nn
 
 
 class LeNet(nn.Module):
     """Modified LeNet-5 architecture (LeCun et al., 1998)."""
-    def __init__(self, num_classes=10):
+    def __init__(self, num_classes: int = 10) -> None:
         super(LeNet, self).__init__()
 
         # Create feature extractor
@@ -25,7 +26,7 @@ class LeNet(nn.Module):
             nn.Linear(84, num_classes),
         )
 
-    def forward(self, x):
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
         x = self.features(x)
         x = x.view(x.size(0), -1)
         x = self.classifier(x)
