@@ -20,6 +20,13 @@ class FashionMNIST(VisionDataset):
         ("t10k-labels-idx1-ubyte.gz", "bb300cfdad3c16e7a12a480ee83cd310")
     ]
 
+    raw_data = [
+        ("train-images-idx3-ubyte", "f4a8712d7a061bf5bd6d2ca38dc4d50a"),
+        ("train-labels-idx1-ubyte", "9018921c3c673c538a1fc5bad174d6f9"),
+        ("t10k-images-idx3-ubyte", "8181f5470baa50b63fa0f6fddb340f0a"),
+        ("t10k-labels-idx1-ubyte", "15d484375f8d13e6eb1aabb0c3f46965")
+    ]
+
     classes = [
         "T-shirt/top",
         "Trouser",
@@ -49,7 +56,8 @@ class FashionMNIST(VisionDataset):
             self.download()
 
         if not self._check_exists():
-            raise RuntimeError("Dataset not found. You can use download=True to download it")
+            raise RuntimeError("Dataset not found or corrupted. You can use download=True to "
+                               "download it")
 
         self.data, self.targets = self._load_data()
 
@@ -95,10 +103,10 @@ class FashionMNIST(VisionDataset):
                 raise RuntimeError(f"Error downloading {filename}")
 
     def _check_exists(self) -> bool:
-        return all(
-            check_integrity(str(Path(self.raw_folder) / Path(filename).stem))
-            for filename, _ in self.resources
-        )
+        for filename, md5 in self.raw_data:
+            if not check_integrity(str(Path(self.raw_folder) / filename), md5):
+                return False
+        return True
 
     def _load_data(self):
         prefix = "train" if self.train else "t10k"
