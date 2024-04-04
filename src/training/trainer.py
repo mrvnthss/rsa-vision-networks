@@ -12,7 +12,8 @@ class Trainer:
             loss_fn,
             optimizer,
             device,
-            cfg):
+            cfg
+    ):
         self.model = model
         self.train_loader = train_loader
         self.val_loader = val_loader
@@ -23,32 +24,10 @@ class Trainer:
         self.writer = SummaryWriter(cfg.logging.tb_dir)
 
     def train(self):
-        # Initialize dictionary to log results
-        logs = {
-            "train": {
-                "global_step": [],
-                "loss": [],
-                "accuracy": []
-            },
-            "val": {
-                "global_step": [],
-                "loss": [],
-                "accuracy": []
-            }
-        }
-
         for _ in range(self.cfg.training.num_epochs):
             # Train and validate model
-            train_logs = self._run_epoch(self.train_loader, self.optimizer)
-            val_logs = self._run_epoch(self.val_loader)
-
-            # Log results
-            logs["train"]["global_step"].extend(train_logs["global_step"])
-            logs["train"]["loss"].extend(train_logs["loss"])
-            logs["train"]["accuracy"].extend(train_logs["accuracy"])
-            logs["val"]["global_step"].extend(val_logs["global_step"])
-            logs["val"]["loss"].extend(val_logs["loss"])
-            logs["val"]["accuracy"].extend(val_logs["accuracy"])
+            self._run_epoch(self.train_loader, self.optimizer)
+            self._run_epoch(self.val_loader)
 
             # Increment epoch index
             self.cfg.logging.epoch_index += 1
@@ -57,19 +36,13 @@ class Trainer:
         self.writer.close()
         print("Training complete!")
 
-        return logs
+        return
 
     def _run_epoch(
             self,
             dataloader,
-            optimizer=None):
-        # Initialize dictionary to log intra-epoch results
-        logs = {
-            "global_step": [],
-            "loss": [],
-            "accuracy": []
-        }
-
+            optimizer=None
+    ):
         # Running totals to report progress to TensorBoard
         running_samples = 0
         running_loss = 0.
@@ -88,8 +61,8 @@ class Trainer:
             log_indices = log_indices[1:]
 
         # Set tags for TensorBoard logging
-        tag_loss = f"Loss/{'Train' if is_training else 'Val'}"
-        tag_accuracy = f"Accuracy/{'Train' if is_training else 'Val'}"
+        tag_loss = f"{'train' if is_training else 'val'}/loss"
+        tag_acc = f"{'train' if is_training else 'val'}/acc"
 
         # Prepare progress bar
         desc = (f"Epoch [{self.cfg.logging.epoch_index + 1}/{self.cfg.training.num_epochs}]    "
@@ -120,10 +93,10 @@ class Trainer:
 
                 # Update progress bar
                 avg_batch_loss = running_loss / running_samples
-                avg_batch_accuracy = (running_correct / running_samples) * 100  # in pct
+                avg_batch_acc = (running_correct / running_samples) * 100  # in pct
                 pbar.set_postfix(
                     loss=avg_batch_loss,
-                    accuracy=avg_batch_accuracy
+                    accuracy=avg_batch_acc
                 )
 
                 # Backward pass and optimization
@@ -137,12 +110,7 @@ class Trainer:
                     # Log to TensorBoard
                     global_step = self.cfg.logging.epoch_index * num_batches + batch_index + 1
                     self.writer.add_scalar(tag_loss, avg_batch_loss, global_step)
-                    self.writer.add_scalar(tag_accuracy, avg_batch_accuracy, global_step)
-
-                    # Log to dictionary
-                    logs["global_step"].append(global_step)
-                    logs["loss"].append(avg_batch_loss)
-                    logs["accuracy"].append(avg_batch_accuracy)
+                    self.writer.add_scalar(tag_acc, avg_batch_acc, global_step)
 
                     # Reset running totals
                     running_samples = 0
@@ -152,4 +120,4 @@ class Trainer:
         # Flush writer after epoch for live updates
         self.writer.flush()
 
-        return logs
+        return

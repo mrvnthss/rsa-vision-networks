@@ -59,7 +59,7 @@ def main(cfg) -> None:
         device,
         cfg
     )
-    _ = trainer.train()
+    trainer.train()
 
 
 if __name__ == "__main__":
