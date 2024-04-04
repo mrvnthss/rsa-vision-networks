@@ -1,6 +1,5 @@
 from pathlib import Path
 from typing import Any, Callable, Dict, Optional, Tuple
-from urllib.error import URLError
 
 from PIL import Image
 from torchvision.datasets.mnist import read_image_file, read_label_file
@@ -11,7 +10,7 @@ from torchvision.datasets.vision import VisionDataset
 class FashionMNIST(VisionDataset):
     """FashionMNIST Dataset by Zalando Research."""
 
-    mirrors = ["http://fashion-mnist.s3-website.eu-central-1.amazonaws.com/"]
+    mirror = "http://fashion-mnist.s3-website.eu-central-1.amazonaws.com/"
 
     resources = [
         ("train-images-idx3-ubyte.gz", "8d4fb7e6c68d591d4c3dfef9ec88bf0d"),
@@ -86,25 +85,17 @@ class FashionMNIST(VisionDataset):
 
         # Download files
         for filename, md5 in self.resources:
-            for mirror in self.mirrors:
-                url = f"{mirror}{filename}"
-                try:
-                    download_and_extract_archive(
-                        url, download_root=self.raw_folder,
-                        filename=filename, md5=md5, remove_finished=True
-                    )
-                except URLError as error:
-                    print(f"Failed to download (trying next):\n{error}")
-                    continue
-                finally:
-                    print()
-                break
-            else:
-                raise RuntimeError(f"Error downloading {filename}")
+            url = f"{self.mirror}{filename}"
+            download_and_extract_archive(
+                url, download_root=self.raw_folder, filename=filename, md5=md5,
+                remove_finished=True
+            )
+            print()
 
     def _check_exists(self) -> bool:
         for filename, md5 in self.raw_data:
-            if not check_integrity(str(Path(self.raw_folder) / filename), md5):
+            filepath = str(Path(self.raw_folder) / filename)
+            if not check_integrity(filepath, md5):
                 return False
         return True
 
