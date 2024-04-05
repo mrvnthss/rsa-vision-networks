@@ -1,14 +1,13 @@
 from pathlib import Path
-from typing import Any, Callable, Dict, Optional, Tuple
+from typing import Callable, Optional
 
 from PIL import Image
-import torch
 from torchvision.datasets.mnist import read_image_file, read_label_file
 from torchvision.datasets.utils import check_integrity, download_and_extract_archive
-from torchvision.datasets.vision import VisionDataset
+from torchvision.datasets.folder import ImageFolder
 
 
-class FashionMNIST(VisionDataset):
+class FashionMNIST(ImageFolder):
     """FashionMNIST Dataset by Zalando Research."""
 
     mirror = "http://fashion-mnist.s3-website.eu-central-1.amazonaws.com/"
@@ -27,8 +26,13 @@ class FashionMNIST(VisionDataset):
         ("t10k-labels-idx1-ubyte", "15d484375f8d13e6eb1aabb0c3f46965")
     ]
 
+    mapping = {
+        "train": ("train-images-idx3-ubyte", "train-labels-idx1-ubyte"),
+        "val": ("t10k-images-idx3-ubyte", "t10k-labels-idx1-ubyte")
+    }
+
     classes = [
-        "T-shirt/top",
+        "T-Shirt",  # T-shirt/top
         "Trouser",
         "Pullover",
         "Dress",
@@ -37,7 +41,7 @@ class FashionMNIST(VisionDataset):
         "Shirt",
         "Sneaker",
         "Bag",
-        "Ankle boot"
+        "Boot"  # Ankle boot
     ]
 
     def __init__(
@@ -45,43 +49,34 @@ class FashionMNIST(VisionDataset):
             root: str,
             train: bool = True,
             transform: Optional[Callable] = None,
-            target_transform: Optional[Callable] = None,
-            download: bool = False
+            target_transform: Optional[Callable] = None
     ) -> None:
-        super().__init__(root, transform=transform, target_transform=target_transform)
+        self.root = root
+        self.train = train
+        self.img_folder = str(Path(self.processed_folder) / ("train" if self.train else "val"))
+        self.transform = transform
+        self.target_transform = target_transform
 
-        self.train = train  # training set or test set
+        # Download raw files, if necessary
+        if not self._is_downloaded():
+            self._download()
 
-        if download:
-            self.download()
+        # Process data, if necessary
+        if not self._is_processed():
+            self._process()
 
-        if not self._check_exists():
-            raise RuntimeError("Dataset not found or corrupted. You can use download=True to "
-                               "download it")
+        super().__init__(
+            root=self.img_folder, transform=self.transform, target_transform=self.target_transform
+        )
 
-        self.data, self.targets = self._load_data()
+    def _is_downloaded(self) -> bool:
+        for filename, md5 in self.raw_data:
+            filepath = str(Path(self.raw_folder) / filename)
+            if not check_integrity(filepath, md5):
+                return False
+        return True
 
-    def __getitem__(self, index: int) -> Tuple[Any, Any]:
-        img, target = self.data[index], int(self.targets[index])
-
-        # Convert PyTorch tensor to PIL Image (8-bit pixels, grayscale)
-        img = Image.fromarray(img.numpy(), mode="L")
-
-        if self.transform:
-            img = self.transform(img)
-
-        if self.target_transform:
-            target = self.target_transform(target)
-
-        return img, target
-
-    def __len__(self) -> int:
-        return len(self.data)
-
-    def download(self) -> None:
-        if self._check_exists():
-            return
-
+    def _download(self) -> None:
         Path(self.raw_folder).mkdir(parents=True, exist_ok=True)
 
         # Download files
@@ -93,22 +88,30 @@ class FashionMNIST(VisionDataset):
             )
             print()
 
-    def _check_exists(self) -> bool:
-        for filename, md5 in self.raw_data:
-            filepath = str(Path(self.raw_folder) / filename)
-            if not check_integrity(filepath, md5):
-                return False
+    def _is_processed(self) -> bool:
+        for image_set in self.mapping.keys():
+            subdir = Path(self.processed_folder) / image_set
+            for img_class in self.classes:
+                class_dir = subdir / img_class
+                if not class_dir.exists() or not any(class_dir.iterdir()):
+                    return False
         return True
 
-    def _load_data(self) -> Tuple[torch.Tensor, torch.Tensor]:
-        prefix = "train" if self.train else "t10k"
-        image_file = f"{prefix}-images-idx3-ubyte"
-        data = read_image_file(str(Path(self.raw_folder, image_file)))
+    def _process(self) -> None:
+        # Create subdirectories for each class
+        for img_class in self.classes:
+            Path(self.processed_folder, "train", img_class).mkdir(parents=True, exist_ok=True)
+            Path(self.processed_folder, "val", img_class).mkdir(parents=True, exist_ok=True)
 
-        label_file = f"{prefix}-labels-idx1-ubyte"
-        targets = read_label_file(str(Path(self.raw_folder, label_file)))
+        # Unpack raw data and save as PNG images
+        for image_set, (image_file, label_file) in self.mapping.items():
+            data = read_image_file(str(Path(self.raw_folder, image_file)))
+            targets = read_label_file(str(Path(self.raw_folder, label_file)))
+            subdir = Path(self.processed_folder) / image_set
 
-        return data, targets
+            for idx, (img, target) in enumerate(zip(data, targets)):
+                img = Image.fromarray(img.numpy(), mode="L")
+                img.save(str(subdir / self.classes[target] / f"image_{idx}.png"))
 
     @property
     def raw_folder(self) -> str:
@@ -117,7 +120,3 @@ class FashionMNIST(VisionDataset):
     @property
     def processed_folder(self) -> str:
         return str(Path(self.root, "processed", self.__class__.__name__))
-
-    @property
-    def class_to_idx(self) -> Dict[str, int]:
-        return {_class: i for i, _class in enumerate(self.classes)}
