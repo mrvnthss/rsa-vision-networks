@@ -2,9 +2,9 @@ from pathlib import Path
 from typing import Callable, Optional
 
 from PIL import Image
+from torchvision.datasets.folder import ImageFolder
 from torchvision.datasets.mnist import read_image_file, read_label_file
 from torchvision.datasets.utils import check_integrity, download_and_extract_archive
-from torchvision.datasets.folder import ImageFolder
 
 
 class FashionMNIST(ImageFolder):
