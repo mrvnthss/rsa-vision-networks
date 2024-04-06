@@ -10,7 +10,7 @@ from torchvision.datasets.utils import check_integrity, download_and_extract_arc
 
 
 class CIFAR10(ImageFolder):
-    """CIFAR10 Dataset."""
+    """CIFAR10 Dataset (Krizhevsky, 2009)."""
 
     mirror = "https://www.cs.toronto.edu/~kriz/"
 

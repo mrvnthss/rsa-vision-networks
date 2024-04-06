@@ -8,7 +8,7 @@ from torchvision.datasets.utils import check_integrity, download_and_extract_arc
 
 
 class FashionMNIST(ImageFolder):
-    """FashionMNIST Dataset by Zalando Research."""
+    """FashionMNIST Dataset by Zalando Research (Xiao et al., 2017)."""
 
     mirror = "http://fashion-mnist.s3-website.eu-central-1.amazonaws.com/"
 
