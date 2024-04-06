@@ -26,7 +26,7 @@ class FashionMNIST(ImageFolder):
         ("t10k-labels-idx1-ubyte", "15d484375f8d13e6eb1aabb0c3f46965")
     ]
 
-    mapping = {
+    splits = {
         "train": ("train-images-idx3-ubyte", "train-labels-idx1-ubyte"),
         "val": ("t10k-images-idx3-ubyte", "t10k-labels-idx1-ubyte")
     }
@@ -52,21 +52,19 @@ class FashionMNIST(ImageFolder):
             target_transform: Optional[Callable] = None
     ) -> None:
         self.root = root
-        self.train = train
-        self.img_folder = str(Path(self.processed_folder) / ("train" if self.train else "val"))
+        self.split = "train" if train else "val"
+        self.split_dir = Path(self.processed_folder) / self.split
         self.transform = transform
         self.target_transform = target_transform
 
-        # Download raw files, if necessary
         if not self._is_downloaded():
             self._download()
 
-        # Process data, if necessary
-        if not self._is_processed():
-            self._process()
+        if not self._is_parsed():
+            self._parse_binary()
 
         super().__init__(
-            root=self.img_folder, transform=self.transform, target_transform=self.target_transform
+            str(self.split_dir), transform=self.transform, target_transform=self.target_transform
         )
 
     def _is_downloaded(self) -> bool:
@@ -88,30 +86,26 @@ class FashionMNIST(ImageFolder):
             )
             print()
 
-    def _is_processed(self) -> bool:
-        for image_set in self.mapping.keys():
-            subdir = Path(self.processed_folder) / image_set
-            for img_class in self.classes:
-                class_dir = subdir / img_class
-                if not class_dir.exists() or not any(class_dir.iterdir()):
-                    return False
+    def _is_parsed(self) -> bool:
+        for img_class in self.classes:
+            class_dir = self.split_dir / img_class
+            if not class_dir.exists() or not any(class_dir.iterdir()):
+                return False
         return True
 
-    def _process(self) -> None:
+    def _parse_binary(self) -> None:
         # Create subdirectories for each class
         for img_class in self.classes:
-            Path(self.processed_folder, "train", img_class).mkdir(parents=True, exist_ok=True)
-            Path(self.processed_folder, "val", img_class).mkdir(parents=True, exist_ok=True)
+            (self.split_dir / img_class).mkdir(parents=True, exist_ok=True)
 
         # Unpack raw data and save as PNG images
-        for image_set, (image_file, label_file) in self.mapping.items():
-            data = read_image_file(str(Path(self.raw_folder, image_file)))
-            targets = read_label_file(str(Path(self.raw_folder, label_file)))
-            subdir = Path(self.processed_folder) / image_set
+        image_file, label_file = self.splits[self.split]
+        data = read_image_file(str(Path(self.raw_folder, image_file)))
+        targets = read_label_file(str(Path(self.raw_folder, label_file)))
 
-            for idx, (img, target) in enumerate(zip(data, targets)):
-                img = Image.fromarray(img.numpy(), mode="L")
-                img.save(str(subdir / self.classes[target] / f"image_{idx}.png"))
+        for idx, (img, target) in enumerate(zip(data, targets)):
+            img = Image.fromarray(img.numpy(), mode="L")
+            img.save(self.split_dir / self.classes[target] / f"img_{idx}.png")
 
     @property
     def raw_folder(self) -> str:
