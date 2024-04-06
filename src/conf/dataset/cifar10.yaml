@@ -13,16 +13,13 @@ raw_set:
       - _target_: utils.ToDtypeWrapper
         dtype: float32
         scale: True
-  download: True
 train_set:
   _target_: datasets.CIFAR10
   root: ${paths.data}
   train: True
   transform: ${model.preprocessing}
-  download: True
 val_set:
   _target_: datasets.CIFAR10
   root: ${paths.data}
   train: False
   transform: ${dataset.train_set.transform}
-  download: True

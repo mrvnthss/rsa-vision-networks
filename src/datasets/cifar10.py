@@ -1,15 +1,15 @@
 from pathlib import Path
 import pickle
 import shutil
-from typing import Any, Callable, Dict, Optional, Tuple
+from typing import Callable, Optional
 
 import numpy as np
 from PIL import Image
+from torchvision.datasets.folder import ImageFolder
 from torchvision.datasets.utils import check_integrity, download_and_extract_archive
-from torchvision.datasets.vision import VisionDataset
 
 
-class CIFAR10(VisionDataset):
+class CIFAR10(ImageFolder):
     """CIFAR10 Dataset."""
 
     mirror = "https://www.cs.toronto.edu/~kriz/"
@@ -47,42 +47,31 @@ class CIFAR10(VisionDataset):
             train: bool = True,
             transform: Optional[Callable] = None,
             target_transform: Optional[Callable] = None,
-            download: bool = False
     ) -> None:
-        super().__init__(root, transform=transform, target_transform=target_transform)
+        self.root = root
+        self.split = "train" if train else "val"
+        self.split_dir = Path(self.processed_folder) / self.split
+        self.transform = transform
+        self.target_transform = target_transform
 
-        self.train = train  # training set or test set
+        if not self._is_downloaded():
+            self._download()
 
-        if download:
-            self.download()
+        if not self._is_parsed():
+            self._parse_binary()
 
-        if not self._check_exists():
-            raise RuntimeError("Dataset not found or corrupted. You can use download=True to "
-                               "download it")
+        super().__init__(
+            str(self.split_dir), transform=self.transform, target_transform=self.target_transform
+        )
 
-        self.data, self.targets = self._load_data()
+    def _is_downloaded(self) -> bool:
+        for filename, md5 in self.train_batches + self.test_batches:
+            filepath = str(Path(self.raw_folder) / filename)
+            if not check_integrity(filepath, md5):
+                return False
+        return True
 
-    def __getitem__(self, index: int) -> Tuple[Any, Any]:
-        img, target = self.data[index], int(self.targets[index])
-
-        # Convert to PIL Image
-        img = Image.fromarray(img)
-
-        if self.transform:
-            img = self.transform(img)
-
-        if self.target_transform:
-            target = self.target_transform(target)
-
-        return img, target
-
-    def __len__(self) -> int:
-        return len(self.data)
-
-    def download(self) -> None:
-        if self._check_exists():
-            return
-
+    def _download(self) -> None:
         Path(self.raw_folder).mkdir(parents=True, exist_ok=True)
 
         # Download files
@@ -101,35 +90,35 @@ class CIFAR10(VisionDataset):
         intermediate_dir.rmdir()
 
         # Delete auxiliary files
-        for file in ["batches.meta", "readme.html"]:
-            file_path = Path(self.raw_folder, file)
-            if file_path.exists():
-                file_path.unlink()
+        for filename in ["batches.meta", "readme.html"]:
+            filepath = Path(self.raw_folder, filename)
+            if filepath.exists():
+                filepath.unlink()
 
-    def _check_exists(self) -> bool:
-        for filename, md5 in self.train_batches + self.test_batches:
-            filepath = str(Path(self.raw_folder) / filename)
-            if not check_integrity(filepath, md5):
+    def _is_parsed(self) -> bool:
+        for img_class in self.classes:
+            class_dir = self.split_dir / img_class
+            if not class_dir.exists() or not any(class_dir.iterdir()):
                 return False
         return True
 
-    def _load_data(self) -> Tuple[Any, Any]:
-        data = []
-        targets = []
+    def _parse_binary(self) -> None:
+        # Create subdirectories for each class
+        for img_class in self.classes:
+            (self.split_dir / img_class).mkdir(parents=True, exist_ok=True)
 
-        batches = self.train_batches if self.train else self.test_batches
-
-        for filename, md5 in batches:
+        # Unpack raw data and save as PNG images
+        batches = self.train_batches if self.split == "train" else self.test_batches
+        for filename, _ in batches:
             filepath = str(Path(self.raw_folder) / filename)
             with open(filepath, "rb") as f:
                 entry = pickle.load(f, encoding="latin1")
-                data.append(entry["data"])
-                targets.extend(entry["labels"])
+                data = np.array(entry["data"]).reshape(-1, 3, 32, 32).transpose((0, 2, 3, 1))
+                targets = entry["labels"]
 
-        data = np.vstack(data).reshape(-1, 3, 32, 32)
-        data = data.transpose((0, 2, 3, 1))
-
-        return data, targets
+            for idx, (img, target) in enumerate(zip(data, targets)):
+                img = Image.fromarray(img, mode="RGB")
+                img.save(self.split_dir / self.classes[target] / f"img_{idx}.png")
 
     @property
     def raw_folder(self) -> str:
@@ -138,7 +127,3 @@ class CIFAR10(VisionDataset):
     @property
     def processed_folder(self) -> str:
         return str(Path(self.root, "processed", self.__class__.__name__))
-
-    @property
-    def class_to_idx(self) -> Dict[str, int]:
-        return {_class: i for i, _class in enumerate(self.classes)}
