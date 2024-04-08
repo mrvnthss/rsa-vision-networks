@@ -64,6 +64,11 @@ class CIFAR10(ImageFolder):
             str(self.split_dir), transform=self.transform, target_transform=self.target_transform
         )
 
+        # NOTE: Calling the super constructor leads to the self.root attribute being overwritten
+        #       and set to the directory containing the processed data (i.e., the images arranged
+        #       in subdirectories by class). Here, we reset it to the original root directory.
+        self.root = root
+
     def _is_downloaded(self) -> bool:
         for filename, md5 in self.train_batches + self.test_batches:
             filepath = str(Path(self.raw_folder) / filename)
