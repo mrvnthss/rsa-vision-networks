@@ -1,3 +1,5 @@
+import time
+
 from omegaconf import DictConfig
 import torch
 from torch import nn
@@ -76,6 +78,9 @@ class Trainer:
                 f"{'Train' if is_training else 'Val'}")
         pbar = tqdm(dataloader, desc=desc, leave=False, unit="batch")
 
+        # Initialize timer
+        start_time = time.time()
+
         # Disable gradients during evaluation
         with (torch.set_grad_enabled(is_training)):
             for batch_index, (inputs, targets) in enumerate(pbar):
@@ -86,9 +91,22 @@ class Trainer:
                 samples = len(targets)
                 running_samples += samples
 
+                # Determine preparation time
+                prep_time = time.time() - start_time
+
                 # Forward pass
                 outputs = self.model(inputs)
                 loss = self.loss_fn(outputs, targets)
+
+                # Backward pass and optimization
+                if is_training:
+                    optimizer.zero_grad()
+                    loss.backward()
+                    optimizer.step()
+
+                # Determine compute efficiency
+                process_time = time.time() - start_time - prep_time
+                compute_efficiency = process_time / (prep_time + process_time) * 100  # in pct
 
                 # Accumulate loss
                 running_loss += loss.item() * samples
@@ -103,14 +121,9 @@ class Trainer:
                 avg_batch_acc = (running_correct / running_samples) * 100  # in pct
                 pbar.set_postfix(
                     loss=avg_batch_loss,
-                    accuracy=avg_batch_acc
+                    accuracy=avg_batch_acc,
+                    compute_efficiency=compute_efficiency
                 )
-
-                # Backward pass and optimization
-                if is_training:
-                    optimizer.zero_grad()
-                    loss.backward()
-                    optimizer.step()
 
                 # Log batch loss and accuracy
                 if batch_index in log_indices:
@@ -123,6 +136,9 @@ class Trainer:
                     running_samples = 0
                     running_loss = 0.
                     running_correct = 0
+
+                # Reset timer
+                start_time = time.time()
 
         # Flush writer after epoch for live updates
         self.writer.flush()
