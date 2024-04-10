@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "rsa"
+name = "thesis-experiments"
 version = "0.1.0"
 description = ""
 authors = ["Marvin Theiss <marvin.theiss@psychol.uni-giessen.de>"]
