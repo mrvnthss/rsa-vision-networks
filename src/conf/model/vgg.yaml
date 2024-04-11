@@ -2,6 +2,9 @@ architecture:
   _target_: models.VGG
   num_layers: 11  # one of [11, 13, 16, 19]
   num_classes: ${dataset.num_classes}
+norm_constants:
+  mean: [0.5, 0.5, 0.5]
+  std: [0.5, 0.5, 0.5]
 preprocessing:
   _target_: torchvision.transforms.v2.Compose
   transforms:
@@ -16,5 +19,5 @@ preprocessing:
       dtype: float32
       scale: True
     - _target_: torchvision.transforms.v2.Normalize
-      mean: ${dataset.stats.mean}
-      std: ${dataset.stats.std}
+      mean: ${model.norm_constants.mean}
+      std: ${model.norm_constants.std}

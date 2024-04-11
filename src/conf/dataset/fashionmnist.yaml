@@ -1,7 +1,4 @@
 num_classes: 10
-stats:
-  mean: [0.5]
-  std: [0.5]
 train_set:
   _target_: datasets.FashionMNIST
   root: ${paths.data}
