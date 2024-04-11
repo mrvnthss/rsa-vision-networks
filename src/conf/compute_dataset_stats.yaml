@@ -1,0 +1,19 @@
+defaults:
+  - model: lenet
+  - dataset: fashionmnist
+  - override hydra/hydra_logging: disabled
+  - override hydra/job_logging: disabled
+  - _self_
+paths:
+  data: ../data
+hydra:
+  output_subdir: null
+  run:
+    dir: .
+model:
+  norm_constants:
+    mean: [0]  # leave as is
+    std: [1]  # leave as is
+dataloader:
+  batch_size: 32
+  num_workers: 16
