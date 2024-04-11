@@ -18,16 +18,16 @@ def main(cfg: DictConfig) -> None:
     # Prepare dataloaders
     train_loader = torch.utils.data.DataLoader(
         train_set,
-        batch_size=cfg.training.batch_size,
+        batch_size=cfg.dataloader.batch_size,
         shuffle=True,
-        num_workers=cfg.training.num_workers,
+        num_workers=cfg.dataloader.num_workers,
         pin_memory=True
     )
     val_loader = torch.utils.data.DataLoader(
         val_set,
-        batch_size=cfg.training.batch_size,
+        batch_size=cfg.dataloader.batch_size,
         shuffle=False,
-        num_workers=cfg.training.num_workers,
+        num_workers=cfg.dataloader.num_workers,
         pin_memory=True
     )
 
