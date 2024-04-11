@@ -2,8 +2,9 @@ architecture:
   _target_: models.LeNet
   num_classes: ${dataset.num_classes}
 norm_constants:
-  mean: [0.5]
-  std: [0.5]
+  # Computed on FashionMNIST dataset (training set, batch size 32)
+  mean: [0.285556]
+  std: [0.338484]
 preprocessing:
   _target_: torchvision.transforms.v2.Compose
   transforms:

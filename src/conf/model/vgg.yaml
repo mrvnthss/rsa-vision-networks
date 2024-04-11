@@ -3,8 +3,9 @@ architecture:
   num_layers: 11  # one of [11, 13, 16, 19]
   num_classes: ${dataset.num_classes}
 norm_constants:
-  mean: [0.5, 0.5, 0.5]
-  std: [0.5, 0.5, 0.5]
+  # Computed on ImageNet dataset (training set, batch size 32)
+  mean: [0.484477, 0.454096, 0.402564]
+  std: [0.272381, 0.263696, 0.276105]
 preprocessing:
   _target_: torchvision.transforms.v2.Compose
   transforms:

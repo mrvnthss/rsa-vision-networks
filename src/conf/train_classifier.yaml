@@ -1,6 +1,7 @@
 defaults:
   - model: lenet
   - dataset: fashionmnist
+  - optional model/dataset: ${model}_${dataset}
   - loss: cross_entropy
   - optimizer: sgd
   - optional optimizer/model: ${optimizer}_${model}
