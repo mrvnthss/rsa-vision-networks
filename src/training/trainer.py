@@ -140,5 +140,8 @@ class Trainer:
                 # Reset timer
                 start_time = time.time()
 
+        # Close progress bar
+        pbar.close()
+
         # Flush writer after epoch for live updates
         self.writer.flush()
