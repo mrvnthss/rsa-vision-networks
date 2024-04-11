@@ -6,7 +6,7 @@ import torch
 from training import Trainer
 
 
-@hydra.main(version_base=None, config_path="conf", config_name="config")
+@hydra.main(version_base=None, config_path="conf", config_name="train_classifier")
 def main(cfg: DictConfig) -> None:
     # Set random seed for reproducibility
     torch.manual_seed(cfg.training.seed)
