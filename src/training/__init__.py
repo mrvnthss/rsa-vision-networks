@@ -1,2 +1,2 @@
 from .balanced_sampler import BalancedSampler
-from .trainer import Trainer
+from .classification_trainer import ClassificationTrainer

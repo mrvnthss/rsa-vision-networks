@@ -3,7 +3,7 @@ from hydra.utils import instantiate
 from omegaconf import DictConfig
 import torch
 
-from training import BalancedSampler, Trainer
+from training import BalancedSampler, ClassificationTrainer
 
 
 @hydra.main(version_base=None, config_path="conf", config_name="train_classifier")
@@ -58,7 +58,7 @@ def main(cfg: DictConfig) -> None:
     )
 
     # Train model
-    trainer = Trainer(
+    trainer = ClassificationTrainer(
         model,
         train_loader,
         val_loader,

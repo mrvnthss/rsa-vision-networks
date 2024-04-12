@@ -1,5 +1,4 @@
 import time
-from typing import List
 
 from omegaconf import DictConfig
 import torch
@@ -7,8 +6,10 @@ from torch import nn
 from torch.utils.tensorboard import SummaryWriter
 from tqdm import tqdm
 
+from .train_utils import compute_log_indices
 
-class Trainer:
+
+class ClassificationTrainer:
     def __init__(
             self,
             model: nn.Module,
@@ -67,7 +68,7 @@ class Trainer:
         self.model.train(is_training)
 
         # Determine batch indices at which to log to TensorBoard
-        log_indices = self._compute_log_indices(dataloader)
+        log_indices = compute_log_indices(dataloader, self.cfg.logging.intra_epoch_updates)
 
         # Set tags for TensorBoard logging
         tag_loss = f"{'train' if is_training else 'val'}/loss"
@@ -145,14 +146,3 @@ class Trainer:
 
         # Flush writer after epoch for live updates
         self.writer.flush()
-
-    def _compute_log_indices(self, dataloader: torch.utils.data.DataLoader) -> List[int]:
-        total_samples = len(dataloader.dataset)
-        sample_intervals = torch.linspace(
-            0, total_samples, self.cfg.logging.intra_epoch_updates + 1
-        )
-        log_indices = (
-            torch.ceil(sample_intervals / self.cfg.dataloader.batch_size) - 1
-        ).int().tolist()[1:]
-
-        return log_indices
