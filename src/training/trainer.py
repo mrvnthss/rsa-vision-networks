@@ -1,4 +1,5 @@
 import time
+from typing import List
 
 from omegaconf import DictConfig
 import torch
@@ -32,20 +33,23 @@ class Trainer:
         inputs, _ = next(iter(self.train_loader))
         self.writer.add_graph(self.model, inputs.to(self.device))
 
-        # Visualize sample images in TensorBoard
+        # Visualize sample images of first batch in TensorBoard
         self.writer.add_images("sample_train_images", inputs, 0)
 
+        # Iteratively train and validate the model
         for _ in range(self.cfg.training.num_epochs):
-            # Train and validate model
-            self._run_epoch(self.train_loader, self.optimizer)
-            self._run_epoch(self.val_loader)
-
-            # Increment epoch index
+            self._train_one_epoch()
+            self._validate()
             self.cfg.logging.epoch_index += 1
 
-        # Close TensorBoard writer and inform user of training completion
+        # Close TensorBoard writer
         self.writer.close()
-        print("Training complete!")
+
+    def _train_one_epoch(self) -> None:
+        self._run_epoch(self.train_loader, self.optimizer)
+
+    def _validate(self) -> None:
+        self._run_epoch(self.val_loader)
 
     def _run_epoch(
             self,
@@ -62,12 +66,7 @@ class Trainer:
         self.model.train(is_training)
 
         # Determine batch indices at which to log to TensorBoard
-        num_batches = len(dataloader)
-        log_indices = torch.linspace(
-            0, num_batches - 1, self.cfg.logging.intra_epoch_updates + 1
-        ).int().tolist()
-        if self.cfg.logging.epoch_index != 0:
-            log_indices = log_indices[1:]
+        log_indices = self._compute_log_indices(dataloader)
 
         # Set tags for TensorBoard logging
         tag_loss = f"{'train' if is_training else 'val'}/loss"
@@ -128,7 +127,7 @@ class Trainer:
                 # Log batch loss and accuracy
                 if batch_index in log_indices:
                     # Log to TensorBoard
-                    global_step = self.cfg.logging.epoch_index * num_batches + batch_index + 1
+                    global_step = self.cfg.logging.epoch_index * len(dataloader) + batch_index + 1
                     self.writer.add_scalar(tag_loss, avg_batch_loss, global_step)
                     self.writer.add_scalar(tag_acc, avg_batch_acc, global_step)
 
@@ -145,3 +144,14 @@ class Trainer:
 
         # Flush writer after epoch for live updates
         self.writer.flush()
+
+    def _compute_log_indices(self, dataloader: torch.utils.data.DataLoader) -> List[int]:
+        total_samples = len(dataloader.dataset)
+        sample_intervals = torch.linspace(
+            0, total_samples, self.cfg.logging.intra_epoch_updates + 1
+        )
+        log_indices = (
+            torch.ceil(sample_intervals / self.cfg.dataloader.batch_size) - 1
+        ).int().tolist()[1:]
+
+        return log_indices
