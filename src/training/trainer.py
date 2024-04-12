@@ -41,6 +41,7 @@ class Trainer:
             self._train_one_epoch()
             self._validate()
             self.cfg.logging.epoch_index += 1
+            self.train_loader.sampler.set_epoch(self.cfg.logging.epoch_index)
 
         # Close TensorBoard writer
         self.writer.close()

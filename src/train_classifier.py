@@ -3,7 +3,7 @@ from hydra.utils import instantiate
 from omegaconf import DictConfig
 import torch
 
-from training import Trainer
+from training import BalancedSampler, Trainer
 
 
 @hydra.main(version_base=None, config_path="conf", config_name="train_classifier")
@@ -15,18 +15,25 @@ def main(cfg: DictConfig) -> None:
     train_set = instantiate(cfg.dataset.train_set)
     val_set = instantiate(cfg.dataset.val_set)
 
+    # Prepare samplers
+    train_sampler = BalancedSampler(train_set, shuffle=True, seed=cfg.training.seed)
+    val_sampler = BalancedSampler(val_set, shuffle=False, seed=cfg.training.seed)
+    # NOTE: Setting the epoch index is not necessary for the val_sampler since
+    #       it does not (deterministically) shuffle the indices
+    train_sampler.set_epoch(cfg.logging.epoch_index)
+
     # Prepare dataloaders
     train_loader = torch.utils.data.DataLoader(
         train_set,
         batch_size=cfg.dataloader.batch_size,
-        shuffle=True,
+        sampler=train_sampler,
         num_workers=cfg.dataloader.num_workers,
         pin_memory=True
     )
     val_loader = torch.utils.data.DataLoader(
         val_set,
         batch_size=cfg.dataloader.batch_size,
-        shuffle=False,
+        sampler=val_sampler,
         num_workers=cfg.dataloader.num_workers,
         pin_memory=True
     )
