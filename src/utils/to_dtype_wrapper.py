@@ -1,11 +1,10 @@
 from typing import Dict, Union
 
 import torch
-from torchvision import tv_tensors
-from torchvision.transforms.v2 import Transform, ToDtype
+import torchvision
 
 
-class ToDtypeWrapper(Transform):
+class ToDtypeWrapper(torchvision.transforms.v2.Transform):
     """
     A wrapper class for torchvision.transforms.v2.ToDtype.
 
@@ -55,10 +54,10 @@ class ToDtypeWrapper(Transform):
         }
 
         tv_tensor_map = {
-            "Image": tv_tensors.Image,
-            "Video": tv_tensors.Video,
-            "BoundingBoxes": tv_tensors.BoundingBoxes,
-            "Mask": tv_tensors.Mask
+            "Image": torchvision.tv_tensors.Image,
+            "Video": torchvision.tv_tensors.Video,
+            "BoundingBoxes": torchvision.tv_tensors.BoundingBoxes,
+            "Mask": torchvision.tv_tensors.Mask
         }
 
         # Assert that dtype is either a string from dtype_map.keys() or
@@ -77,7 +76,7 @@ class ToDtypeWrapper(Transform):
             dtype = {tv_tensor_map[k]: dtype_map[v] for k, v in dtype.items()}
 
         # Call the class's constructor that we are wrapping
-        self.to_dtype = ToDtype(dtype, scale=scale)
+        self.to_dtype = torchvision.transforms.v2.ToDtype(dtype, scale=scale)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         return self.to_dtype(x)
