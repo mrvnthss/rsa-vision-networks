@@ -6,14 +6,18 @@ defaults:
   - _self_
 paths:
   data: ../data
+# NOTE: The following 'hydra' settings disable logging, as this is irrelevant for the task at hand.
+#       Do not change these settings.
 hydra:
   output_subdir: null
   run:
     dir: .
+# NOTE: The following 'model' settings are chosen such that the dataset images are not normalized.
+#       Do not change these settings.
 model:
   norm_constants:
-    mean: [0]  # leave as is
-    std: [1]  # leave as is
+    mean: [0]
+    std: [1]
 dataloader:
   batch_size: 32
   num_workers: 16
