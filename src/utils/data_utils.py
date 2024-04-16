@@ -1,3 +1,11 @@
+"""This module provides utility functions for handling/processing data.
+
+Functions:
+    compute_dataset_stats: Compute the mean and standard deviation of a
+      dataset.
+"""
+
+
 from typing import Tuple
 
 import numpy as np
@@ -8,6 +16,15 @@ from tqdm import tqdm
 def compute_dataset_stats(
         dataloader: torch.utils.data.DataLoader
 ) -> Tuple[np.ndarray, np.ndarray]:
+    """Compute the mean and standard deviation of a dataset.
+
+    Args:
+        dataloader: The dataloader providing the dataset.
+
+    Returns:
+        A tuple containing the mean and standard deviation of the
+          dataset as NumPy arrays.
+    """
     with torch.no_grad():
         # Determine number of channels
         num_channels = next(iter(dataloader))[0].size(1)

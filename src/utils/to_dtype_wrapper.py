@@ -1,7 +1,7 @@
-"""
-This module provides a wrapper for the ToDtype class in
-torchvision.transforms.v2, allowing for compatibility with the Hydra
-config system.
+"""This module provides a wrapper for torchvision's ToDtype class.
+
+The ToDtypeWrapper class wraps torchvision.transforms.v2.ToDtype to
+provide compatibility with the Hydra framework.
 """
 
 
@@ -13,8 +13,7 @@ from torchvision.transforms import v2 as transforms
 
 
 class ToDtypeWrapper(transforms.Transform):
-    """
-    A wrapper for the ToDtype class in torchvision.transforms.v2.
+    """A wrapper for the ToDtype class in torchvision.transforms.v2.
 
     This class accepts a dtype as a string or a dictionary and a scale
     parameter.  If dtype is a string, it is converted to the
@@ -23,17 +22,19 @@ class ToDtypeWrapper(transforms.Transform):
     strings that can be converted to torch.dtype.  The converted
     dtype(s) and scale parameter are then passed to the ToDtype class.
 
-    Args:
-        dtype (Union[str, Dict[str, str]]): The dtype to convert to.
-            If it's a string, it is converted to the corresponding
-            torch.dtype.  If it's a dictionary, its keys should be from
-            torchvision.tv_tensors and its values should be strings that
-            can be converted to torch.dtype.
-        scale (bool): Whether to scale the values for images or videos.
+    Parameters:
+        dtype: The dtype to convert to. If it's a string, it is
+          converted to the corresponding torch.dtype.  If it's a
+          dictionary, its keys should be from torchvision.tv_tensors and
+          its values should be strings that can be converted to
+          torch.dtype.
+        scale: Whether to scale the values for images or videos.
 
     Attributes:
-        to_dtype (ToDtype): An instance of
-            torchvision.transforms.v2.ToDtype.
+        dtype_map: A mapping from string dtypes to torch dtypes.
+        tv_tensor_map: A mapping from torchvision.tv_tensors to their
+          corresponding classes.
+        to_dtype: An instance of torchvision.transforms.v2.ToDtype.
     """
 
     dtype_map = {
@@ -68,8 +69,8 @@ class ToDtypeWrapper(transforms.Transform):
 
     def __init__(self, dtype: Union[str, Dict[str, str]], scale: bool) -> None:
         super().__init__()
-        # Assert that dtype is either a string from dtype_map.keys() or
-        # a dict with keys from tv_tensor_map.keys() and values from dtype_map.keys()
+        # Assert that dtype is either a string from dtype_map or
+        # a dict with keys from tv_tensor_map and values from dtype_map
         if isinstance(dtype, str):
             assert dtype in self.dtype_map
         elif isinstance(dtype, dict):
@@ -80,10 +81,10 @@ class ToDtypeWrapper(transforms.Transform):
 
         if isinstance(dtype, str):
             dtype = self.dtype_map[dtype]
-        else:  # dict
+        else:
             dtype = {self.tv_tensor_map[k]: self.dtype_map[v] for k, v in dtype.items()}
 
-        # Call the class's constructor that we are wrapping
+        # Call the class's constructor that is being wrapped
         self.to_dtype = transforms.ToDtype(dtype, scale=scale)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:

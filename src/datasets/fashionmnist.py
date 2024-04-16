@@ -1,3 +1,6 @@
+"""This module provides the FashionMNIST class."""
+
+
 from pathlib import Path
 from typing import Callable, Optional
 
@@ -8,7 +11,23 @@ from torchvision.datasets.utils import check_integrity, download_and_extract_arc
 
 
 class FashionMNIST(ImageFolder):
-    """FashionMNIST Dataset by Zalando Research (Xiao et al., 2017)."""
+    """FashionMNIST dataset by Zalando Research (Xiao et al., 2017).
+
+    The class can be used to download, parse, and load the FashionMNIST
+    dataset.  The FashionMNIST dataset consists of 70.000 28x28
+    grayscale images from 10 classes, with 7.000 images per class. There
+    are 60.000 training samples and 10.000 test samples.
+
+    Parameters:
+        root: Root directory of the dataset.
+        train: If True, loads the training split, else the test split.
+        transform: A transform to modify features (images).
+        target_transform: A transform to modify targets (labels).
+
+    (Additional) Attributes:
+        split: The dataset split to load, either "train" or "val".
+        split_dir: Directory containing the dataset split.
+    """
 
     mirror = "http://fashion-mnist.s3-website.eu-central-1.amazonaws.com/"
 

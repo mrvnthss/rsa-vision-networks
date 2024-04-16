@@ -1,3 +1,6 @@
+"""This module provides the VGG class."""
+
+
 import torch
 import torch.nn as nn
 
@@ -5,7 +8,7 @@ import torch.nn as nn
 #   https://doi.org/10.48550/arXiv.1409.1556
 # NOTE: The configurations below correspond to "ConvNet Configuration[s]" A, B, D, and E in Table 1
 #       of the paper.  These architectures are commonly referred to as VGG11, VGG13, VGG16, and
-#       VGG19, respectively, indicating the number of layers with learnable parameters.
+#       VGG19, respectively, indicating the number of layers with trainable parameters.
 configurations = {
     11: [64, 'M', 128, 'M', 256, 256, 'M', 512, 512, 'M', 512, 512, 'M'],
     13: [64, 64, 'M', 128, 128, 'M', 256, 256, 'M', 512, 512, 'M', 512, 512, 'M'],
@@ -16,7 +19,18 @@ configurations = {
 
 
 class VGG(nn.Module):
-    """VGG architecture introduced by Simonyan and Zisserman (2015)."""
+    """VGG architecture introduced by Simonyan and Zisserman (2015).
+
+    An implementation of the VGG architecture that can be used to
+    classify 224x224 color images.  The model outputs logits for each
+    class.  The number of layers (11, 13, 16, or 19) and the number of
+    classes to predict can be specified when instantiating the model.
+
+    Parameters:
+        num_layers: The number of layers with trainable parameters.
+        num_classes: The number of classes to predict.
+    """
+
     def __init__(self, num_layers: int, num_classes: int = 1000) -> None:
         super(VGG, self).__init__()
 

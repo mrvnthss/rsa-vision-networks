@@ -1,3 +1,6 @@
+"""This module provides the CIFAR10 class."""
+
+
 from pathlib import Path
 import pickle
 import shutil
@@ -10,7 +13,23 @@ from torchvision.datasets.utils import check_integrity, download_and_extract_arc
 
 
 class CIFAR10(ImageFolder):
-    """CIFAR10 Dataset (Krizhevsky, 2009)."""
+    """CIFAR10 dataset (Krizhevsky, 2009).
+
+    The class can be used to download, parse, and load the CIFAR-10
+    dataset.  The CIFAR-10 dataset consists of 60.000 32x32 color images
+    from 10 classes, with 6.000 images per class.  There are 50.000
+    training samples and 10.000 test samples.
+
+    Parameters:
+        root: Root directory of the dataset.
+        train: If True, loads the training split, else the test split.
+        transform: A transform to modify features (images).
+        target_transform: A transform to modify targets (labels).
+
+    (Additional) Attributes:
+        split: The dataset split to load, either "train" or "val".
+        split_dir: Directory containing the dataset split.
+    """
 
     mirror = "https://www.cs.toronto.edu/~kriz/"
 

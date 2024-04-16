@@ -1,13 +1,12 @@
-"""
-This script is used to compute the mean and standard deviation (per
-channel) of a dataset.
+"""This script computes the mean and standard deviation of a dataset.
 
 This script is configured using the Hydra framework, with configuration
 details specified in the 'src/conf/' directory.  The configuration file
 associated with this script is named 'compute_dataset_stats.yaml'.
 
-Usage:
-    python compute_dataset_stats.py model=vgg dataset=cifar10
+Typical usage example:
+
+  python compute_dataset_stats.py model=vgg dataset=cifar10
 """
 
 

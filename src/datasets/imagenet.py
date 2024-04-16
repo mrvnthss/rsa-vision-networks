@@ -1,3 +1,6 @@
+"""This module provides the ImageNet class."""
+
+
 from pathlib import Path
 import shutil
 from typing import Callable, Optional
@@ -8,7 +11,24 @@ from torchvision.datasets.utils import check_integrity, extract_archive
 
 
 class ImageNet(ImageFolder):
-    """ImageNet 2012 Classification Dataset (Deng et al., 2009).
+    """ImageNet 2012 classification dataset (Deng et al., 2009).
+
+    This class can be used to parse, and load the ImageNet 2012
+    classification dataset.  The ImageNet dataset consists of 1.331.167
+    color images from 1.000 classes.  There are 1.281.167 training
+    samples and 50.000 validation samples.  There are between 732 and
+    1.30 images per class in the training split and 50 images per class
+    in the validation split.
+
+    Parameters:
+        root: Root directory of the dataset.
+        train: If True, loads the training split, else the validation split.
+        transform: A transform to modify features (images).
+        target_transform: A transform to modify targets (labels).
+
+    (Additional) Attributes:
+        split: The dataset split to load, either "train" or "val".
+        split_dir: Directory containing the dataset split.
 
     Note:
         Prior to using this class, the ImageNet 2012 classification
