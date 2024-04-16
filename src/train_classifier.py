@@ -1,3 +1,15 @@
+"""
+This script is used to train a model for image classification.
+
+This script is configured using the Hydra framework, with configuration
+details specified in the 'src/conf/' directory.  The configuration file
+associated with this script is named 'train_classifier.yaml'.
+
+Usage:
+    python train_classifier.py training.num_epochs=10
+"""
+
+
 import hydra
 from hydra.utils import instantiate
 from omegaconf import DictConfig
