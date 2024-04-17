@@ -9,7 +9,7 @@ from torch import nn
 from torch.utils.tensorboard import SummaryWriter
 from tqdm import tqdm
 
-from .train_utils import compute_log_indices
+from src.training.train_utils import compute_log_indices
 
 
 class ClassificationTrainer:
@@ -18,7 +18,7 @@ class ClassificationTrainer:
     Parameters:
         model: The model to be trained.
         train_loader: The dataloader providing training samples.
-        val_loader: The dataloader providing validation samples
+        val_loader: The dataloader providing validation samples.
         loss_fn: The loss function used for training.
         optimizer: The optimizer used for training.
         device: The device to train on.
@@ -60,23 +60,18 @@ class ClassificationTrainer:
         Note:
             This method modifies the model in place.
         """
-        # Visualize model architecture in TensorBoard
+        # Visualize model architecture and sample images of first batch in TensorBoard
         inputs, _ = next(iter(self.train_loader))
         self.writer.add_graph(self.model, inputs.to(self.device))
-
-        # Visualize sample images of first batch in TensorBoard
         self.writer.add_images("sample_train_images", inputs, 0)
 
         for _ in range(self.cfg.training.num_epochs):
-            # Train and validate the model for one epoch
             self._train_one_epoch()
             self._validate()
-
-            # Increase epoch index and update train_sampler for deterministic shuffling
             self.cfg.logging.epoch_index += 1
+            # NOTE: Updating the train_sampler's epoch is necessary for deterministic shuffling
             self.train_loader.sampler.set_epoch(self.cfg.logging.epoch_index)
 
-        # Close TensorBoard writer
         self.writer.close()
 
     def _train_one_epoch(self) -> None:

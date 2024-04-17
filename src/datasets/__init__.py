@@ -1,3 +1,3 @@
-from .cifar10 import CIFAR10
-from .fashionmnist import FashionMNIST
-from .imagenet import ImageNet
+from src.datasets.cifar10 import CIFAR10
+from src.datasets.fashionmnist import FashionMNIST
+from src.datasets.imagenet import ImageNet

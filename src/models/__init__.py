@@ -1,2 +1,2 @@
-from .lenet import LeNet
-from .vgg import VGG
+from src.models.lenet import LeNet
+from src.models.vgg import VGG
