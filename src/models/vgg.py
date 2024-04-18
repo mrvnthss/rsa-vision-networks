@@ -26,7 +26,7 @@ class VGG(nn.Module):
     class.  The number of layers (11, 13, 16, or 19) and the number of
     classes to predict can be specified.
 
-    Parameters:
+    Params:
         num_layers: The number of layers with trainable parameters.
         num_classes: The number of classes to predict.
     """

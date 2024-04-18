@@ -20,7 +20,7 @@ class ImageNet(ImageFolder):
     1,300 images per class in the training split and 50 images per class
     in the validation split.
 
-    Parameters:
+    Params:
         root: Root directory of the dataset.
         train: If True, loads the training split, else the validation
           split.

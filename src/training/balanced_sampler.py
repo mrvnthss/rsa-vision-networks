@@ -15,7 +15,7 @@ class BalancedSampler(torch.utils.data.sampler.Sampler):
     by sampling indices based on weights that are inversely proportional
     to the class frequencies in the dataset.
 
-    Parameters:
+    Params:
         dataset: The dataset to sample from.
         shuffle: Whether to shuffle the data before sampling.
         seed: The random seed used for deterministic shuffling.

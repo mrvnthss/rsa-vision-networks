@@ -12,7 +12,7 @@ class LeNet(nn.Module):
     classify 32x32 grayscale images.  The model outputs logits for each
     class.  The number of classes to predict can be specified.
 
-    Parameters:
+    Params:
         num_classes: The number of classes to predict.
 
     Note:

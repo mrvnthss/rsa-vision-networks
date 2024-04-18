@@ -19,7 +19,7 @@ class ToDtypeWrapper(transforms.Transform):
     convert to and a boolean indicating whether to scale the values for
     images or videos.
 
-    Parameters:
+    Params:
         dtype: The dtype to convert to.  If a string is passed (e.g.,
           "float32"), only images and videos will be converted to the
           corresponding dtype (e.g., ``torch.float32``).  A dict can be

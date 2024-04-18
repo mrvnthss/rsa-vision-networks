@@ -18,7 +18,7 @@ class FashionMNIST(ImageFolder):
     grayscale images from 10 classes, with 7,000 images per class. There
     are 60,000 training samples and 10,000 test samples.
 
-    Parameters:
+    Params:
         root: Root directory of the dataset.
         train: If True, loads the training split, else the test split.
         transform: A transform to modify features (images).
