@@ -13,9 +13,8 @@ paths:
 hydra:
   run:
     dir: ${paths.logs_hydra}/${now:%Y-%m-%d}/${now:%H-%M-%S}
-logging:
-  epoch_index: 0
-  intra_epoch_updates: 10
+tracking:
+  log_frequency: 10
   tb_dir: ${paths.logs_tb}/${now:%Y-%m-%d}/${now:%H-%M-%S}
 dataloader:
   batch_size: 32

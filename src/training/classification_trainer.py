@@ -1,21 +1,18 @@
-"""This module provides the ClassificationTrainer class."""
+"""A class to train a model for image classification in PyTorch."""
 
-
-import time
 
 from omegaconf import DictConfig
 import torch
 from torch import nn
-from torch.utils.tensorboard import SummaryWriter
-from tqdm import tqdm
 
-from src.training.train_utils import compute_log_indices
+from src.training.balanced_sampler import BalancedSampler
+from src.utils import ExperimentTracker
 
 
 class ClassificationTrainer:
-    """A class for training a classification model in PyTorch.
+    """A trainer to train a classification model in PyTorch.
 
-    Parameters:
+    Params:
         model: The model to be trained.
         train_loader: The dataloader providing training samples.
         val_loader: The dataloader providing validation samples.
@@ -25,7 +22,9 @@ class ClassificationTrainer:
         cfg: The training configuration.
 
     (Additional) Attributes:
-        writer: The TensorBoard writer.
+        tracker: An ExperimentTracker instance to track loss and
+          multiclass accuracy, and to reduce boilerplate code in the
+          training loop.
     """
 
     def __init__(
@@ -43,153 +42,100 @@ class ClassificationTrainer:
         self.val_loader = val_loader
         self.loss_fn = loss_fn
         self.optimizer = optimizer
-        self.cfg = cfg
         self.device = device
-        self.writer = SummaryWriter(cfg.logging.tb_dir)
+        self.cfg = cfg
+
+        self.tracker = ExperimentTracker(
+            self.model, self.train_loader, self.val_loader, self.device, self.cfg
+        )
+
+        self._update_train_sampler()
 
     def train(self) -> None:
-        """Train the model for a specified number of epochs.
-
-        This method handles the entire training process.  It visualizes
-        the model architecture and sample images in TensorBoard, trains
-        and validates the model for a number of epochs, and updates the
-        epoch index after each epoch. It also sets the epoch of the
-        training set sampler for deterministic shuffling, and it closes
-        the TensorBoard writer after training has finished.
-
-        Note:
-            This method modifies the model in place.
-        """
-        # Visualize model architecture and sample images of first batch in TensorBoard
+        # Visualize model architecture in TensorBoard
         inputs, _ = next(iter(self.train_loader))
-        self.writer.add_graph(self.model, inputs.to(self.device))
-        self.writer.add_images("sample_train_images", inputs, 0)
+        self.tracker.visualize_model(inputs.to(self.device))
 
+        # Training loop
         for _ in range(self.cfg.training.num_epochs):
-            self._train_one_epoch()
+            self._train()
             self._validate()
-            self.cfg.logging.epoch_index += 1
-            # NOTE: Updating the train_sampler's epoch is necessary for deterministic shuffling
-            self.train_loader.sampler.set_epoch(self.cfg.logging.epoch_index)
+            self._increment_epoch()
+            self._update_train_sampler()
 
-        self.writer.close()
+        # Close TensorBoard writer once training is finished
+        self.tracker.close_writer()
 
-    def _train_one_epoch(self) -> None:
-        """Train the model for one epoch."""
-        self._run_epoch(self.train_loader, self.optimizer)
+    def _train(self) -> None:
+        self.tracker.prepare_run("train")
+        self._run_epoch()
 
     def _validate(self) -> None:
-        """Validate the model."""
-        self._run_epoch(self.val_loader)
+        self.tracker.prepare_run("validate")
+        self._run_epoch()
 
-    def _run_epoch(
-            self,
-            dataloader: torch.utils.data.DataLoader,
-            optimizer: torch.optim.Optimizer = None
-    ) -> None:
-        """Run one epoch of training or validation.
+    def _run_epoch(self) -> None:
+        """Run a single epoch of training or validation.
 
-        This method handles one epoch of training or validation,
-        depending on whether an optimizer is provided.  It computes the
-        loss and accuracy for each batch, updates the model parameters
-        if in training mode, and logs the running totals for loss and
-        accuracy to TensorBoard.
-
-        Args:
-            dataloader: The dataloader providing training or validation
-              samples.
-            optimizer: The optimizer used for training.  If None, the
-              method validates the model.
+        Whether the model is in training or validation mode is
+        determined by the ``self.tracker.is_training`` attribute.
+        Supporting tasks (i.e., tracking training metrics, updating
+        the progress bar, and logging metrics to TensorBoard) are
+        handled by the ExperimentTracker instance ``self.tracker``.
 
         Note:
-            This method modifies the model in place if an optimizer is
-              provided.
-    """
-        # Running totals to report progress to TensorBoard
-        running_samples = 0
-        running_loss = 0.
-        running_correct = 0
+            This method modifies the model in place when training.
+        """
+        pbar = self.tracker.get_pbar()
 
-        # Set training/evaluation mode
-        is_training = optimizer is not None
-        self.model.train(is_training)
+        # Loop over mini-batches
+        with (torch.set_grad_enabled(self.tracker.is_training)):
+            # Initial timestamp
+            self.tracker.take_time("start")
 
-        # Determine batch indices at which to log to TensorBoard
-        log_indices = compute_log_indices(dataloader, self.cfg.logging.intra_epoch_updates)
-
-        # Set tags for TensorBoard logging
-        tag_loss = f"{'train' if is_training else 'val'}/loss"
-        tag_acc = f"{'train' if is_training else 'val'}/acc"
-
-        # Prepare progress bar
-        desc = (f"Epoch [{self.cfg.logging.epoch_index + 1}/{self.cfg.training.num_epochs}]    "
-                f"{'Train' if is_training else 'Val'}")
-        pbar = tqdm(dataloader, desc=desc, leave=False, unit="batch")
-
-        # Initialize timer
-        start_time = time.time()
-
-        # Disable gradients during evaluation
-        with (torch.set_grad_enabled(is_training)):
-            for batch_index, (inputs, targets) in enumerate(pbar):
-                inputs = inputs.to(self.device)
+            for features, targets in pbar:
+                features = features.to(self.device)
                 targets = targets.to(self.device)
+                batch_size = len(targets)
 
-                # Keep track of the number of samples
-                samples = len(targets)
-                running_samples += samples
-
-                # Determine preparation time
-                prep_time = time.time() - start_time
+                # Timestamp to compute preparation time
+                self.tracker.take_time("prep")
 
                 # Forward pass
-                outputs = self.model(inputs)
-                loss = self.loss_fn(outputs, targets)
+                predictions = self.model(features)
+                loss = self.loss_fn(predictions, targets)
 
                 # Backward pass and optimization
-                if is_training:
-                    optimizer.zero_grad()
+                if self.tracker.is_training:
+                    self.optimizer.zero_grad()
                     loss.backward()
-                    optimizer.step()
+                    self.optimizer.step()
 
-                # Determine compute efficiency
-                process_time = time.time() - start_time - prep_time
-                compute_efficiency = process_time / (prep_time + process_time) * 100  # in pct
+                # Timestamp to compute processing time
+                self.tracker.take_time("proc")
 
-                # Accumulate loss
-                running_loss += loss.item() * samples
+                # Update loss, multiclass accuracy, and progress bar
+                self.tracker.update_loss(loss.item(), batch_size)
+                self.tracker.update_mca(predictions, targets)
+                self.tracker.update_pbar(pbar)
 
-                # Compute accuracy
-                _, predictions = torch.max(outputs, 1)
-                correct = (predictions == targets).sum().item()
-                running_correct += correct
+                # Add metrics to TensorBoard and increment batch index
+                self.tracker.log_metrics()
+                self.tracker.increment_batch()
 
-                # Update progress bar
-                avg_batch_loss = running_loss / running_samples
-                avg_batch_acc = (running_correct / running_samples) * 100  # in pct
-                pbar.set_postfix(
-                    loss=avg_batch_loss,
-                    accuracy=avg_batch_acc,
-                    compute_efficiency=compute_efficiency
-                )
-
-                # Log batch loss and accuracy
-                if batch_index in log_indices:
-                    # Log to TensorBoard
-                    global_step = self.cfg.logging.epoch_index * len(dataloader) + batch_index + 1
-                    self.writer.add_scalar(tag_loss, avg_batch_loss, global_step)
-                    self.writer.add_scalar(tag_acc, avg_batch_acc, global_step)
-
-                    # Reset running totals
-                    running_samples = 0
-                    running_loss = 0.
-                    running_correct = 0
-
-                # Reset timer
-                start_time = time.time()
+                # Reset starting timestamp for next mini-batch
+                self.tracker.take_time("start")
 
         # Close progress bar
         pbar.close()
 
         # Flush writer after epoch for live updates
-        self.writer.flush()
+        self.tracker.flush_writer()
+
+    def _increment_epoch(self) -> None:
+        self.tracker.increment_epoch()
+
+    def _update_train_sampler(self) -> None:
+        """Update the sampler's epoch for deterministic shuffling."""
+        if isinstance(self.train_loader.sampler, BalancedSampler):
+            self.train_loader.sampler.set_epoch(self.tracker.epoch)
