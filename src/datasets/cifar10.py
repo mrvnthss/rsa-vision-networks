@@ -68,10 +68,11 @@ class CIFAR10(ImageFolder):
             target_transform: Optional[Callable] = None,
     ) -> None:
         self.root = root
-        self.split = "train" if train else "val"
-        self.split_dir = Path(self.processed_folder) / self.split
         self.transform = transform
         self.target_transform = target_transform
+
+        self.split = "train" if train else "val"
+        self.split_dir = Path(self.processed_folder) / self.split
 
         if not self._is_downloaded():
             self._download()

@@ -41,13 +41,13 @@ class BalancedSampler(torch.utils.data.sampler.Sampler):
         This method checks if the epoch has been set when shuffling is
         enabled, initializes a random number generator with a seed that
         is either epoch-dependent (for deterministic shuffling) or fixed
-        (for deterministic sampling without shuffling), and samples
-        indices without replacement based on class weights.
+        (for sampling without shuffling), and samples indices without
+        replacement based on class weights.
 
         Yields:
             An index pointing to a sample in the dataset.
         """
-        # Check if self.epoch has been set if shuffling is enabled
+        # Check if ``self.epoch`` has been set if shuffling is enabled
         if self.shuffle and self.epoch == -1:
             raise ValueError(
                 "self.shuffle is set to True, but self.epoch has not been set. "
@@ -60,7 +60,7 @@ class BalancedSampler(torch.utils.data.sampler.Sampler):
             # Epoch-dependent seed to shuffle deterministically
             g.manual_seed(self.seed + self.epoch)
         else:
-            # Fixed seed for deterministic sampling without shuffling
+            # Fixed seed for sampling without shuffling
             g.manual_seed(self.seed)
 
         # Sample indices without replacement based on class weights

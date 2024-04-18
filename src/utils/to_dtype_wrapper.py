@@ -72,7 +72,11 @@ class ToDtypeWrapper(transforms.Transform):
         if isinstance(dtype, str):
             assert dtype in self.dtype_map
         elif isinstance(dtype, dict):
-            assert all(k in self.tv_tensor_map and v in self.dtype_map for k, v in dtype.items())
+            assert all(
+                k in self.tv_tensor_map
+                and v in self.dtype_map
+                for k, v in dtype.items()
+            )
         else:
             raise ValueError(f"dtype must be a str or dict, got {type(dtype)} instead")
 

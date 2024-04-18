@@ -1,4 +1,4 @@
-"""A class to track and log metrics during training and validation."""
+"""A class to handle auxiliary tasks during training and validation."""
 
 
 import time
@@ -11,16 +11,16 @@ from torchmetrics.classification import MulticlassAccuracy
 from tqdm import tqdm
 
 
-class MetricTracker:
-    """A tracker to log metrics during training and validation.
+class TrainingManager:
+    """A manager to handle auxiliary tasks during training/validation.
 
-    Log metrics to TensorBoard at specified intervals during training
-    and validation.  Also handles auxiliary tasks such as preparing the
-    model for training or validation, updating the progress bar, and
-    inferring the compute efficiency.
+    Handles auxiliary tasks during training and validation, such as
+    switching between training and validation modes, updating the
+    progress bar, logging metrics to TensorBoard, and computing the
+    compute efficiency.
 
     Params:
-        model: The model being trained.
+        model: The model to be trained.
         train_loader: The dataloader providing training samples.
         val_loader: The dataloader providing validation samples.
         device: The device to train on.
@@ -30,15 +30,16 @@ class MetricTracker:
         mca: A multiclass accuracy metric to track model performance.
         writer: A SummaryWriter instance to log metrics to TensorBoard.
         log_indices: Indices at which to log metrics to TensorBoard.
-        tb_tags: Tags to log metrics to TensorBoard.
+        tb_tags: Tags for logging metrics to TensorBoard.
         is_training: A flag to indicate whether the model is training.
         batch: The current batch number.
         epoch: The current epoch number.
-        samples: The number of samples processed.
+        samples: The number of samples processed within one epoch.
         running_loss: The running loss during training/validation.
         start_time: A timestamp indicating the start of processing a
           mini-batch.
-        prep_time: A timestamp indicating the end of data preparation.
+        prep_time: A timestamp indicating the end of preparing a
+          mini-batch.
         proc_time: A timestamp indicating the end of processing a
           mini-batch.
     """
@@ -50,7 +51,7 @@ class MetricTracker:
             val_loader: torch.utils.data.DataLoader,
             device: torch.device,
             cfg: DictConfig
-    ):
+    ) -> None:
         self.model = model
         self.train_loader = train_loader
         self.val_loader = val_loader
@@ -110,11 +111,19 @@ class MetricTracker:
             compute_efficiency=self._get_compute_efficiency()
         )
 
-    def update_loss(self, loss: float, batch_size: int) -> None:
+    def update_loss(
+            self,
+            loss: float,
+            batch_size: int
+    ) -> None:
         self.running_loss += loss * batch_size
         self.samples += batch_size
 
-    def update_mca(self, preds: torch.Tensor, targets: torch.Tensor) -> None:
+    def update_mca(
+            self,
+            preds: torch.Tensor,
+            targets: torch.Tensor
+    ) -> None:
         self.mca.update(preds, targets)
 
     def log_metrics(self) -> None:
@@ -129,8 +138,7 @@ class MetricTracker:
             self.writer.add_scalar(self.tb_tags["acc"], self._compute_mca(), global_step)
 
             # Reset loss and multiclass accuracy
-            self._reset_loss()
-            self._reset_mca()
+            self._reset_metrics()
 
     def take_time(self, stage: str) -> None:
         timestamp = time.time()
@@ -187,12 +195,10 @@ class MetricTracker:
     def _compute_loss(self) -> float:
         return self.running_loss / self.samples
 
-    def _reset_loss(self) -> None:
-        self.running_loss = 0.
-        self.samples = 0
-
     def _compute_mca(self) -> float:
         return self.mca.compute().item() * 100
 
-    def _reset_mca(self) -> None:
+    def _reset_metrics(self) -> None:
+        self.running_loss = 0.
+        self.samples = 0
         self.mca.reset()

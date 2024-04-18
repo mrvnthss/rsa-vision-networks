@@ -28,8 +28,16 @@ def main(cfg: DictConfig) -> None:
     val_set = instantiate(cfg.dataset.val_set)
 
     # Prepare samplers
-    train_sampler = BalancedSampler(train_set, shuffle=True, seed=cfg.training.seed)
-    val_sampler = BalancedSampler(val_set, shuffle=False, seed=cfg.training.seed)
+    train_sampler = BalancedSampler(
+        train_set,
+        shuffle=True,
+        seed=cfg.training.seed
+    )
+    val_sampler = BalancedSampler(
+        val_set,
+        shuffle=False,
+        seed=cfg.training.seed
+    )
 
     # Prepare dataloaders
     train_loader = torch.utils.data.DataLoader(
