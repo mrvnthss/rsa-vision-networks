@@ -6,7 +6,7 @@ import torch
 from torch import nn
 
 from src.training.balanced_sampler import BalancedSampler
-from src.utils import ExperimentTracker
+from src.utils import MetricTracker
 
 
 class ClassificationTrainer:
@@ -45,7 +45,7 @@ class ClassificationTrainer:
         self.device = device
         self.cfg = cfg
 
-        self.tracker = ExperimentTracker(
+        self.tracker = MetricTracker(
             self.model, self.train_loader, self.val_loader, self.device, self.cfg
         )
 

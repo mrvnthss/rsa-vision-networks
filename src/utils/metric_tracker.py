@@ -11,8 +11,13 @@ from torchmetrics.classification import MulticlassAccuracy
 from tqdm import tqdm
 
 
-class ExperimentTracker:
+class MetricTracker:
     """A tracker to log metrics during training and validation.
+
+    Log metrics to TensorBoard at specified intervals during training
+    and validation.  Also handles auxiliary tasks such as preparing the
+    model for training or validation, updating the progress bar, and
+    inferring the compute efficiency.
 
     Params:
         model: The model being trained.
