@@ -1,4 +1,4 @@
-"""This module provides the FashionMNIST class."""
+"""The FashionMNIST dataset by Zalando Research (Xiao et al., 2017)."""
 
 
 from pathlib import Path
@@ -14,9 +14,9 @@ class FashionMNIST(ImageFolder):
     """FashionMNIST dataset by Zalando Research (Xiao et al., 2017).
 
     The class can be used to download, parse, and load the FashionMNIST
-    dataset.  The FashionMNIST dataset consists of 70.000 28x28
-    grayscale images from 10 classes, with 7.000 images per class. There
-    are 60.000 training samples and 10.000 test samples.
+    dataset.  The FashionMNIST dataset consists of 70,000 28x28
+    grayscale images from 10 classes, with 7,000 images per class. There
+    are 60,000 training samples and 10,000 test samples.
 
     Parameters:
         root: Root directory of the dataset.
@@ -83,7 +83,9 @@ class FashionMNIST(ImageFolder):
             self._parse_binary()
 
         super().__init__(
-            str(self.split_dir), transform=self.transform, target_transform=self.target_transform
+            str(self.split_dir),
+            transform=self.transform,
+            target_transform=self.target_transform
         )
 
         # NOTE: Calling the super constructor leads to the self.root attribute being overwritten

@@ -1,4 +1,4 @@
-"""This module provides the ImageNet class."""
+"""The ImageNet 2012 classification dataset by Deng et al. (2009)."""
 
 
 from pathlib import Path
@@ -13,16 +13,17 @@ from torchvision.datasets.utils import check_integrity, extract_archive
 class ImageNet(ImageFolder):
     """ImageNet 2012 classification dataset (Deng et al., 2009).
 
-    This class can be used to parse, and load the ImageNet 2012
-    classification dataset.  The ImageNet dataset consists of 1.331.167
-    color images from 1.000 classes.  There are 1.281.167 training
-    samples and 50.000 validation samples.  There are between 732 and
-    1.30 images per class in the training split and 50 images per class
+    This class can be used to parse and load the ImageNet 2012
+    classification dataset.  The ImageNet dataset consists of 1,331,167
+    color images from 1,000 classes.  There are 1,281,167 training
+    samples and 50,000 validation samples.  There are between 732 and
+    1,300 images per class in the training split and 50 images per class
     in the validation split.
 
     Parameters:
         root: Root directory of the dataset.
-        train: If True, loads the training split, else the validation split.
+        train: If True, loads the training split, else the validation
+          split.
         transform: A transform to modify features (images).
         target_transform: A transform to modify targets (labels).
 
@@ -34,7 +35,7 @@ class ImageNet(ImageFolder):
         Prior to using this class, the ImageNet 2012 classification
         dataset has to be downloaded from the official website
         (https://image-net.org/challenges/LSVRC/2012/2012-downloads.php)
-        and placed in the appropriate directory (data/raw/ImageNet/).
+        and placed in the directory 'data/raw/ImageNet/'.
     """
 
     raw_data = {
@@ -65,7 +66,9 @@ class ImageNet(ImageFolder):
         wnid_to_classes = load_meta_file(self.raw_folder)[0]
 
         super().__init__(
-            str(self.split_dir), transform=self.transform, target_transform=self.target_transform
+            str(self.split_dir),
+            transform=self.transform,
+            target_transform=self.target_transform
         )
         self.root = root
 

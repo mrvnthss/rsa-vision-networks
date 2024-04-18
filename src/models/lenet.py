@@ -1,4 +1,4 @@
-"""This module provides the LeNet class."""
+"""A modified version of the LeNet-5 architecture."""
 
 
 import torch
@@ -10,8 +10,7 @@ class LeNet(nn.Module):
 
     An implementation of the LeNet-5 architecture that can be used to
     classify 32x32 grayscale images.  The model outputs logits for each
-    class.  The number of classes to predict can be specified when
-    instantiating the model.
+    class.  The number of classes to predict can be specified.
 
     Parameters:
         num_classes: The number of classes to predict.
@@ -35,19 +34,21 @@ class LeNet(nn.Module):
              implementation employs a fully connected layer.
     """
 
-    def __init__(self, num_classes: int = 10) -> None:
+    def __init__(
+            self,
+            num_classes: int = 10
+    ) -> None:
         super(LeNet, self).__init__()
 
         # Create feature extractor
         self.features = nn.Sequential(
-            # NOTE: Layer names (C1, S2, ...) are taken from the original paper,
-            #       "B" refers to batch size
-            nn.Conv2d(1, 6, 5),   # C1: Bx6x28x28
+            # NOTE: Layer names (C1, S2, ...) are from the original paper, "B" = batch size
+            nn.Conv2d(1, 6, 5),     # C1: Bx6x28x28
             nn.ReLU(inplace=True),
-            nn.MaxPool2d(2, 2),   # S2: Bx6x14x14
-            nn.Conv2d(6, 16, 5),  # C3: Bx16x10x10
+            nn.MaxPool2d(2, 2),     # S2: Bx6x14x14
+            nn.Conv2d(6, 16, 5),    # C3: Bx16x10x10
             nn.ReLU(inplace=True),
-            nn.MaxPool2d(2, 2),   # S4: Bx16x5x5
+            nn.MaxPool2d(2, 2),     # S4: Bx16x5x5
         )
 
         # Create classifier

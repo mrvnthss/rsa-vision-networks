@@ -1,4 +1,4 @@
-"""This script computes the mean and standard deviation of a dataset.
+"""Compute the mean and standard deviation of a dataset.
 
 This script is configured using the Hydra framework, with configuration
 details specified in the 'src/conf/' directory.  The configuration file
@@ -6,7 +6,10 @@ associated with this script is named 'compute_dataset_stats.yaml'.
 
 Typical usage example:
 
-  python compute_dataset_stats.py model=vgg dataset=cifar10
+  >>> python compute_dataset_stats.py model=vgg dataset=cifar10
+  norm_constants:
+    mean: [0.48869, 0.475378, 0.439596]
+    std: [0.236056, 0.232438, 0.249809]
 """
 
 
@@ -30,7 +33,7 @@ def compute_dataset_stats(
 
     Returns:
         A tuple containing the mean and standard deviation of the
-          dataset as NumPy arrays.
+          dataset provided by ``dataloader`` as NumPy arrays.
     """
     with torch.no_grad():
         # Determine number of channels

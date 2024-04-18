@@ -1,4 +1,4 @@
-"""This module provides the CIFAR10 class."""
+"""The CIFAR10 dataset by Krizhevsky (2009)."""
 
 
 from pathlib import Path
@@ -16,9 +16,9 @@ class CIFAR10(ImageFolder):
     """CIFAR10 dataset (Krizhevsky, 2009).
 
     The class can be used to download, parse, and load the CIFAR-10
-    dataset.  The CIFAR-10 dataset consists of 60.000 32x32 color images
-    from 10 classes, with 6.000 images per class.  There are 50.000
-    training samples and 10.000 test samples.
+    dataset.  The CIFAR-10 dataset consists of 60,000 32x32 color images
+    from 10 classes, with 6,000 images per class.  There are 50,000
+    training samples and 10,000 test samples.
 
     Parameters:
         root: Root directory of the dataset.
@@ -80,7 +80,9 @@ class CIFAR10(ImageFolder):
             self._parse_binary()
 
         super().__init__(
-            str(self.split_dir), transform=self.transform, target_transform=self.target_transform
+            str(self.split_dir),
+            transform=self.transform,
+            target_transform=self.target_transform
         )
 
         # NOTE: Calling the super constructor leads to the self.root attribute being overwritten

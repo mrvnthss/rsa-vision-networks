@@ -1,4 +1,4 @@
-"""This module provides the VGG class."""
+"""The VGG architecture by Simonyan and Zisserman (2015)."""
 
 
 import torch
@@ -24,14 +24,18 @@ class VGG(nn.Module):
     An implementation of the VGG architecture that can be used to
     classify 224x224 color images.  The model outputs logits for each
     class.  The number of layers (11, 13, 16, or 19) and the number of
-    classes to predict can be specified when instantiating the model.
+    classes to predict can be specified.
 
     Parameters:
         num_layers: The number of layers with trainable parameters.
         num_classes: The number of classes to predict.
     """
 
-    def __init__(self, num_layers: int, num_classes: int = 1000) -> None:
+    def __init__(
+            self,
+            num_layers: int,
+            num_classes: int = 1000
+    ) -> None:
         super(VGG, self).__init__()
 
         # Create feature extractor

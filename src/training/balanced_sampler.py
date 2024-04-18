@@ -1,23 +1,23 @@
-"""This module provides the BalancedSampler class."""
+"""A class for balanced sampling of ImageFolder datasets."""
 
 
 import torch
 
 
 class BalancedSampler(torch.utils.data.sampler.Sampler):
-    """A sampler that provides balanced validation batches.
+    """A sampler providing balanced batches for ImageFolder datasets.
 
     The BalancedSampler class is most useful in conjunction with
     dataloaders for datasets inheriting from PyTorch's ImageFolder
     class.  These dataloaders usually sample images from one class
-    at a time (if shuffling is disabled), which can lead to imbalanced
+    at a time (if shuffling is disabled), which leads to imbalanced
     validation batches.  The BalancedSampler class addresses this issue
     by sampling indices based on weights that are inversely proportional
     to the class frequencies in the dataset.
 
     Parameters:
         dataset: The dataset to sample from.
-        shuffle: Whether to shuffle the dataset before sampling.
+        shuffle: Whether to shuffle the data before sampling.
         seed: The random seed used for deterministic shuffling.
 
     (Additional) Attributes:

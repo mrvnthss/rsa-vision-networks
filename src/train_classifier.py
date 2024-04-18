@@ -1,4 +1,4 @@
-"""This script trains a model for image classification in PyTorch.
+"""Train a model for image classification in PyTorch.
 
 This script is configured using the Hydra framework, with configuration
 details specified in the 'src/conf/' directory.  The configuration file
@@ -6,7 +6,7 @@ associated with this script is named 'train_classifier.yaml'.
 
 Typical usage example:
 
-  python train_classifier.py training.num_epochs=10
+  >>> python train_classifier.py training.num_epochs=10
 """
 
 
@@ -30,7 +30,6 @@ def main(cfg: DictConfig) -> None:
     # Prepare samplers
     train_sampler = BalancedSampler(train_set, shuffle=True, seed=cfg.training.seed)
     val_sampler = BalancedSampler(val_set, shuffle=False, seed=cfg.training.seed)
-    train_sampler.set_epoch(cfg.logging.epoch_index)  # necessary for deterministic shuffling
 
     # Prepare dataloaders
     train_loader = torch.utils.data.DataLoader(
@@ -67,7 +66,7 @@ def main(cfg: DictConfig) -> None:
         model.parameters()
     )
 
-    # Train model
+    # Instantiate trainer
     trainer = ClassificationTrainer(
         model,
         train_loader,
@@ -77,6 +76,8 @@ def main(cfg: DictConfig) -> None:
         device,
         cfg
     )
+
+    # Start training
     trainer.train()
 
 
