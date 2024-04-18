@@ -57,7 +57,7 @@ class ExperimentTracker:
             average="micro"
         ).to(self.device)
 
-        self.writer = SummaryWriter(cfg.tracking.tb_dir)
+        self.writer = SummaryWriter(cfg.paths.logs)
         self.log_indices = []
         self.tb_tags = {}
 
@@ -159,7 +159,7 @@ class ExperimentTracker:
         dataloader = self.train_loader if self.is_training else self.val_loader
         total_samples = len(dataloader.dataset)
         sample_intervals = torch.linspace(
-            0, total_samples, self.cfg.tracking.log_frequency + 1
+            0, total_samples, self.cfg.training.log_frequency + 1
         )
         self.log_indices = (
             torch.ceil(sample_intervals / dataloader.batch_size) - 1

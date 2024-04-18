@@ -1,3 +1,4 @@
+name: imagenet
 num_classes: 1000
 train_set:
   _target_: datasets.ImageNet

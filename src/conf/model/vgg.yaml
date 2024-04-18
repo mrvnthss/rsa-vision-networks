@@ -1,3 +1,4 @@
+name: vgg
 architecture:
   _target_: models.VGG
   num_layers: 11  # one of [11, 13, 16, 19]

@@ -1,3 +1,4 @@
+name: cifar10
 num_classes: 10
 train_set:
   _target_: datasets.CIFAR10

@@ -1,3 +1,4 @@
+name: fashionmnist
 num_classes: 10
 train_set:
   _target_: datasets.FashionMNIST
