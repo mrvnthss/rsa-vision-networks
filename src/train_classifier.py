@@ -15,13 +15,15 @@ from hydra.utils import instantiate
 from omegaconf import DictConfig
 import torch
 
-from src.training import BalancedSampler, ClassificationTrainer
+from src.training import ClassificationTrainer
+from src.utils import BalancedSampler
 
 
 @hydra.main(version_base=None, config_path="conf", config_name="train_classifier")
 def main(cfg: DictConfig) -> None:
-    # Set random seed for reproducibility
+    # Set random seeds for reproducibility
     torch.manual_seed(cfg.training.seed)
+    torch.cuda.manual_seed_all(cfg.training.seed)
 
     # Prepare datasets
     train_set = instantiate(cfg.dataset.train_set)

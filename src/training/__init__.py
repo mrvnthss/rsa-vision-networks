@@ -1,2 +1,1 @@
-from src.training.balanced_sampler import BalancedSampler
 from src.training.classification_trainer import ClassificationTrainer

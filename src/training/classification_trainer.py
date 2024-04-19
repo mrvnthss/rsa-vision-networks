@@ -5,8 +5,7 @@ from omegaconf import DictConfig
 import torch
 from torch import nn
 
-from src.training.balanced_sampler import BalancedSampler
-from src.utils import TrainingManager
+from src.utils import BalancedSampler, TrainingManager
 
 
 class ClassificationTrainer:
