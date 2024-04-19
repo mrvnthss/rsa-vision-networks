@@ -69,8 +69,8 @@ class TrainingManager:
 
         self.is_training = True
 
-        self.batch = 0
-        self.epoch = 0
+        self.batch = 1
+        self.epoch = 1
         self.samples = 0
         self.running_loss = 0.
 
@@ -87,7 +87,7 @@ class TrainingManager:
         """
         self.is_training = state == "train"
         self.model.train(self.is_training)
-        self.batch = 0
+        self.batch = 1
         self._set_log_indices()
         self.tb_tags = {
             "loss": f"loss/{'train' if self.is_training else 'val'}",
@@ -100,7 +100,7 @@ class TrainingManager:
     def get_pbar(self) -> tqdm:
         """Decorate a dataloader with a ``tqdm`` progress bar."""
         dataloader = self.train_loader if self.is_training else self.val_loader
-        desc = (f"Epoch [{self.epoch + 1}/{self.cfg.training.num_epochs}]    "
+        desc = (f"Epoch [{self.epoch}/{self.cfg.training.num_epochs}]    "
                 f"{'Train' if self.is_training else 'Val'}")
         return tqdm(dataloader, desc=desc, leave=False, unit="batch")
 
@@ -131,7 +131,7 @@ class TrainingManager:
         if self.batch in self.log_indices:
             # Compute global step
             dataloader = self.train_loader if self.is_training else self.val_loader
-            global_step = self.epoch * len(dataloader) + self.batch + 1
+            global_step = (self.epoch - 1) * len(dataloader) + self.batch
 
             # Log metrics to TensorBoard
             self.writer.add_scalar(self.tb_tags["loss"], self._compute_loss(), global_step)
@@ -175,7 +175,7 @@ class TrainingManager:
             0, total_samples, self.cfg.training.log_frequency + 1
         )
         self.log_indices = (
-            torch.ceil(sample_intervals / dataloader.batch_size) - 1
+            torch.ceil(sample_intervals / dataloader.batch_size)
         ).int().tolist()[1:]
 
     def _get_compute_efficiency(self) -> float:
