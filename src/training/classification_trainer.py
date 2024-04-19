@@ -1,6 +1,8 @@
 """A class to train a model for image classification in PyTorch."""
 
 
+from typing import Tuple
+
 from omegaconf import DictConfig
 import torch
 from torch import nn
@@ -21,7 +23,7 @@ class ClassificationTrainer:
         cfg: The training configuration.
 
     (Additional) Attributes:
-        train_manager: An TrainingManager instance to perform auxiliary
+        train_manager: A TrainingManager instance to perform auxiliary
           tasks during training and validation.
     """
 
@@ -60,23 +62,25 @@ class ClassificationTrainer:
 
         # Training loop
         for _ in range(self.cfg.training.num_epochs):
-            self._train_one_epoch()
-            self._validate()
+            train_loss, train_mca = self._train_one_epoch()
+            val_loss, val_mca = self._validate()
             self._increment_epoch()
             self._update_train_sampler()
 
         # Close TensorBoard writer once training is finished
         self.train_manager.close_writer()
 
-    def _train_one_epoch(self) -> None:
+    def _train_one_epoch(self) -> Tuple[float, float]:
         self.train_manager.prepare_run("train")
-        self._run_epoch()
+        train_loss, train_mca = self._run_epoch()
+        return train_loss, train_mca
 
-    def _validate(self) -> None:
+    def _validate(self) -> Tuple[float, float]:
         self.train_manager.prepare_run("validate")
-        self._run_epoch()
+        val_loss, val_mca = self._run_epoch()
+        return val_loss, val_mca
 
-    def _run_epoch(self) -> None:
+    def _run_epoch(self) -> Tuple[float, float]:
         """Run a single epoch of training or validation.
 
         Whether the model is in training or validation mode is
@@ -85,6 +89,9 @@ class ClassificationTrainer:
         modes, updating the progress bar, logging metrics to
         TensorBoard, and computing the compute efficiency) are handled
         by the TrainingManager instance ``self.train_manager``.
+
+        Returns:
+            The average loss and multiclass accuracy for the epoch.
 
         Note:
             This method modifies the model in place when training.
@@ -134,6 +141,12 @@ class ClassificationTrainer:
 
         # Flush writer after epoch for live updates
         self.train_manager.flush_writer()
+
+        # Compute average loss and multiclass accuracy for the epoch
+        loss = self.train_manager.compute_loss(total=True)
+        mca = self.train_manager.compute_mca(total=True)
+
+        return loss, mca
 
     def _increment_epoch(self) -> None:
         self.train_manager.increment_epoch()

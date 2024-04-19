@@ -27,7 +27,6 @@ class TrainingManager:
         cfg: The training configuration.
 
     (Additional) Attributes:
-        mca: A multiclass accuracy metric to track model performance.
         writer: A SummaryWriter instance to log metrics to TensorBoard.
         log_indices: Indices at which to log metrics to TensorBoard.
         tb_tags: Tags for logging metrics to TensorBoard.
@@ -35,8 +34,18 @@ class TrainingManager:
         start_epoch: The starting epoch number.
         epoch: The current epoch number.
         batch: The current batch number.
-        samples: The number of samples processed within one epoch.
+        running_samples: The running number of samples processed.
+          Resets after each logging interval.
         running_loss: The running loss during training/validation.
+          Resets after each logging interval.
+        running_mca: A metric to track the multiclass accuracy during
+          training/validation.  Resets after each logging interval.
+        total_samples: The total number of samples processed.  Resets
+          after each epoch.
+        total_loss: The total loss during training/validation.  Resets
+          after each epoch.
+        total_mca: A metric to track the multiclass accuracy during
+          training/validation.  Resets after each epoch.
         start_time: A timestamp indicating the start of processing a
           mini-batch.
         prep_time: A timestamp indicating the end of preparing a
@@ -59,11 +68,6 @@ class TrainingManager:
         self.device = device
         self.cfg = cfg
 
-        self.mca = MulticlassAccuracy(
-            num_classes=cfg.dataset.num_classes,
-            average="micro"
-        ).to(self.device)
-
         self.writer = SummaryWriter(cfg.paths.logs)
         self.log_indices = []
         self.tb_tags = {}
@@ -73,8 +77,20 @@ class TrainingManager:
         self.start_epoch = 1
         self.epoch = 1
         self.batch = 1
-        self.samples = 0
+
+        self.running_samples = 0
         self.running_loss = 0.
+        self.running_mca = MulticlassAccuracy(
+            num_classes=cfg.dataset.num_classes,
+            average="micro"
+        ).to(self.device)
+
+        self.total_samples = 0
+        self.total_loss = 0.
+        self.total_mca = MulticlassAccuracy(
+            num_classes=cfg.dataset.num_classes,
+            average="micro"
+        ).to(self.device)
 
         self.start_time = 0.
         self.prep_time = 0.
@@ -90,6 +106,7 @@ class TrainingManager:
         self.is_training = state == "train"
         self.model.train(self.is_training)
         self.batch = 1
+        self._reset_metrics(total=True)
         self._set_log_indices()
         self.tb_tags = {
             "loss": f"loss/{'train' if self.is_training else 'val'}",
@@ -109,8 +126,8 @@ class TrainingManager:
 
     def update_pbar(self, pbar: tqdm) -> None:
         pbar.set_postfix(
-            loss=self._compute_loss(),
-            accuracy=self._compute_mca(),
+            loss=self.compute_loss(),
+            accuracy=self.compute_mca(),
             compute_efficiency=self._get_compute_efficiency()
         )
 
@@ -120,14 +137,29 @@ class TrainingManager:
             batch_size: int
     ) -> None:
         self.running_loss += loss * batch_size
-        self.samples += batch_size
+        self.running_samples += batch_size
+        self.total_loss += loss * batch_size
+        self.total_samples += batch_size
 
     def update_mca(
             self,
             preds: torch.Tensor,
             targets: torch.Tensor
     ) -> None:
-        self.mca.update(preds, targets)
+        self.running_mca.update(preds, targets)
+        self.total_mca.update(preds, targets)
+
+    def compute_loss(self, total: bool = False) -> float:
+        if total:
+            return self.total_loss / self.total_samples
+        else:
+            return self.running_loss / self.running_samples
+
+    def compute_mca(self, total: bool = False) -> float:
+        if total:
+            return self.total_mca.compute().item() * 100
+        else:
+            return self.running_mca.compute().item() * 100
 
     def log_metrics(self) -> None:
         """Log metrics to TensorBoard at specified intervals."""
@@ -137,8 +169,8 @@ class TrainingManager:
             global_step = (self.epoch - 1) * len(dataloader) + self.batch
 
             # Log metrics to TensorBoard
-            self.writer.add_scalar(self.tb_tags["loss"], self._compute_loss(), global_step)
-            self.writer.add_scalar(self.tb_tags["acc"], self._compute_mca(), global_step)
+            self.writer.add_scalar(self.tb_tags["loss"], self.compute_loss(), global_step)
+            self.writer.add_scalar(self.tb_tags["acc"], self.compute_mca(), global_step)
 
             # Reset loss and multiclass accuracy
             self._reset_metrics()
@@ -195,13 +227,12 @@ class TrainingManager:
         total_duration = prep_duration + proc_duration
         return proc_duration / total_duration * 100
 
-    def _compute_loss(self) -> float:
-        return self.running_loss / self.samples
-
-    def _compute_mca(self) -> float:
-        return self.mca.compute().item() * 100
-
-    def _reset_metrics(self) -> None:
-        self.running_loss = 0.
-        self.samples = 0
-        self.mca.reset()
+    def _reset_metrics(self, total: bool = False) -> None:
+        if total:
+            self.total_loss = 0.
+            self.total_samples = 0
+            self.total_mca.reset()
+        else:
+            self.running_loss = 0.
+            self.running_samples = 0
+            self.running_mca.reset()
