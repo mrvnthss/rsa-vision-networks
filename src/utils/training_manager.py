@@ -32,8 +32,9 @@ class TrainingManager:
         log_indices: Indices at which to log metrics to TensorBoard.
         tb_tags: Tags for logging metrics to TensorBoard.
         is_training: A flag to indicate whether the model is training.
-        batch: The current batch number.
+        start_epoch: The starting epoch number.
         epoch: The current epoch number.
+        batch: The current batch number.
         samples: The number of samples processed within one epoch.
         running_loss: The running loss during training/validation.
         start_time: A timestamp indicating the start of processing a
@@ -69,8 +70,9 @@ class TrainingManager:
 
         self.is_training = True
 
-        self.batch = 1
+        self.start_epoch = 1
         self.epoch = 1
+        self.batch = 1
         self.samples = 0
         self.running_loss = 0.
 
@@ -100,7 +102,8 @@ class TrainingManager:
     def get_pbar(self) -> tqdm:
         """Decorate a dataloader with a ``tqdm`` progress bar."""
         dataloader = self.train_loader if self.is_training else self.val_loader
-        desc = (f"Epoch [{self.epoch}/{self.cfg.training.num_epochs}]    "
+        final_epoch = self.start_epoch + self.cfg.training.num_epochs - 1
+        desc = (f"Epoch [{self.epoch}/{final_epoch}]    "
                 f"{'Train' if self.is_training else 'Val'}")
         return tqdm(dataloader, desc=desc, leave=False, unit="batch")
 
