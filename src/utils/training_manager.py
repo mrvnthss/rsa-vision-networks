@@ -28,9 +28,12 @@ class TrainingManager:
 
     (Additional) Attributes:
         writer: A SummaryWriter instance to log metrics to TensorBoard.
+        log_frequency: The frequency at which to log metrics to
+          TensorBoard.
         log_indices: Indices at which to log metrics to TensorBoard.
         tb_tags: Tags for logging metrics to TensorBoard.
         is_training: A flag to indicate whether the model is training.
+        num_epochs: The total number of epochs to train for.
         start_epoch: The starting epoch number.
         epoch: The current epoch number.
         batch: The current batch number.
@@ -66,14 +69,15 @@ class TrainingManager:
         self.train_loader = train_loader
         self.val_loader = val_loader
         self.device = device
-        self.cfg = cfg
 
         self.writer = SummaryWriter(cfg.paths.logs)
+        self.log_frequency = cfg.training.log_frequency
         self.log_indices = []
         self.tb_tags = {}
 
         self.is_training = True
 
+        self.num_epochs = cfg.training.num_epochs
         self.start_epoch = 1
         self.epoch = 1
         self.batch = 1
@@ -119,7 +123,7 @@ class TrainingManager:
     def get_pbar(self) -> tqdm:
         """Decorate a dataloader with a ``tqdm`` progress bar."""
         dataloader = self.train_loader if self.is_training else self.val_loader
-        final_epoch = self.start_epoch + self.cfg.training.num_epochs - 1
+        final_epoch = self.start_epoch + self.num_epochs - 1
         desc = (f"Epoch [{self.epoch}/{final_epoch}]    "
                 f"{'Train' if self.is_training else 'Val'}")
         return tqdm(dataloader, desc=desc, leave=False, unit="batch")
@@ -207,7 +211,7 @@ class TrainingManager:
         dataloader = self.train_loader if self.is_training else self.val_loader
         total_samples = len(dataloader.dataset)
         sample_intervals = torch.linspace(
-            0, total_samples, self.cfg.training.log_frequency + 1
+            0, total_samples, self.log_frequency + 1
         )
         self.log_indices = (
             torch.ceil(sample_intervals / dataloader.batch_size)
