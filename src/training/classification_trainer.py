@@ -3,11 +3,12 @@
 
 from typing import Tuple
 
+from numpy import inf
 from omegaconf import DictConfig
 import torch
 from torch import nn
 
-from src.utils import BalancedSampler, TrainingManager
+from src.utils import BalancedSampler, CheckpointManager, PerformanceTracker, TrainingManager
 
 
 class ClassificationTrainer:
@@ -23,8 +24,26 @@ class ClassificationTrainer:
         cfg: The training configuration.
 
     (Additional) Attributes:
+        num_epochs: The total number of epochs to train for.
+        save_periodically: Whether to periodically save model
+          checkpoints.
+        save_frequency: The frequency at which to periodically save
+          model checkpoints.
+        delete_previous: Whether to delete previous checkpoints when
+          saving new ones.  Only applies to periodically saved
+          checkpoints.
+        save_best: Whether to continuously save the best performing
+          model.
+        early_stopping: Whether to perform early stopping.
+        is_tracking: Whether to track model performance for saving
+          purposes or early stopping.
         train_manager: A TrainingManager instance to perform auxiliary
           tasks during training and validation.
+        chkpt_manager: A CheckpointManager instance to save model
+          checkpoints.  Only initialized if saving is enabled.
+        performance_tracker: A PerformanceTracker instance to monitor
+          model performance and handle early stopping.  Only initialized
+          if tracking is enabled.
     """
 
     def __init__(
@@ -43,27 +62,98 @@ class ClassificationTrainer:
         self.loss_fn = loss_fn
         self.optimizer = optimizer
         self.device = device
-        self.cfg = cfg
 
+        self.num_epochs = cfg.training.num_epochs
+
+        self.save_periodically = cfg.checkpoints.save_frequency > 0
+        self.save_frequency = cfg.checkpoints.save_frequency
+        self.delete_previous = cfg.checkpoints.delete_previous
+
+        self.save_best = cfg.checkpoints.save_best
+        self.early_stopping = cfg.checkpoints.patience > 0
+        self.is_tracking = self.save_best or self.early_stopping
+
+        # Initialize training manager
         self.train_manager = TrainingManager(
-            self.model,
-            self.train_loader,
-            self.val_loader,
-            self.device,
-            self.cfg
+            model=self.model,
+            train_loader=self.train_loader,
+            val_loader=self.val_loader,
+            device=self.device,
+            cfg=cfg
         )
 
+        # Initialize checkpoint manager, if saving is enabled
+        if self.save_periodically or self.save_best:
+            self.chkpt_manager = CheckpointManager(
+                checkpoint_dir=cfg.checkpoints.checkpoint_dir
+            )
+
+        # Initialize performance tracker, if tracking is enabled
+        if self.is_tracking:
+            metrics = {
+                "val_loss": 0.,
+                "val_mca": 0.
+            }
+            higher_is_better = cfg.training.performance_metric == "val_mca"
+            patience = cfg.checkpoints.patience if self.early_stopping else inf
+            self.performance_tracker = PerformanceTracker(
+                metrics=metrics,
+                performance_metric=cfg.training.performance_metric,
+                higher_is_better=higher_is_better,
+                patience=patience
+            )
+
+        # Initialize the training sampler's epoch for deterministic shuffling
         self._update_train_sampler()
 
     def train(self) -> None:
-        # Visualize model architecture in TensorBoard
+        # Visualize the model architecture in TensorBoard
         inputs, _ = next(iter(self.train_loader))
         self.train_manager.visualize_model(inputs.to(self.device))
 
-        # Training loop
-        for _ in range(self.cfg.training.num_epochs):
-            train_loss, train_mca = self._train_one_epoch()
+        # Start the training loop
+        for _ in range(self.num_epochs):
+            # Train and validate for one epoch
+            _ = self._train_one_epoch()
             val_loss, val_mca = self._validate()
+
+            # Track performance metrics
+            if self.is_tracking:
+                metrics = {
+                    "val_loss": val_loss,
+                    "val_mca": val_mca
+                }
+                self.performance_tracker.update(metrics)
+
+            # Check for early stopping
+            if self.early_stopping:
+                if self.performance_tracker.is_patience_exceeded():
+                    print(f"Performance has not improved for {self.performance_tracker.patience} "
+                          "consecutive epochs. Stopping training now.")
+                    break
+
+            # Check for new best performance and possibly save checkpoint
+            if self.save_best and self.performance_tracker.latest_is_best:
+                self.chkpt_manager.save_checkpoint(
+                    epoch=self.train_manager.epoch,
+                    model=self.model,
+                    optimizer=self.optimizer,
+                    best_score=self.performance_tracker.best_score,
+                    performance_metric=self.performance_tracker.performance_metric,
+                    is_best=True
+                )
+
+            # Periodic checkpoint save
+            if self.save_periodically:
+                if self.train_manager.epoch % self.save_frequency == 0:
+                    self.chkpt_manager.save_checkpoint(
+                        epoch=self.train_manager.epoch,
+                        model=self.model,
+                        optimizer=self.optimizer,
+                        delete_previous=self.delete_previous
+                    )
+
+            # Increment epoch counter and update training sampler
             self._increment_epoch()
             self._update_train_sampler()
 

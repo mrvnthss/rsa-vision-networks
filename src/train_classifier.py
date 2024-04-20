@@ -76,7 +76,8 @@ def main(cfg: DictConfig) -> None:
         model.parameters()
     )
 
-    # Instantiate trainer
+    # Instantiate trainer and start training
+    # NOTE: Training is automatically resumed if a checkpoint is provided
     trainer = ClassificationTrainer(
         model,
         train_loader,
@@ -86,8 +87,6 @@ def main(cfg: DictConfig) -> None:
         device,
         cfg
     )
-
-    # Start training
     trainer.train()
 
 

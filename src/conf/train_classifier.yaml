@@ -6,9 +6,10 @@ defaults:
   - optimizer: sgd
   - optional optimizer/model: ${optimizer}_${model}
   - _self_
+run: train_classifier/${model.name}/${dataset.name}/${now:%Y-%m-%d_%H-%M-%S}
 paths:
   data: ../data
-  logs: ../logs/train_classifier/${model.name}/${dataset.name}/${now:%Y-%m-%d_%H-%M-%S}
+  logs: ../logs/${run}
 hydra:
   run:
     dir: ${paths.logs}
@@ -16,6 +17,14 @@ dataloader:
   batch_size: 32
   num_workers: 16
 training:
-  num_epochs: 90
-  log_frequency: 10
   seed: 42
+  resume_from: null
+  num_epochs: 100
+  log_frequency: 10
+  performance_metric: val_loss
+checkpoints:
+  checkpoint_dir: ../checkpoints/${run}
+  save_frequency: 10
+  delete_previous: True
+  save_best: True
+  patience: 10
