@@ -30,6 +30,7 @@ class BalancedSampler(torch.utils.data.sampler.Sampler):
             shuffle: bool = True,
             seed: int = 0
     ) -> None:
+        super().__init__()
         self.dataset = dataset
         self.shuffle = shuffle
         self.seed = seed
