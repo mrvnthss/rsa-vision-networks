@@ -36,7 +36,7 @@ class VGG(nn.Module):
             num_layers: int,
             num_classes: int = 1000
     ) -> None:
-        super(VGG, self).__init__()
+        super().__init__()
 
         # Create feature extractor
         self._make_layers(num_layers)

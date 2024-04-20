@@ -38,7 +38,7 @@ class LeNet(nn.Module):
             self,
             num_classes: int = 10
     ) -> None:
-        super(LeNet, self).__init__()
+        super().__init__()
 
         # Create feature extractor
         self.features = nn.Sequential(
