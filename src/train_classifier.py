@@ -31,26 +31,26 @@ def main(cfg: DictConfig) -> None:
 
     # Prepare samplers
     train_sampler = BalancedSampler(
-        train_set,
+        dataset=train_set,
         shuffle=True,
         seed=cfg.training.seed
     )
     val_sampler = BalancedSampler(
-        val_set,
+        dataset=val_set,
         shuffle=False,
         seed=cfg.training.seed
     )
 
     # Prepare dataloaders
     train_loader = torch.utils.data.DataLoader(
-        train_set,
+        dataset=train_set,
         batch_size=cfg.dataloader.batch_size,
         sampler=train_sampler,
         num_workers=cfg.dataloader.num_workers,
         pin_memory=True
     )
     val_loader = torch.utils.data.DataLoader(
-        val_set,
+        dataset=val_set,
         batch_size=cfg.dataloader.batch_size,
         sampler=val_sampler,
         num_workers=cfg.dataloader.num_workers,

@@ -1,6 +1,7 @@
 """A class to train a model for image classification in PyTorch."""
 
 
+import logging
 from typing import Tuple
 
 from numpy import inf
@@ -45,6 +46,7 @@ class ClassificationTrainer:
         performance_tracker: A PerformanceTracker instance to monitor
           model performance and handle early stopping.  Only initialized
           if tracking is enabled, else set to None.
+        logger: A logger instance to record logs.
     """
 
     def __init__(
@@ -120,6 +122,9 @@ class ClassificationTrainer:
                 performance_tracker=self.performance_tracker
             )
 
+        # Initialize logger
+        self.logger = logging.getLogger(__name__)
+
         # Initialize the training sampler's epoch for deterministic shuffling
         self._update_train_sampler()
 
@@ -128,7 +133,7 @@ class ClassificationTrainer:
         inputs, _ = next(iter(self.train_loader))
         self.train_manager.visualize_model(inputs.to(self.device))
 
-        # Start the training loop
+        self.logger.info("Starting training...")
         for _ in range(self.num_epochs):
             # Train and validate for one epoch
             _ = self._train_one_epoch()
@@ -145,8 +150,11 @@ class ClassificationTrainer:
             # Check for early stopping
             if self.early_stopping:
                 if self.performance_tracker.is_patience_exceeded():
-                    print(f"Performance has not improved for {self.performance_tracker.patience} "
-                          "consecutive epochs. Stopping training now.")
+                    self.logger.info(
+                        "Performance has not improved for %d consecutive epochs. "
+                        "Stopping training now.",
+                        self.performance_tracker.patience
+                    )
                     break
 
             # Check for new best performance and possibly save checkpoint

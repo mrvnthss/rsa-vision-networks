@@ -1,6 +1,7 @@
 """A class to save model checkpoints in PyTorch."""
 
 
+import logging
 from pathlib import Path
 from typing import Optional
 
@@ -23,6 +24,7 @@ class CheckpointManager:
         latest_checkpoint: The path pointing to the checkpoint saved
           last, excluding the checkpoint corresponding to the best
           performing model.
+        logger: A logger instance to record logs.
     """
 
     def __init__(
@@ -31,11 +33,11 @@ class CheckpointManager:
             cfg: DictConfig
     ) -> None:
         self.checkpoint_dir = Path(checkpoint_dir)
+        self.checkpoint_dir.mkdir(parents=True, exist_ok=True)
         self.cfg = cfg
 
-        self.checkpoint_dir.mkdir(parents=True, exist_ok=True)
-
         self.latest_checkpoint: Optional[Path] = None
+        self.logger = logging.getLogger(__name__)
 
     def save_checkpoint(
             self,
@@ -106,12 +108,13 @@ class CheckpointManager:
                     performance_tracker.best_score = chkpt["best_score"]
                 else:
                     starting_best_score = "-inf" if performance_tracker.higher_is_better else "inf"
-                    print(
-                        "No previous best score found in checkpoint, "
-                        f"best score will be set to {starting_best_score}."
+                    self.logger.warning(
+                        "No previous best score found in checkpoint, best score will be reset to "
+                        "%s for tracking purposes.",
+                        starting_best_score
                     )
             else:
-                print(
+                self.logger.warning(
                     "Performance metric in configuration does not match performance metric "
                     "found in checkpoint. Any previous best score will be discarded, tracking "
                     "starts from scratch."
