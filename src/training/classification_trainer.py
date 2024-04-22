@@ -40,10 +40,11 @@ class ClassificationTrainer:
         train_manager: A TrainingManager instance to perform auxiliary
           tasks during training and validation.
         chkpt_manager: A CheckpointManager instance to save model
-          checkpoints.  Only initialized if saving is enabled.
+          checkpoints.  Only initialized if saving is enabled or
+          training is to be resumed from a checkpoint, else set to None.
         performance_tracker: A PerformanceTracker instance to monitor
           model performance and handle early stopping.  Only initialized
-          if tracking is enabled.
+          if tracking is enabled, else set to None.
     """
 
     def __init__(
@@ -82,13 +83,16 @@ class ClassificationTrainer:
             cfg=cfg
         )
 
-        # Initialize checkpoint manager, if saving is enabled
-        if self.save_periodically or self.save_best:
+        # Initialize checkpoint manager if saving is enabled or training is to be resumed
+        if self.save_periodically or self.save_best or cfg.training.resume_from:
             self.chkpt_manager = CheckpointManager(
-                checkpoint_dir=cfg.checkpoints.checkpoint_dir
+                checkpoint_dir=cfg.checkpoints.checkpoint_dir,
+                cfg=cfg
             )
+        else:
+            self.chkpt_manager = None
 
-        # Initialize performance tracker, if tracking is enabled
+        # Initialize performance tracker if tracking is enabled
         if self.is_tracking:
             metrics = {
                 "val_loss": 0.,
@@ -101,6 +105,19 @@ class ClassificationTrainer:
                 performance_metric=cfg.training.performance_metric,
                 higher_is_better=higher_is_better,
                 patience=patience
+            )
+        else:
+            self.performance_tracker = None
+
+        # Resume training if a checkpoint is provided
+        if cfg.training.resume_from:
+            self.chkpt_manager.resume_training(
+                resume_from=cfg.training.resume_from,
+                model=self.model,
+                optimizer=self.optimizer,
+                device=self.device,
+                train_manager=self.train_manager,
+                performance_tracker=self.performance_tracker
             )
 
         # Initialize the training sampler's epoch for deterministic shuffling
@@ -139,17 +156,18 @@ class ClassificationTrainer:
                     model=self.model,
                     optimizer=self.optimizer,
                     best_score=self.performance_tracker.best_score,
-                    performance_metric=self.performance_tracker.performance_metric,
                     is_best=True
                 )
 
             # Periodic checkpoint save
             if self.save_periodically:
                 if self.train_manager.epoch % self.save_frequency == 0:
+                    best_score = self.performance_tracker.best_score if self.is_tracking else None
                     self.chkpt_manager.save_checkpoint(
                         epoch=self.train_manager.epoch,
                         model=self.model,
                         optimizer=self.optimizer,
+                        best_score=best_score,
                         delete_previous=self.delete_previous
                     )
 

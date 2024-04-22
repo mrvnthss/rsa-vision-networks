@@ -4,8 +4,12 @@
 from pathlib import Path
 from typing import Optional
 
+from omegaconf import DictConfig
 import torch
 from torch import nn
+
+from src.utils.performance_tracker import PerformanceTracker
+from src.utils.training_manager import TrainingManager
 
 
 class CheckpointManager:
@@ -13,6 +17,7 @@ class CheckpointManager:
 
     Params:
         checkpoint_dir: The directory to save model checkpoints in.
+        cfg: The training configuration.
 
     (Additional) Attributes:
         latest_checkpoint: The path pointing to the checkpoint saved
@@ -22,9 +27,12 @@ class CheckpointManager:
 
     def __init__(
             self,
-            checkpoint_dir: str
+            checkpoint_dir: str,
+            cfg: DictConfig
     ) -> None:
         self.checkpoint_dir = Path(checkpoint_dir)
+        self.cfg = cfg
+
         self.checkpoint_dir.mkdir(parents=True, exist_ok=True)
 
         self.latest_checkpoint: Optional[Path] = None
@@ -35,18 +43,16 @@ class CheckpointManager:
             model: nn.Module,
             optimizer: torch.optim.Optimizer,
             best_score: Optional[float] = None,
-            performance_metric: Optional[str] = None,
             is_best: bool = False,
             delete_previous: bool = False
     ) -> None:
         # Save model checkpoint
         state = {
             "epoch": epoch,
-            "arch": type(model).__name__,
             "model": model.state_dict(),
             "optimizer": optimizer.state_dict(),
             "best_score": best_score,
-            "performance_metric": performance_metric
+            "config": self.cfg
         }
         chkpt_name = "best_performing.pt" if is_best else f"epoch_{epoch}.pt"
         chkpt_path = self.checkpoint_dir / chkpt_name
@@ -57,3 +63,56 @@ class CheckpointManager:
             if delete_previous and self.latest_checkpoint:
                 Path(self.latest_checkpoint).unlink()
             self.latest_checkpoint = chkpt_path
+
+    def resume_training(
+            self,
+            resume_from: str,
+            model: nn.Module,
+            optimizer: torch.optim.Optimizer,
+            device: torch.device,
+            train_manager: Optional[TrainingManager] = None,
+            performance_tracker: Optional[PerformanceTracker] = None
+    ) -> None:
+        # Load checkpoint
+        chkpt = torch.load(resume_from, map_location=device)
+
+        # Load model state
+        if chkpt["config"].model.name == self.cfg.model.name:
+            model.load_state_dict(chkpt["model"])
+        else:
+            raise ValueError(
+                "Model architecture in configuration does not match model "
+                "architecture found in checkpoint."
+            )
+
+        # Load optimizer state
+        if chkpt["config"].optimizer.type == self.cfg.optimizer.type:
+            optimizer.load_state_dict(chkpt["optimizer"])
+        else:
+            raise ValueError(
+                "Optimizer type in configuration does not match "
+                "optimizer type found in checkpoint."
+            )
+
+        # Update training manager's parameters
+        if train_manager:
+            train_manager.start_epoch = chkpt["epoch"] + 1
+            train_manager.epoch = chkpt["epoch"] + 1
+
+        # Update performance tracker's parameters
+        if performance_tracker:
+            if chkpt["config"].training.performance_metric == self.cfg.training.performance_metric:
+                if chkpt["best_score"]:
+                    performance_tracker.best_score = chkpt["best_score"]
+                else:
+                    starting_best_score = "-inf" if performance_tracker.higher_is_better else "inf"
+                    print(
+                        "No previous best score found in checkpoint, "
+                        f"best score will be set to {starting_best_score}."
+                    )
+            else:
+                print(
+                    "Performance metric in configuration does not match performance metric "
+                    "found in checkpoint. Any previous best score will be discarded, tracking "
+                    "starts from scratch."
+                )
