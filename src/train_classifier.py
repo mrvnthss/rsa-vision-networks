@@ -72,7 +72,7 @@ def main(cfg: DictConfig) -> None:
 
     # Instantiate optimizer
     optimizer = instantiate(
-        cfg.optimizer,
+        cfg.optimizer.settings,
         model.parameters()
     )
 
