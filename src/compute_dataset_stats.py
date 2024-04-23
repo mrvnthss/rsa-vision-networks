@@ -6,7 +6,7 @@ associated with this script is named 'compute_dataset_stats.yaml'.
 
 Typical usage example:
 
-  >>> python compute_dataset_stats.py model=vgg dataset=cifar10
+  >>> python compute_dataset_stats.py model=vgg11 dataset=cifar10
   norm_constants:
     mean: [0.48869, 0.475378, 0.439596]
     std: [0.236056, 0.232438, 0.249809]
@@ -46,7 +46,7 @@ def compute_dataset_stats(
         # Prepare progress bar
         total_samples = len(dataloader.dataset)
         desc = "Computing dataset statistics"
-        pbar = tqdm(total=total_samples, desc=desc, unit="image")
+        pbar = tqdm(desc=desc, total=total_samples, unit="image")
 
         for inputs, _ in dataloader:
             # Update running totals
@@ -76,8 +76,10 @@ def compute_dataset_stats(
 
 @hydra.main(version_base=None, config_path="conf", config_name="compute_dataset_stats")
 def main(cfg: DictConfig) -> None:
-    # Prepare dataloader
+    # Prepare dataset
     dataset = instantiate(cfg.dataset.train_set)
+
+    # Prepare dataloader
     dataloader = torch.utils.data.DataLoader(
         dataset,
         batch_size=cfg.dataloader.batch_size,
