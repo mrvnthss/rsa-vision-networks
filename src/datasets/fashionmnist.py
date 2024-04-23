@@ -1,6 +1,7 @@
 """The FashionMNIST dataset by Zalando Research (Xiao et al., 2017)."""
 
 
+import logging
 from pathlib import Path
 from typing import Callable, Optional
 
@@ -19,14 +20,15 @@ class FashionMNIST(ImageFolder):
     are 60,000 training samples and 10,000 test samples.
 
     Params:
-        root: Root directory of the dataset.
+        root: The root directory of the dataset.
         train: If True, loads the training split, else the test split.
         transform: A transform to modify features (images).
         target_transform: A transform to modify targets (labels).
 
     (Additional) Attributes:
         split: The dataset split to load, either "train" or "val".
-        split_dir: Directory containing the dataset split.
+        split_dir: The directory containing the dataset split.
+        logger: A logger instance to record logs.
     """
 
     mirror = "http://fashion-mnist.s3-website.eu-central-1.amazonaws.com/"
@@ -45,7 +47,7 @@ class FashionMNIST(ImageFolder):
         ("t10k-labels-idx1-ubyte", "15d484375f8d13e6eb1aabb0c3f46965")
     ]
 
-    splits = {
+    data_by_split = {
         "train": ("train-images-idx3-ubyte", "train-labels-idx1-ubyte"),
         "val": ("t10k-images-idx3-ubyte", "t10k-labels-idx1-ubyte")
     }
@@ -76,6 +78,8 @@ class FashionMNIST(ImageFolder):
 
         self.split = "train" if train else "val"
         self.split_dir = Path(self.processed_folder) / self.split
+
+        self.logger = logging.getLogger(__name__)
 
         if not self._is_downloaded():
             self._download()
@@ -111,7 +115,6 @@ class FashionMNIST(ImageFolder):
                 url, download_root=self.raw_folder, filename=filename, md5=md5,
                 remove_finished=True
             )
-            print()
 
     def _is_parsed(self) -> bool:
         for img_class in self.classes:
@@ -121,14 +124,19 @@ class FashionMNIST(ImageFolder):
         return True
 
     def _parse_binary(self) -> None:
-        # Create subdirectories for each class
+        # Create class subdirectories
         for img_class in self.classes:
             (self.split_dir / img_class).mkdir(parents=True, exist_ok=True)
 
         # Unpack raw data and save as PNG images
-        image_file, label_file = self.splits[self.split]
-        data = read_image_file(str(Path(self.raw_folder, image_file)))
-        targets = read_label_file(str(Path(self.raw_folder, label_file)))
+        image_file, label_file = self.data_by_split[self.split]
+        self.logger.info(
+            "Processing %s and saving images in %s",
+            image_file,
+            self.split_dir
+        )
+        data = read_image_file(str(Path(self.raw_folder) / image_file))
+        targets = read_label_file(str(Path(self.raw_folder) / label_file))
 
         for idx, (img, target) in enumerate(zip(data, targets)):
             img = Image.fromarray(img.numpy(), mode="L")

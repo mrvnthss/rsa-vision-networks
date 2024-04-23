@@ -1,6 +1,7 @@
 """The ImageNet 2012 classification dataset by Deng et al. (2009)."""
 
 
+import logging
 from pathlib import Path
 import shutil
 from typing import Callable, Optional
@@ -8,6 +9,7 @@ from typing import Callable, Optional
 from torchvision.datasets.folder import ImageFolder
 from torchvision.datasets.imagenet import load_meta_file, parse_devkit_archive
 from torchvision.datasets.utils import check_integrity, extract_archive
+from tqdm import tqdm
 
 
 class ImageNet(ImageFolder):
@@ -21,7 +23,7 @@ class ImageNet(ImageFolder):
     in the validation split.
 
     Params:
-        root: Root directory of the dataset.
+        root: The root directory of the dataset.
         train: If True, loads the training split, else the validation
           split.
         transform: A transform to modify features (images).
@@ -29,13 +31,14 @@ class ImageNet(ImageFolder):
 
     (Additional) Attributes:
         split: The dataset split to load, either "train" or "val".
-        split_dir: Directory containing the dataset split.
+        split_dir: The directory containing the dataset split.
+        logger: A logger instance to record logs.
 
     Note:
         Prior to using this class, the ImageNet 2012 classification
         dataset has to be downloaded from the official website
         (https://image-net.org/challenges/LSVRC/2012/2012-downloads.php)
-        and placed in the directory 'data/raw/ImageNet/'.
+        and placed in the 'data/raw/ImageNet/' directory.
     """
 
     raw_data = {
@@ -59,6 +62,8 @@ class ImageNet(ImageFolder):
 
         self.split = "train" if train else "val"
         self.split_dir = Path(self.processed_folder) / self.split
+
+        self.logger = logging.getLogger(__name__)
 
         if not self._is_parsed():
             self._parse_archive()
@@ -84,8 +89,14 @@ class ImageNet(ImageFolder):
 
     def _parse_archive(self) -> None:
         # Make sure that meta file ("meta.bin") is available
-        meta_fpath = str(Path(self.raw_folder, self.meta_data))
+        meta_fpath = str(Path(self.raw_folder) / self.meta_data)
         if not check_integrity(meta_fpath):
+            self.logger.info(
+                "Meta file not found in %s. Parsing %s to create meta.bin in %s",
+                self.raw_folder,
+                self.raw_data["devkit"][0],
+                self.raw_folder
+            )
             parse_devkit_archive(self.raw_folder, self.raw_data["devkit"][0])
 
         if self.split == "train":
@@ -94,7 +105,7 @@ class ImageNet(ImageFolder):
             self._parse_val_archive()
 
     def _verify_archive(self, file: str, md5: str) -> None:
-        if not check_integrity(str(Path(self.raw_folder, file)), md5):
+        if not check_integrity(str(Path(self.raw_folder) / file), md5):
             msg = (
                 "The archive {} is not present in the root directory or is corrupted. "
                 "You need to download it externally and place it in {}."
@@ -103,31 +114,77 @@ class ImageNet(ImageFolder):
 
     def _parse_train_archive(self) -> None:
         filename, md5 = self.raw_data["train"]
+        self.logger.info(
+            "Verifying %s in %s, this may take a while",
+            filename,
+            self.raw_folder
+        )
         self._verify_archive(filename, md5)
 
         train_archive = str(Path(self.raw_folder) / filename)
         train_root = str(Path(self.processed_folder) / "train")
+        self.logger.info(
+            "Extracting %s to %s, this may take a while",
+            train_archive,
+            train_root
+        )
         extract_archive(train_archive, train_root)
 
-        for archive in Path(train_root).iterdir():
+        self.logger.info(
+            "Extracting archives in %s, this may take a while",
+            train_root
+        )
+        desc = "Extracting archives"
+        total_archives = sum(1 for _ in Path(train_root).iterdir())
+        pbar = tqdm(
+            Path(train_root).iterdir(),
+            desc=desc,
+            total=total_archives,
+            unit="archive"
+        )
+        for archive in pbar:
             extract_archive(str(archive), str(archive.with_suffix('')), remove_finished=True)
 
     def _parse_val_archive(self) -> None:
         filename, md5 = self.raw_data["val"]
+        self.logger.info(
+            "Verifying %s in %s",
+            filename,
+            self.raw_folder
+        )
         self._verify_archive(filename, md5)
 
         val_archive = str(Path(self.raw_folder) / filename)
         val_root = str(Path(self.processed_folder) / "val")
+        self.logger.info(
+            "Extracting %s to %s",
+            val_archive,
+            val_root
+        )
         extract_archive(val_archive, val_root)
 
+        wnids = load_meta_file(self.raw_folder)[1]
         images = sorted(str(image) for image in Path(val_root).iterdir())
 
-        wnids = load_meta_file(self.raw_folder)[1]
+        # Create class subdirectories
         for wnid in set(wnids):
             Path(val_root, wnid).mkdir(parents=True, exist_ok=True)
 
-        for wnid, img_file in zip(wnids, images):
-            shutil.move(img_file, Path(val_root, wnid, Path(img_file).name))
+        # Move images to appropriate class subdirectories
+        self.logger.info(
+            "Moving images to class subdirectories in %s",
+            val_root
+        )
+        desc = "Moving images"
+        total_images = len(images)
+        pbar = tqdm(
+            zip(wnids, images),
+            desc=desc,
+            total=total_images,
+            unit="image"
+        )
+        for wnid, image in pbar:
+            shutil.move(image, Path(val_root) / wnid / Path(image).name)
 
     @property
     def raw_folder(self) -> str:

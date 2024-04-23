@@ -1,6 +1,7 @@
 """The CIFAR10 dataset by Krizhevsky (2009)."""
 
 
+import logging
 from pathlib import Path
 import pickle
 import shutil
@@ -21,14 +22,15 @@ class CIFAR10(ImageFolder):
     training samples and 10,000 test samples.
 
     Params:
-        root: Root directory of the dataset.
+        root: The root directory of the dataset.
         train: If True, loads the training split, else the test split.
         transform: A transform to modify features (images).
         target_transform: A transform to modify targets (labels).
 
     (Additional) Attributes:
         split: The dataset split to load, either "train" or "val".
-        split_dir: Directory containing the dataset split.
+        split_dir: The directory containing the dataset split.
+        logger: A logger instance to record logs.
     """
 
     mirror = "https://www.cs.toronto.edu/~kriz/"
@@ -74,6 +76,8 @@ class CIFAR10(ImageFolder):
         self.split = "train" if train else "val"
         self.split_dir = Path(self.processed_folder) / self.split
 
+        self.logger = logging.getLogger(__name__)
+
         if not self._is_downloaded():
             self._download()
 
@@ -108,17 +112,27 @@ class CIFAR10(ImageFolder):
             url, download_root=self.raw_folder, extract_root=self.raw_folder,
             filename=filename, md5=md5, remove_finished=True
         )
-        print()
 
         # Remove intermediate "cifar-10-batches-py" directory
-        intermediate_dir = Path(self.raw_folder, "cifar-10-batches-py")
+        intermediate_dir = Path(self.raw_folder) / "cifar-10-batches-py"
+        self.logger.info(
+            "Moving all files from %s to %s",
+            intermediate_dir,
+            self.raw_folder
+        )
         for file in intermediate_dir.iterdir():
             shutil.move(str(file), self.raw_folder)
         intermediate_dir.rmdir()
 
         # Delete auxiliary files
-        for filename in ["batches.meta", "readme.html"]:
-            filepath = Path(self.raw_folder, filename)
+        aux_files = ["batches.meta", "readme.html"]
+        self.logger.info(
+            "Deleting auxiliary files %s and %s in %s",
+            *aux_files,
+            self.raw_folder
+        )
+        for filename in aux_files:
+            filepath = Path(self.raw_folder) / filename
             if filepath.exists():
                 filepath.unlink()
 
@@ -130,7 +144,7 @@ class CIFAR10(ImageFolder):
         return True
 
     def _parse_binary(self) -> None:
-        # Create subdirectories for each class
+        # Create class subdirectories
         for img_class in self.classes:
             (self.split_dir / img_class).mkdir(parents=True, exist_ok=True)
 
@@ -138,6 +152,11 @@ class CIFAR10(ImageFolder):
         batches = self.train_batches if self.split == "train" else self.test_batches
         for filename, _ in batches:
             filepath = str(Path(self.raw_folder) / filename)
+            self.logger.info(
+                "Processing %s and saving images in %s",
+                filepath,
+                self.split_dir
+            )
             with open(filepath, "rb") as f:
                 entry = pickle.load(f, encoding="latin1")
                 data = np.array(entry["data"]).reshape(-1, 3, 32, 32).transpose((0, 2, 3, 1))
