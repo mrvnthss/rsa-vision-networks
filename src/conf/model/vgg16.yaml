@@ -1,0 +1,25 @@
+name: vgg16
+architecture:
+  _target_: models.VGG
+  num_layers: 16
+  num_classes: ${dataset.num_classes}
+norm_constants:
+  # Computed on ImageNet dataset (training set, batch size 32)
+  mean: [0.484477, 0.454096, 0.402564]
+  std: [0.272381, 0.263696, 0.276105]
+preprocessing:
+  _target_: torchvision.transforms.v2.Compose
+  transforms:
+    - _target_: torchvision.transforms.v2.Resize
+      size: 256
+      interpolation: 2  # BILINEAR
+      antialias: True
+    - _target_: torchvision.transforms.v2.CenterCrop
+      size: 224
+    - _target_: torchvision.transforms.v2.ToImage
+    - _target_: utils.ToDtypeWrapper
+      dtype: float32
+      scale: True
+    - _target_: torchvision.transforms.v2.Normalize
+      mean: ${model.norm_constants.mean}
+      std: ${model.norm_constants.std}

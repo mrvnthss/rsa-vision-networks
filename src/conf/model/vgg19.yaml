@@ -1,7 +1,7 @@
-name: vgg
+name: vgg19
 architecture:
   _target_: models.VGG
-  num_layers: 11  # one of [11, 13, 16, 19]
+  num_layers: 19
   num_classes: ${dataset.num_classes}
 norm_constants:
   # Computed on ImageNet dataset (training set, batch size 32)
