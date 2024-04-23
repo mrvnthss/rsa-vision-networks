@@ -6,9 +6,12 @@ associated with this script is named 'train_classifier.yaml'.
 
 Typical usage example:
 
-  >>> python train_classifier.py training.num_epochs=10
+  >>> python train_classifier.py model=lenet dataset=fashionmnist
+  ...                            training.num_epochs=10
 """
 
+
+import logging
 
 import hydra
 from hydra.utils import instantiate
@@ -19,17 +22,23 @@ from src.training import ClassificationTrainer
 from src.utils import BalancedSampler
 
 
+logger = logging.getLogger(__name__)
+
+
 @hydra.main(version_base=None, config_path="conf", config_name="train_classifier")
 def main(cfg: DictConfig) -> None:
     # Set random seeds for reproducibility
     torch.manual_seed(cfg.training.seed)
     torch.cuda.manual_seed_all(cfg.training.seed)
+    logger.info("Random seed is set to: %d", cfg.training.seed)
 
     # Prepare datasets
+    logger.info("Preparing datasets")
     train_set = instantiate(cfg.dataset.train_set)
     val_set = instantiate(cfg.dataset.val_set)
 
-    # Prepare samplers
+    # Instantiate dataset samplers
+    logger.info("Instantiating dataset samplers")
     train_sampler = BalancedSampler(
         dataset=train_set,
         shuffle=True,
@@ -42,6 +51,7 @@ def main(cfg: DictConfig) -> None:
     )
 
     # Prepare dataloaders
+    logger.info("Setting up dataloaders")
     train_loader = torch.utils.data.DataLoader(
         dataset=train_set,
         batch_size=cfg.dataloader.batch_size,
@@ -63,14 +73,12 @@ def main(cfg: DictConfig) -> None:
         else "mps" if torch.backends.mps.is_available()
         else "cpu"
     )
+    logger.info("Target device is set to: %s", device)
 
-    # Instantiate model and move to target device
+    # Instantiate model, loss function, and optimizer
+    logger.info("Instantiating model, setting up loss function and optimizer")
     model = instantiate(cfg.model.architecture).to(device)
-
-    # Instantiate loss function
     loss_fn = instantiate(cfg.loss)
-
-    # Instantiate optimizer
     optimizer = instantiate(
         cfg.optimizer.settings,
         model.parameters()
@@ -78,6 +86,7 @@ def main(cfg: DictConfig) -> None:
 
     # Instantiate trainer and start training
     # NOTE: Training is automatically resumed if a checkpoint is provided
+    logger.info("Setting up trainer")
     trainer = ClassificationTrainer(
         model,
         train_loader,
@@ -87,7 +96,9 @@ def main(cfg: DictConfig) -> None:
         device,
         cfg
     )
+    logger.info("Starting training loop")
     trainer.train()
+    logger.info("Training finished")
 
 
 if __name__ == "__main__":
