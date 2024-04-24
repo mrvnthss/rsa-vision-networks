@@ -32,6 +32,14 @@ def main(cfg: DictConfig) -> None:
     torch.cuda.manual_seed_all(cfg.training.seed)
     logger.info("Random seed is set to: %d", cfg.training.seed)
 
+    # Set target device
+    device = torch.device(
+        "cuda" if torch.cuda.is_available()
+        else "mps" if torch.backends.mps.is_available()
+        else "cpu"
+    )
+    logger.info("Target device is set to: %s", device)
+
     # Prepare datasets
     logger.info("Preparing datasets")
     train_set = instantiate(cfg.dataset.train_set)
@@ -67,14 +75,6 @@ def main(cfg: DictConfig) -> None:
         pin_memory=True
     )
 
-    # Set target device
-    device = torch.device(
-        "cuda" if torch.cuda.is_available()
-        else "mps" if torch.backends.mps.is_available()
-        else "cpu"
-    )
-    logger.info("Target device is set to: %s", device)
-
     # Instantiate model, loss function, and optimizer
     logger.info("Instantiating model, setting up loss function and optimizer")
     model = instantiate(cfg.model.architecture).to(device)
@@ -96,9 +96,7 @@ def main(cfg: DictConfig) -> None:
         device,
         cfg
     )
-    logger.info("Starting training loop")
     trainer.train()
-    logger.info("Training finished")
 
 
 if __name__ == "__main__":

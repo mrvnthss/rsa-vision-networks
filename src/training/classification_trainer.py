@@ -35,8 +35,9 @@ class ClassificationTrainer:
           checkpoints.
         save_best: Whether to continuously save the best performing
           model.
+        saving_enabled: Whether to save model checkpoints at all.
         early_stopping: Whether to perform early stopping.
-        is_tracking: Whether to track model performance for saving
+        tracking_enabled: Whether to track model performance for saving
           purposes or early stopping.
         train_manager: A TrainingManager instance to perform auxiliary
           tasks during training and validation.
@@ -68,13 +69,17 @@ class ClassificationTrainer:
 
         self.num_epochs = cfg.training.num_epochs
 
-        self.save_periodically = cfg.checkpoints.save_frequency > 0
+        self.save_regularly = cfg.checkpoints.save_frequency > 0
         self.save_frequency = cfg.checkpoints.save_frequency
         self.delete_previous = cfg.checkpoints.delete_previous
-
         self.save_best = cfg.checkpoints.save_best
+        self.saving_enabled = self.save_regularly or self.save_best
+
         self.early_stopping = cfg.checkpoints.patience > 0
-        self.is_tracking = self.save_best or self.early_stopping
+        self.tracking_enabled = self.save_best or self.early_stopping
+
+        # Initialize logger
+        self.logger = logging.getLogger(__name__)
 
         # Initialize training manager
         self.train_manager = TrainingManager(
@@ -85,31 +90,46 @@ class ClassificationTrainer:
             cfg=cfg
         )
 
-        # Initialize checkpoint manager if saving is enabled or training is to be resumed
-        if self.save_periodically or self.save_best or cfg.training.resume_from:
+        # Checkpoint manager
+        if self.saving_enabled or cfg.training.resume_from:
+            # Initialize manager
             self.chkpt_manager = CheckpointManager(
                 checkpoint_dir=cfg.checkpoints.checkpoint_dir,
                 cfg=cfg
             )
+
+            # Report status
+            msgs = self.chkpt_manager.get_status(self.save_regularly, self.save_best)
+            for msg in msgs:
+                self.logger.info(msg)
         else:
             self.chkpt_manager = None
+            self.logger.info("No checkpoints will be saved during training")
 
-        # Initialize performance tracker if tracking is enabled
-        if self.is_tracking:
+        # Performance tracker
+        if self.tracking_enabled:
+            # Set up parameters
             metrics = {
                 "val_loss": 0.,
                 "val_mca": 0.
             }
             higher_is_better = cfg.training.performance_metric == "val_mca"
             patience = cfg.checkpoints.patience if self.early_stopping else inf
+
+            # Initialize tracker
             self.performance_tracker = PerformanceTracker(
                 metrics=metrics,
                 performance_metric=cfg.training.performance_metric,
                 higher_is_better=higher_is_better,
                 patience=patience
             )
+
+            # Report status
+            msg = self.performance_tracker.get_status()
+            self.logger.info(msg)
         else:
             self.performance_tracker = None
+            self.logger.info("Early stopping disabled, model performance may degrade over time")
 
         # Resume training if a checkpoint is provided
         if cfg.training.resume_from:
@@ -122,40 +142,54 @@ class ClassificationTrainer:
                 performance_tracker=self.performance_tracker
             )
 
-        # Initialize logger
-        self.logger = logging.getLogger(__name__)
-
-        # Initialize the training sampler's epoch for deterministic shuffling
+        # Set the training sampler's epoch for deterministic shuffling
         self._update_train_sampler()
 
     def train(self) -> None:
-        # Visualize the model architecture in TensorBoard
+        # Visualize model architecture in TensorBoard
         inputs, _ = next(iter(self.train_loader))
         self.train_manager.visualize_model(inputs.to(self.device))
 
-        self.logger.info("Starting training...")
+        self.logger.info("Starting training loop")
         for _ in range(self.num_epochs):
+            # Make sure that sampler of train_loader is in sync with train_manager
+            assert (self.train_manager.epoch == self.train_loader.sampler.epoch)
+
             # Train and validate for one epoch
-            _ = self._train_one_epoch()
+            train_loss, train_mca = self._train_one_epoch()
             val_loss, val_mca = self._validate()
 
             # Track performance metrics
-            if self.is_tracking:
+            if self.tracking_enabled:
                 metrics = {
                     "val_loss": val_loss,
                     "val_mca": val_mca
                 }
                 self.performance_tracker.update(metrics)
 
+            # Report results
+            self.logger.info(
+                "Epoch [%0*d/%d]    Train  Loss: %.4f  MCA: %.2f    Val  Loss: %.4f  MCA: %.2f",
+                len(str(self.train_manager.final_epoch)),
+                self.train_manager.epoch,
+                self.train_manager.final_epoch,
+                train_loss,
+                train_mca,
+                val_loss,
+                val_mca
+            )
+
             # Check for early stopping
             if self.early_stopping:
                 if self.performance_tracker.is_patience_exceeded():
+                    # Close TensorBoard writer and stop training
+                    self.train_manager.close_writer()
                     self.logger.info(
-                        "Performance has not improved for %d consecutive epochs. "
-                        "Stopping training now.",
+                        "Performance has not improved for %d consecutive epochs, "
+                        "stopping training now",
                         self.performance_tracker.patience
                     )
-                    break
+                    return
 
             # Check for new best performance and possibly save checkpoint
             if self.save_best and self.performance_tracker.latest_is_best:
@@ -167,10 +201,12 @@ class ClassificationTrainer:
                     is_best=True
                 )
 
-            # Periodic checkpoint save
-            if self.save_periodically:
+            # Regular checkpoint save
+            if self.save_regularly:
                 if self.train_manager.epoch % self.save_frequency == 0:
-                    best_score = self.performance_tracker.best_score if self.is_tracking else None
+                    best_score = (
+                        self.performance_tracker.best_score if self.tracking_enabled else None
+                    )
                     self.chkpt_manager.save_checkpoint(
                         epoch=self.train_manager.epoch,
                         model=self.model,
@@ -183,8 +219,9 @@ class ClassificationTrainer:
             self._increment_epoch()
             self._update_train_sampler()
 
-        # Close TensorBoard writer once training is finished
+        # Close TensorBoard writer and log training completion
         self.train_manager.close_writer()
+        self.logger.info("Training completed successfully")
 
     def _train_one_epoch(self) -> Tuple[float, float]:
         self.train_manager.prepare_run("train")

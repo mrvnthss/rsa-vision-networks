@@ -16,6 +16,7 @@ class PerformanceTracker:
           of the ``performance_metric`` reflect better performance.
         patience: The number of consecutive epochs without an increase
           in performance to wait before stopping the training process.
+          Set to ``inf`` to disable early stopping.
 
     (Additional) Attributes:
         best_score: The best score of the ``performance_metric``
@@ -64,3 +65,9 @@ class PerformanceTracker:
 
     def is_patience_exceeded(self) -> bool:
         return self.patience_counter >= self.patience
+
+    def get_status(self) -> str:
+        if self.patience == inf:
+            return "Early stopping disabled, model performance may degrade over time"
+        else:
+            return f"Early stopping enabled, patience is set to {self.patience} epochs"

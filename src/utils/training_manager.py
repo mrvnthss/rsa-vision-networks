@@ -36,6 +36,7 @@ class TrainingManager:
         num_epochs: The total number of epochs to train for.
         start_epoch: The starting epoch number.
         epoch: The current epoch number.
+        final_epoch: The final epoch number.
         batch: The current batch number.
         running_samples: The running number of samples processed.
           Resets after each logging interval.
@@ -79,6 +80,7 @@ class TrainingManager:
 
         self.num_epochs = cfg.training.num_epochs
         self.start_epoch = 1
+        self.final_epoch = self.start_epoch + self.num_epochs - 1
         self.epoch = 1
         self.batch = 1
 
@@ -121,11 +123,10 @@ class TrainingManager:
         self.writer.add_graph(self.model, inputs)
 
     def get_pbar(self) -> tqdm:
-        """Decorate a dataloader with a ``tqdm`` progress bar."""
         dataloader = self.train_loader if self.is_training else self.val_loader
-        final_epoch = self.start_epoch + self.num_epochs - 1
-        desc = (f"Epoch [{self.epoch}/{final_epoch}]    "
-                f"{'Train' if self.is_training else 'Val'}")
+        num_digits = len(str(self.final_epoch))
+        mode = "Train" if self.is_training else "Val"
+        desc = f"Epoch [{self.epoch:0{num_digits}d}/{self.final_epoch}]    {mode}"
         return tqdm(dataloader, desc=desc, leave=False, unit="batch")
 
     def update_pbar(self, pbar: tqdm) -> None:
