@@ -16,7 +16,7 @@ class TrainingManager:
 
     Handles auxiliary tasks during training and validation, such as
     switching between training and validation modes, updating the
-    progress bar, logging metrics to TensorBoard, and computing the
+    progress bar, logging data to TensorBoard, and computing the
     compute efficiency.
 
     Params:
@@ -29,11 +29,11 @@ class TrainingManager:
     (Additional) Attributes:
         writer: A SummaryWriter instance to log data for consumption and
           visualization by TensorBoard.
-        tb_updates: The number of times to update TensorBoard per epoch
-          of training/validation.
-        tb_indices: Indices at which to log data for consumption and
-          visualization by TensorBoard
-        tb_tags: Tags for logging metrics to TensorBoard.
+        tb_updates: The number of times per epoch to log data for
+          consumption by TensorBoard.
+        tb_indices: Batch indices at which to log data for consumption
+          by TensorBoard.
+        tb_tags: Tags for logging data to TensorBoard.
         is_training: A flag to indicate whether the model is training.
         num_epochs: The total number of epochs to train for.
         start_epoch: The starting epoch number.
@@ -41,11 +41,14 @@ class TrainingManager:
         epoch: The current epoch number.
         batch: The current batch number.
         running_samples: The running number of samples processed.
-          Resets after each logging interval.
+          Resets after each logging interval specified by
+          ``tb_indices``.
         running_loss: The running loss during training/validation.
-          Resets after each logging interval.
+          Resets after each logging interval specified by
+          ``tb_indices``.
         running_mca: A metric to track the multiclass accuracy during
-          training/validation.  Resets after each logging interval.
+          training/validation.  Resets after each logging interval
+          specified by ``tb_indices``.
         total_samples: The total number of samples processed.  Resets
           after each epoch.
         total_loss: The total loss during training/validation.  Resets
@@ -168,14 +171,14 @@ class TrainingManager:
         else:
             return self.running_mca.compute().item() * 100
 
-    def log_metrics(self) -> None:
-        """Log metrics to TensorBoard at specified intervals."""
+    def log_scalars(self) -> None:
+        """Log scalars to TensorBoard at specified batches."""
         if self.batch in self.tb_indices:
             # Compute global step
             dataloader = self.train_loader if self.is_training else self.val_loader
             global_step = (self.epoch - 1) * len(dataloader) + self.batch
 
-            # Log metrics for consumption by TensorBoard
+            # Log scalars for consumption by TensorBoard
             self.writer.add_scalar(self.tb_tags["loss"], self.compute_loss(), global_step)
             self.writer.add_scalar(self.tb_tags["acc"], self.compute_mca(), global_step)
 
@@ -204,20 +207,20 @@ class TrainingManager:
         self.writer.close()
 
     def _set_tb_indices(self) -> None:
-        """Set indices at which to log metrics to TensorBoard.
+        """Set indices at which to log data to TensorBoard.
 
-        Compute indices at which metrics are to be logged to
-        TensorBoard.  The indices are computed based on the total number
-        of samples in the dataset and the desired number of per-epoch
-        updates specified in the training configuration ``self.cfg``.
+        Compute indices at which data is to be logged to TensorBoard.
+        The indices are computed based on the total number of samples in
+        the dataset and the desired number of per-epoch updates
+        specified in the training configuration ``self.cfg``.
         """
         dataloader = self.train_loader if self.is_training else self.val_loader
         total_samples = len(dataloader.dataset)
-        sample_intervals = torch.linspace(
+        sample_indices = torch.linspace(
             0, total_samples, self.tb_updates + 1
         )
         self.tb_indices = (
-            torch.ceil(sample_intervals / dataloader.batch_size)
+            torch.ceil(sample_indices / dataloader.batch_size)
         ).int().tolist()[1:]
 
     def _get_compute_efficiency(self) -> float:
@@ -225,7 +228,7 @@ class TrainingManager:
 
         Compute efficiency is defined as the percentage of time spent on
         processing the data relative to the total time spent on
-        processing and preparation.  This metric is useful for
+        processing and preparing the data.  This metric is useful for
         identifying bottlenecks in the training loop related to data
         loading.
         """

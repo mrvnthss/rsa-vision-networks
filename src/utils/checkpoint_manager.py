@@ -48,7 +48,7 @@ class CheckpointManager:
             is_best: bool = False,
             delete_previous: bool = False
     ) -> None:
-        # Save model checkpoint
+        # Set up checkpoint
         state = {
             "epoch": epoch,
             "model": model.state_dict(),
@@ -58,24 +58,23 @@ class CheckpointManager:
         }
         chkpt_name = "best_performing.pt" if is_best else f"epoch_{epoch}.pt"
         chkpt_path = self.checkpoint_dir / chkpt_name
-        self.logger.debug(
-            "Saving checkpoint %s in %s",
-            chkpt_name,
-            self.checkpoint_dir
-        )
+
+        # Save checkpoint
+        self.logger.debug("Saving checkpoint %s in %s", chkpt_name, self.checkpoint_dir)
         torch.save(state, chkpt_path)
         self.logger.debug("Checkpoint saved successfully")
 
-        # Delete previous checkpoint and update the latest checkpoint only for periodic saves
         if not is_best:
-            if delete_previous and self.latest_checkpoint:
+            # Delete previous checkpoint
+            if delete_previous and self.latest_checkpoint is not None:
                 self.logger.debug(
                     "Deleting previous checkpoint %s from %s",
                     self.latest_checkpoint.name,
-                    self.checkpoint_dir
+                    self.latest_checkpoint.parent
                 )
                 Path(self.latest_checkpoint).unlink()
                 self.logger.debug("Previous checkpoint deleted successfully")
+            # Update latest checkpoint
             self.latest_checkpoint = chkpt_path
 
     def resume_training(
@@ -104,8 +103,7 @@ class CheckpointManager:
                 self.logger.info("Model state loaded successfully")
             else:
                 raise ValueError(
-                    "Model architecture in configuration does not match model "
-                    "architecture found in checkpoint."
+                    "Model architecture in config does not match architecture found in checkpoint."
                 )
         except ValueError as e:
             self.logger.exception("Error occurred while loading model state: %s", e)
@@ -119,14 +117,13 @@ class CheckpointManager:
                 self.logger.info("Optimizer state loaded successfully")
             else:
                 raise ValueError(
-                    "Optimizer type in configuration does not match "
-                    "optimizer type found in checkpoint."
+                    "Optimizer type in config does not match type found in checkpoint."
                 )
         except ValueError as e:
             self.logger.exception("Error occurred while loading optimizer state: %s", e)
             raise
 
-        # Update training manager's parameters
+        # Set epoch in training manager
         if train_manager:
             train_manager.start_epoch = chkpt["epoch"] + 1
             train_manager.epoch = chkpt["epoch"] + 1
@@ -134,7 +131,7 @@ class CheckpointManager:
         # Update performance tracker's parameters
         if performance_tracker:
             if chkpt["config"].training.performance_metric == self.cfg.training.performance_metric:
-                if chkpt["best_score"]:
+                if chkpt["best_score"] is not None:
                     self.logger.info(
                         "Best score (%s) will be set to %.4f for tracking purposes",
                         self.cfg.training.performance_metric,
@@ -142,16 +139,18 @@ class CheckpointManager:
                     )
                     performance_tracker.best_score = chkpt["best_score"]
                 else:
-                    starting_best_score = "-inf" if performance_tracker.higher_is_better else "inf"
+                    best_score = "-inf" if performance_tracker.higher_is_better else "inf"
                     self.logger.warning(
-                        "No previous best score found in checkpoint, best score will be reset to "
-                        "%s for tracking purposes",
-                        starting_best_score
+                        "No best score found in checkpoint, "
+                        "will be reset to %s for tracking purposes",
+                        best_score
                     )
             else:
+                best_score = "-inf" if performance_tracker.higher_is_better else "inf"
                 self.logger.warning(
                     "Performance metric in config does not match metric found in checkpoint: "
-                    "Previous best score will be discarded, tracking starts from scratch"
+                    "Best score will be set to %s for tracking purposes",
+                    best_score
                 )
 
     def get_status(
@@ -179,7 +178,7 @@ class CheckpointManager:
             )
         else:
             msgs.append(
-                "No additional checkpoints (corresponding to the best model) will be saved"
+                "No additional checkpoints based on performance will be saved"
             )
 
         return msgs

@@ -36,10 +36,9 @@ class PerformanceTracker:
     ) -> None:
         self.metrics = metrics
         self.performance_metric = performance_metric
+        assert self.performance_metric in self.metrics
         self.higher_is_better = higher_is_better
         self.patience = patience
-
-        assert self.performance_metric in self.metrics
 
         self.best_score = -inf if self.higher_is_better else inf
         self.latest_is_best = False
@@ -49,6 +48,7 @@ class PerformanceTracker:
             self,
             metrics: Dict[str, float]
     ) -> None:
+        assert self.performance_metric in metrics
         self.metrics = metrics
         latest_score = self.metrics[self.performance_metric]
 
