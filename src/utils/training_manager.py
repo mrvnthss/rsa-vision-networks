@@ -27,16 +27,18 @@ class TrainingManager:
         cfg: The training configuration.
 
     (Additional) Attributes:
-        writer: A SummaryWriter instance to log metrics to TensorBoard.
-        log_frequency: The frequency at which to log metrics to
-          TensorBoard.
-        log_indices: Indices at which to log metrics to TensorBoard.
+        writer: A SummaryWriter instance to log data for consumption and
+          visualization by TensorBoard.
+        tb_updates: The number of times to update TensorBoard per epoch
+          of training/validation.
+        tb_indices: Indices at which to log data for consumption and
+          visualization by TensorBoard
         tb_tags: Tags for logging metrics to TensorBoard.
         is_training: A flag to indicate whether the model is training.
         num_epochs: The total number of epochs to train for.
         start_epoch: The starting epoch number.
-        epoch: The current epoch number.
         final_epoch: The final epoch number.
+        epoch: The current epoch number.
         batch: The current batch number.
         running_samples: The running number of samples processed.
           Resets after each logging interval.
@@ -72,8 +74,8 @@ class TrainingManager:
         self.device = device
 
         self.writer = SummaryWriter(cfg.paths.logs)
-        self.log_frequency = cfg.training.log_frequency
-        self.log_indices = []
+        self.tb_updates = cfg.training.tb_updates
+        self.tb_indices = []
         self.tb_tags = {}
 
         self.is_training = True
@@ -113,7 +115,7 @@ class TrainingManager:
         self.model.train(self.is_training)
         self.batch = 1
         self._reset_metrics(total=True)
-        self._set_log_indices()
+        self._set_tb_indices()
         self.tb_tags = {
             "loss": f"loss/{'train' if self.is_training else 'val'}",
             "acc": f"acc/{'train' if self.is_training else 'val'}"
@@ -168,12 +170,12 @@ class TrainingManager:
 
     def log_metrics(self) -> None:
         """Log metrics to TensorBoard at specified intervals."""
-        if self.batch in self.log_indices:
+        if self.batch in self.tb_indices:
             # Compute global step
             dataloader = self.train_loader if self.is_training else self.val_loader
             global_step = (self.epoch - 1) * len(dataloader) + self.batch
 
-            # Log metrics to TensorBoard
+            # Log metrics for consumption by TensorBoard
             self.writer.add_scalar(self.tb_tags["loss"], self.compute_loss(), global_step)
             self.writer.add_scalar(self.tb_tags["acc"], self.compute_mca(), global_step)
 
@@ -201,20 +203,20 @@ class TrainingManager:
     def close_writer(self) -> None:
         self.writer.close()
 
-    def _set_log_indices(self) -> None:
+    def _set_tb_indices(self) -> None:
         """Set indices at which to log metrics to TensorBoard.
 
         Compute indices at which metrics are to be logged to
         TensorBoard.  The indices are computed based on the total number
-        of samples in the dataset and the logging frequency specified in
-        the training configuration ``self.cfg``.
+        of samples in the dataset and the desired number of per-epoch
+        updates specified in the training configuration ``self.cfg``.
         """
         dataloader = self.train_loader if self.is_training else self.val_loader
         total_samples = len(dataloader.dataset)
         sample_intervals = torch.linspace(
-            0, total_samples, self.log_frequency + 1
+            0, total_samples, self.tb_updates + 1
         )
-        self.log_indices = (
+        self.tb_indices = (
             torch.ceil(sample_intervals / dataloader.batch_size)
         ).int().tolist()[1:]
 

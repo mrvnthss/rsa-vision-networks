@@ -20,7 +20,7 @@ training:
   seed: 42
   resume_from: null
   num_epochs: 100
-  log_frequency: 10
+  tb_updates: 10
   performance_metric: val_loss
 checkpoints:
   checkpoint_dir: ../checkpoints/${run}
