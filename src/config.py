@@ -102,3 +102,11 @@ class ClassifierConf(DictConfig):
     dataloader: DataloaderConf
     training: TrainingConf
     checkpoints: CheckpointsConf
+
+
+@dataclass
+class ComputeStatsConf(DictConfig):
+    model: ModelConf
+    dataset: DatasetConf
+    paths: PathsConf
+    dataloader: DataloaderConf

@@ -16,11 +16,13 @@ Typical usage example:
 from typing import Tuple
 
 import hydra
+from hydra.core.config_store import ConfigStore
 from hydra.utils import instantiate
 import numpy as np
-from omegaconf import DictConfig
 import torch
 from tqdm import tqdm
+
+from src.config import ComputeStatsConf
 
 
 def compute_dataset_stats(
@@ -74,8 +76,12 @@ def compute_dataset_stats(
         return mean.numpy(), std.numpy()
 
 
+cs = ConfigStore.instance()
+cs.store(name="compute_stats_conf", node=ComputeStatsConf)
+
+
 @hydra.main(version_base=None, config_path="conf", config_name="compute_dataset_stats")
-def main(cfg: DictConfig) -> None:
+def main(cfg: ComputeStatsConf) -> None:
     # Prepare dataset
     dataset = instantiate(cfg.dataset.train_set)
 
