@@ -14,19 +14,23 @@ Typical usage example:
 import logging
 
 import hydra
+from hydra.core.config_store import ConfigStore
 from hydra.utils import instantiate
-from omegaconf import DictConfig
 import torch
 
+from src.config import ClassifierConf
 from src.training import ClassificationTrainer
 from src.utils import BalancedSampler
 
 
 logger = logging.getLogger(__name__)
 
+cs = ConfigStore.instance()
+cs.store(name="classifier_conf", node=ClassifierConf)
+
 
 @hydra.main(version_base=None, config_path="conf", config_name="train_classifier")
-def main(cfg: DictConfig) -> None:
+def main(cfg: ClassifierConf) -> None:
     # Set random seeds for reproducibility
     torch.manual_seed(cfg.training.seed)
     torch.cuda.manual_seed_all(cfg.training.seed)
@@ -80,7 +84,7 @@ def main(cfg: DictConfig) -> None:
     model = instantiate(cfg.model.architecture).to(device)
     loss_fn = instantiate(cfg.loss)
     optimizer = instantiate(
-        cfg.optimizer.settings,
+        cfg.optimizer,
         model.parameters()
     )
 

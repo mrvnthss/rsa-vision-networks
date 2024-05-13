@@ -1,5 +1,4 @@
 # @package _global_
 
 optimizer:
-  settings:
-    lr: 0.01
+  lr: 0.01

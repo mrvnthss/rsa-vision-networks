@@ -112,13 +112,15 @@ class CheckpointManager:
         # Load optimizer state
         self.logger.info("Loading optimizer state")
         try:
-            if chkpt["config"].optimizer.type == self.cfg.optimizer.type:
-                optimizer.load_state_dict(chkpt["optimizer"])
-                self.logger.info("Optimizer state loaded successfully")
-            else:
-                raise ValueError(
-                    "Optimizer type in config does not match type found in checkpoint."
-                )
+            # Make sure that optimizer parameters match
+            for k in chkpt["config"].optimizer:
+                if chkpt["config"].optimizer[k] != self.cfg.optimizer[k]:
+                    raise ValueError(
+                        "Optimizer in config does not match configuration found in checkpoint."
+                    )
+
+            optimizer.load_state_dict(chkpt["optimizer"])
+            self.logger.info("Optimizer state loaded successfully")
         except ValueError as e:
             self.logger.exception("Error occurred while loading optimizer state: %s", e)
             raise
