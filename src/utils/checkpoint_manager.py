@@ -7,7 +7,7 @@ from typing import Optional, List
 
 from omegaconf import DictConfig
 import torch
-from torch import nn
+import torch.nn as nn
 
 from src.utils.performance_tracker import PerformanceTracker
 from src.utils.training_manager import TrainingManager

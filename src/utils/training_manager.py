@@ -5,7 +5,7 @@ import time
 
 from omegaconf import DictConfig
 import torch
-from torch import nn
+import torch.nn as nn
 from torch.utils.tensorboard import SummaryWriter
 from torchmetrics.classification import MulticlassAccuracy
 from tqdm import tqdm

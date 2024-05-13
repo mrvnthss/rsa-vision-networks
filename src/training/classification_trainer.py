@@ -7,7 +7,7 @@ from typing import Tuple
 from numpy import inf
 from omegaconf import DictConfig
 import torch
-from torch import nn
+import torch.nn as nn
 
 from src.utils import BalancedSampler, CheckpointManager, PerformanceTracker, TrainingManager
 
@@ -283,7 +283,7 @@ class ClassificationTrainer:
                 self.train_manager.update_pbar(pbar)
 
                 # Add metrics to TensorBoard and increment batch index
-                self.train_manager.log_metrics()
+                self.train_manager.log_scalars()
                 self.train_manager.increment_batch()
 
                 # Reset starting timestamp for next mini-batch
