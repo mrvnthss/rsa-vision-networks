@@ -13,7 +13,7 @@ numpy = "^1.26.4"
 # https://github.com/tensorflow/tensorboard/issues/6808
 # https://github.com/tensorflow/tensorboard/commit/e795312f70537cb9c9ab4bd2a08a03e77f0356a5
 protobuf = ">=3.19.6,!=4.24.0,<5.0.0"
-python = "^3.11"
+python = "3.12.2"
 scipy = "^1.13.0"
 tbparse = "^0.0.8"
 tensorboard = "^2.16.2"
