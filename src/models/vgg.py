@@ -3,6 +3,7 @@
 
 import torch
 import torch.nn as nn
+from torchvision import models
 
 # VGG configurations as described in Simonyan and Zisserman (2015)
 #   https://doi.org/10.48550/arXiv.1409.1556
@@ -34,7 +35,8 @@ class VGG(nn.Module):
     def __init__(
             self,
             num_layers: int,
-            num_classes: int = 1000
+            num_classes: int = 1000,
+            pretrained: bool = False
     ) -> None:
         super().__init__()
 
@@ -52,11 +54,8 @@ class VGG(nn.Module):
             nn.Linear(4096, num_classes),
         )
 
-        # Initialize weights based on remarks in Section 3.1 of Simonyan and Zisserman (2015)
-        for m in self.modules():
-            if isinstance(m, nn.Conv2d):
-                nn.init.xavier_normal_(m.weight)  # Glorot & Bengio (2010)
-                nn.init.zeros_(m.bias)  # "The biases were initialized with zero."
+        # Initialize weights
+        self._initialize_weights(num_layers, num_classes, pretrained)
 
     def _make_layers(self, num_layers: int) -> None:
         layers = []
@@ -69,6 +68,45 @@ class VGG(nn.Module):
                 layers += [conv2d, nn.ReLU(inplace=True)]
                 in_channels = v
         self.features = nn.Sequential(*layers)
+
+    def _initialize_weights(
+            self,
+            num_layers: int,
+            num_classes: int,
+            pretrained: bool
+    ) -> None:
+        if pretrained:
+            # Load weights from TorchVision
+            weights = models.get_weight(f"VGG{num_layers}_Weights.IMAGENET1K_V1")
+            state_dict = weights.get_state_dict()
+
+            # Delete weights of the last FC layer from `state_dict` if num_classes != 1000
+            if num_classes != 1000:
+                state_dict.pop("classifier.6.weight")
+                state_dict.pop("classifier.6.bias")
+
+            # Load weights
+            missing_keys, unexpected_keys = self.load_state_dict(state_dict, strict=False)
+
+            # Make sure that loading was successful
+            assert len(unexpected_keys) == 0
+            if num_classes != 1000:
+                assert missing_keys == ["classifier.6.weight", "classifier.6.bias"]
+            else:
+                assert len(missing_keys) == 0
+
+            # Initialize the weights of the last FC layer
+            if num_classes != 1000:
+                nn.init.normal_(self.classifier[6].weight, 0, 0.01)
+                nn.init.zeros_(self.classifier[6].bias)
+        else:
+            for m in self.modules():
+                if isinstance(m, nn.Conv2d):
+                    nn.init.kaiming_normal_(m.weight, mode="fan_out", nonlinearity="relu")
+                    nn.init.zeros_(m.bias)
+                elif isinstance(m, nn.Linear):
+                    nn.init.normal_(m.weight, 0, 0.01)
+                    nn.init.zeros_(m.bias)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         x = self.features(x)

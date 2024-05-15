@@ -8,7 +8,9 @@ from omegaconf import DictConfig, MISSING
 @dataclass
 class ArchConf:
     _target_: str = MISSING
+    num_layers: int = MISSING
     num_classes: int = MISSING
+    pretrained: bool = MISSING
 
 
 @dataclass

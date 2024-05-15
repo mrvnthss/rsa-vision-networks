@@ -3,10 +3,11 @@ architecture:
   _target_: models.VGG
   num_layers: 13
   num_classes: ${dataset.num_classes}
+  pretrained: False
+# Cf. https://pytorch.org/vision/stable/models/generated/torchvision.models.vgg13.html
 norm_constants:
-  # Computed on ImageNet dataset (training set, batch size 32)
-  mean: [0.484477, 0.454096, 0.402564]
-  std: [0.272381, 0.263696, 0.276105]
+  mean: [0.485, 0.456, 0.406]
+  std: [0.229, 0.224, 0.225]
 preprocessing:
   _target_: torchvision.transforms.v2.Compose
   transforms:
