@@ -1,5 +1,16 @@
 name: imagenet
 num_classes: 1000
+is_grayscale: False
+norm_constants:
+  # https://pytorch.org/vision/stable/models/generated/torchvision.models.alexnet.html
+  mean: [0.485, 0.456, 0.406]
+  std: [0.229, 0.224, 0.225]
+#  # Computed on training set without preprocessing
+#  mean: [0.4811, 0.4575, 0.4078]
+#  std: [0.2334, 0.2294, 0.2302]
+#  # Computed on training set with preprocessing, i.e., Resize(256) --> CenterCrop(224)
+#  mean: [0.4845, 0.4541, 0.4026]
+#  std: [0.2247, 0.2202, 0.2195]
 train_set:
   _target_: datasets.ImageNet
   root: ${paths.data}

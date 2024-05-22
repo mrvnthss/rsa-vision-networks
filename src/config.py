@@ -23,7 +23,6 @@ class ComposeConf:
 class ModelConf:
     name: str = MISSING
     architecture: ArchConf = MISSING
-    norm_constants: Dict[str, List[float]] = MISSING
     preprocessing: ComposeConf = MISSING
 
 
@@ -39,6 +38,8 @@ class VisionDatasetConf:
 class DatasetConf:
     name: str = MISSING
     num_classes: int = MISSING
+    is_grayscale: bool = MISSING
+    norm_constants: Dict[str, List[float]] = MISSING
     train_set: VisionDatasetConf = MISSING
     val_set: VisionDatasetConf = MISSING
 
@@ -108,7 +109,5 @@ class ClassifierConf(DictConfig):
 
 @dataclass
 class ComputeStatsConf(DictConfig):
-    model: ModelConf
     dataset: DatasetConf
     paths: PathsConf
-    dataloader: DataloaderConf

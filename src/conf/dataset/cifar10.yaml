@@ -1,5 +1,10 @@
 name: cifar10
 num_classes: 10
+is_grayscale: False
+norm_constants:
+  # Computed on training set
+  mean: [0.4910, 0.4819, 0.4465]
+  std: [0.2021, 0.1993, 0.2009]
 train_set:
   _target_: datasets.CIFAR10
   root: ${paths.data}

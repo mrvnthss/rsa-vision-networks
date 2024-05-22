@@ -1,7 +1,0 @@
-# @package _global_
-
-model:
-  norm_constants:
-    # Computed on CIFAR10 dataset (training set, batch size 32)
-    mean: [0.48869, 0.475378, 0.439596]
-    std: [0.236056, 0.232438, 0.249809]

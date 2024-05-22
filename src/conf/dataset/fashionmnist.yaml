@@ -1,5 +1,10 @@
 name: fashionmnist
 num_classes: 10
+is_grayscale: True
+norm_constants:
+  # Computed on training set
+  mean: [0.2860]
+  std: [0.3205]
 train_set:
   _target_: datasets.FashionMNIST
   root: ${paths.data}
