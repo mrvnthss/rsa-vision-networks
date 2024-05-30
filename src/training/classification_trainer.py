@@ -1,4 +1,4 @@
-"""A class to train a model for image classification in PyTorch."""
+"""A class to train a network for image classification in PyTorch."""
 
 
 import logging
@@ -7,47 +7,46 @@ from typing import Tuple
 from numpy import inf
 from omegaconf import DictConfig
 import torch
-import torch.nn as nn
+from torch import nn
 
 from src.utils import BalancedSampler, CheckpointManager, PerformanceTracker, TrainingManager
 
 
 class ClassificationTrainer:
-    """A trainer to train a classification model in PyTorch.
+    """A trainer to train a classification network in PyTorch.
 
-    Params:
-        model: The model to be trained.
-        train_loader: The dataloader providing training samples.
-        val_loader: The dataloader providing validation samples.
-        loss_fn: The loss function used for training.
-        optimizer: The optimizer used for training.
-        device: The device to train on.
-        cfg: The training configuration.
-
-    (Additional) Attributes:
-        num_epochs: The total number of epochs to train for.
-        save_periodically: Whether to periodically save model
-          checkpoints.
-        save_frequency: The frequency at which to periodically save
-          model checkpoints.
-        delete_previous: Whether to delete previous checkpoints when
-          saving new ones.  Only applies to periodically saved
-          checkpoints.
-        save_best: Whether to continuously save the best performing
-          model.
-        saving_enabled: Whether to save model checkpoints at all.
-        early_stopping: Whether to perform early stopping.
-        tracking_enabled: Whether to track model performance for saving
-          purposes or early stopping.
-        train_manager: A TrainingManager instance to perform auxiliary
-          tasks during training and validation.
+    Attributes:
         chkpt_manager: A CheckpointManager instance to save model
           checkpoints.  Only initialized if saving is enabled or
           training is to be resumed from a checkpoint, else set to None.
+        delete_previous: Whether to delete previous checkpoints when
+          saving new ones.  Only applies to periodically saved
+          checkpoints.
+        device: The device to train on.
+        early_stopping: Whether to perform early stopping.
+        logger: A logger instance to record logs.
+        loss_fn: The loss function used for training.
+        model: The model to be trained.
+        num_epochs: The total number of epochs to train for.
+        optimizer: The optimizer used for training.
         performance_tracker: A PerformanceTracker instance to monitor
           model performance and handle early stopping.  Only initialized
           if tracking is enabled, else set to None.
-        logger: A logger instance to record logs.
+        save_best: Whether to save the best performing model.
+        save_frequency: The frequency at which to periodically save
+          model checkpoints.
+        save_periodically: Whether to periodically save model
+          checkpoints.
+        saving_enabled: Whether to save model checkpoints at all.
+        train_manager: A TrainingManager instance to perform auxiliary
+          tasks during training and validation.
+        tracking_enabled: Whether to track model performance for saving
+          purposes or early stopping.
+        train_loader: The dataloader providing training samples.
+        val_loader: The dataloader providing validation samples.
+
+    Methods:
+        train(): Train the model for a specified number of epochs.
     """
 
     def __init__(
@@ -60,6 +59,18 @@ class ClassificationTrainer:
             device: torch.device,
             cfg: DictConfig
     ) -> None:
+        """Initialize the trainer with the provided configuration.
+
+        Args:
+            model: The model to be trained.
+            train_loader: The dataloader providing training samples.
+            val_loader: The dataloader providing validation samples.
+            loss_fn: The loss function used for training.
+            optimizer: The optimizer used for training.
+            device: The device to train on.
+            cfg: The training configuration.
+        """
+
         self.model = model
         self.train_loader = train_loader
         self.val_loader = val_loader
@@ -69,11 +80,11 @@ class ClassificationTrainer:
 
         self.num_epochs = cfg.training.num_epochs
 
-        self.save_regularly = cfg.checkpoints.save_frequency > 0
+        self.save_periodically = cfg.checkpoints.save_frequency > 0
         self.save_frequency = cfg.checkpoints.save_frequency
         self.delete_previous = cfg.checkpoints.delete_previous
         self.save_best = cfg.checkpoints.save_best
-        self.saving_enabled = self.save_regularly or self.save_best
+        self.saving_enabled = self.save_periodically or self.save_best
 
         self.early_stopping = cfg.checkpoints.patience > 0
         self.tracking_enabled = self.save_best or self.early_stopping
@@ -99,7 +110,7 @@ class ClassificationTrainer:
             )
 
             # Report status
-            msgs = self.chkpt_manager.get_status(self.save_regularly, self.save_best)
+            msgs = self.chkpt_manager.get_status(self.save_periodically, self.save_best)
             for msg in msgs:
                 self.logger.info(msg)
         else:
@@ -146,6 +157,8 @@ class ClassificationTrainer:
         self._update_train_sampler()
 
     def train(self) -> None:
+        """Train the model for a specified number of epochs."""
+
         # Visualize model architecture in TensorBoard
         inputs, _ = next(iter(self.train_loader))
         self.train_manager.visualize_model(inputs.to(self.device))
@@ -153,7 +166,7 @@ class ClassificationTrainer:
         self.logger.info("Starting training loop")
         for _ in range(self.num_epochs):
             # Make sure that sampler of train_loader is in sync with train_manager
-            assert (self.train_manager.epoch == self.train_loader.sampler.epoch)
+            assert self.train_manager.epoch == self.train_loader.sampler.epoch
 
             # Train and validate for one epoch
             train_loss, train_mca = self._train_one_epoch()
@@ -201,8 +214,8 @@ class ClassificationTrainer:
                     is_best=True
                 )
 
-            # Regular checkpoint save
-            if self.save_regularly:
+            # Periodic checkpoint save
+            if self.save_periodically:
                 if self.train_manager.epoch % self.save_frequency == 0:
                     best_score = (
                         self.performance_tracker.best_score if self.tracking_enabled else None
@@ -224,11 +237,25 @@ class ClassificationTrainer:
         self.logger.info("Training completed successfully")
 
     def _train_one_epoch(self) -> Tuple[float, float]:
+        """Train the model on the training set for one epoch.
+
+        Returns:
+            The average loss and multiclass accuracy on the training
+              set.
+        """
+
         self.train_manager.prepare_run("train")
         train_loss, train_mca = self._run_epoch()
         return train_loss, train_mca
 
     def _validate(self) -> Tuple[float, float]:
+        """Validate the model on the validation set.
+
+        Returns:
+            The average loss and multiclass accuracy on the validation
+              set.
+        """
+
         self.train_manager.prepare_run("validate")
         val_loss, val_mca = self._run_epoch()
         return val_loss, val_mca
@@ -244,15 +271,17 @@ class ClassificationTrainer:
         by the TrainingManager instance ``self.train_manager``.
 
         Returns:
-            The average loss and multiclass accuracy for the epoch.
+            The average loss and multiclass accuracy on the training or
+              validation set.
 
         Note:
-            This method modifies the model in place when training.
+            This method modifies the network in place when training.
         """
+
         pbar = self.train_manager.get_pbar()
 
         # Loop over mini-batches
-        with (torch.set_grad_enabled(self.train_manager.is_training)):
+        with torch.set_grad_enabled(self.train_manager.is_training):
             # Initial timestamp
             self.train_manager.take_time("start")
 
@@ -302,9 +331,12 @@ class ClassificationTrainer:
         return loss, mca
 
     def _increment_epoch(self) -> None:
+        """Increment the training manager's epoch counter."""
+
         self.train_manager.increment_epoch()
 
     def _update_train_sampler(self) -> None:
         """Update the sampler's epoch for deterministic shuffling."""
+
         if isinstance(self.train_loader.sampler, BalancedSampler):
             self.train_loader.sampler.set_epoch(self.train_manager.epoch)
