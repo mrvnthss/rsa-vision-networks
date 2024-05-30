@@ -5,7 +5,7 @@ defaults:
   - _self_
 paths:
   data: ../data
-# NOTE: The following 'hydra' settings disable logging, as this is irrelevant for the task at hand.
+# NOTE: The following "hydra" settings disable logging, as this is irrelevant for the task at hand.
 #       Do not change these settings.
 hydra:
   output_subdir: null
