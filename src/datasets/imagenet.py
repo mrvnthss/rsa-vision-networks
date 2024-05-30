@@ -38,11 +38,6 @@ class ImageNet(ImageFolder):
         wnids: The WordNet IDs of the dataset classes.
         wnid_to_idx: A dictionary mapping WordNet IDs to indices.
 
-    Properties:
-        processed_folder: The path of the folder containing the
-          processed data.
-        raw_folder: The path of the folder containing the raw data.
-
     Note:
         Prior to using this class, the ImageNet 2012 classification
         dataset has to be downloaded from the official website
@@ -222,12 +217,12 @@ class ImageNet(ImageFolder):
 
     @property
     def raw_folder(self) -> str:
-        """Return the path of the raw data folder."""
+        """The path of the raw data folder."""
 
         return str(Path(self.data_dir, "raw", self.__class__.__name__))
 
     @property
     def processed_folder(self) -> str:
-        """Return the path of the processed data folder."""
+        """The path of the processed data folder."""
 
         return str(Path(self.data_dir, "processed", self.__class__.__name__))

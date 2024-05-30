@@ -32,11 +32,6 @@ class FashionMNIST(ImageFolder):
         split_dir: The directory containing the dataset split.
         target_transform: A transform to modify targets (labels).
         transform: A transform to modify features (images).
-
-    Properties:
-        processed_folder: The path of the folder containing the
-          processed data.
-        raw_folder: The path of the folder containing the raw data.
     """
 
     mirror = "http://fashion-mnist.s3-website.eu-central-1.amazonaws.com/"
@@ -169,12 +164,12 @@ class FashionMNIST(ImageFolder):
 
     @property
     def raw_folder(self) -> str:
-        """Return the path of the raw data folder."""
+        """The path of the raw data folder."""
 
         return str(Path(self.data_dir, "raw", self.__class__.__name__))
 
     @property
     def processed_folder(self) -> str:
-        """Return the path of the processed data folder."""
+        """The path of the processed data folder."""
 
         return str(Path(self.data_dir, "processed", self.__class__.__name__))
