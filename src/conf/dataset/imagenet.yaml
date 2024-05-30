@@ -13,11 +13,11 @@ norm_constants:
 #  std: [0.2247, 0.2202, 0.2195]
 train_set:
   _target_: datasets.ImageNet
-  root: ${paths.data}
+  data_dir: ${paths.data}
   train: True
   transform: ${model.preprocessing}
 val_set:
   _target_: datasets.ImageNet
-  root: ${paths.data}
+  data_dir: ${paths.data}
   train: False
   transform: ${model.preprocessing}

@@ -7,11 +7,11 @@ norm_constants:
   std: [0.3205]
 train_set:
   _target_: datasets.FashionMNIST
-  root: ${paths.data}
+  data_dir: ${paths.data}
   train: True
   transform: ${model.preprocessing}
 val_set:
   _target_: datasets.FashionMNIST
-  root: ${paths.data}
+  data_dir: ${paths.data}
   train: False
   transform: ${model.preprocessing}

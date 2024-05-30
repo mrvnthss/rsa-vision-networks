@@ -21,16 +21,24 @@ class CIFAR10(ImageFolder):
     from 10 classes, with 6,000 images per class.  There are 50,000
     training samples and 10,000 test samples.
 
-    Params:
-        root: The root directory of the dataset.
-        train: If True, loads the training split, else the test split.
-        transform: A transform to modify features (images).
-        target_transform: A transform to modify targets (labels).
-
-    (Additional) Attributes:
+    Attributes:
+        classes: The class labels of the dataset.
+        data_dir: The path of the "data/" directory containing all
+          datasets.
+        logger: A logger instance to record logs.
+        mirror: The URL mirror to download the dataset from.
+        resource: The name and MD5 hash of the dataset archive.
         split: The dataset split to load, either "train" or "val".
         split_dir: The directory containing the dataset split.
-        logger: A logger instance to record logs.
+        target_transform: A transform to modify targets (labels).
+        test_batches: The names and MD5 hashes of the test batch.
+        train_batches: The names and MD5 hashes of the training batches.
+        transform: A transform to modify features (images).
+
+    Properties:
+        processed_folder: The path of the folder containing the
+          processed data.
+        raw_folder: The path of the folder containing the raw data.
     """
 
     mirror = "https://www.cs.toronto.edu/~kriz/"
@@ -64,12 +72,23 @@ class CIFAR10(ImageFolder):
 
     def __init__(
             self,
-            root: str,
+            data_dir: str,
             train: bool = True,
             transform: Optional[Callable] = None,
             target_transform: Optional[Callable] = None,
     ) -> None:
-        self.root = root
+        """Initialize the CIFAR10 dataset.
+
+        Args:
+            data_dir: The path of the "data/" directory containing all
+              datasets.
+            train: Whether to load the training split (True) or the
+              validation split (False).
+            transform: A transform to modify features (images).
+            target_transform: A transform to modify targets (labels).
+        """
+
+        self.data_dir = data_dir
         self.transform = transform
         self.target_transform = target_transform
 
@@ -85,17 +104,14 @@ class CIFAR10(ImageFolder):
             self._parse_binary()
 
         super().__init__(
-            str(self.split_dir),
+            root=str(self.split_dir),
             transform=self.transform,
             target_transform=self.target_transform
         )
 
-        # NOTE: Calling the super constructor leads to the self.root attribute being overwritten
-        #       and set to the directory containing the processed data (i.e., the images arranged
-        #       in subdirectories by class). Here, we reset it to the original root directory.
-        self.root = root
-
     def _is_downloaded(self) -> bool:
+        """Check if the dataset has been downloaded."""
+
         for filename, md5 in self.train_batches + self.test_batches:
             filepath = str(Path(self.raw_folder) / filename)
             if not check_integrity(filepath, md5):
@@ -103,14 +119,20 @@ class CIFAR10(ImageFolder):
         return True
 
     def _download(self) -> None:
+        """Download the dataset."""
+
         Path(self.raw_folder).mkdir(parents=True, exist_ok=True)
 
         # Download files
         filename, md5 = self.resource
         url = f"{self.mirror}{filename}"
         download_and_extract_archive(
-            url, download_root=self.raw_folder, extract_root=self.raw_folder,
-            filename=filename, md5=md5, remove_finished=True
+            url,
+            download_root=self.raw_folder,
+            extract_root=self.raw_folder,
+            filename=filename,
+            md5=md5,
+            remove_finished=True
         )
 
         # Remove intermediate "cifar-10-batches-py" directory
@@ -137,6 +159,8 @@ class CIFAR10(ImageFolder):
                 filepath.unlink()
 
     def _is_parsed(self) -> bool:
+        """Check if binary files have been parsed."""
+
         for img_class in self.classes:
             class_dir = self.split_dir / img_class
             if not class_dir.exists() or not any(class_dir.iterdir()):
@@ -144,6 +168,8 @@ class CIFAR10(ImageFolder):
         return True
 
     def _parse_binary(self) -> None:
+        """Parse binary files and save as PNG images."""
+
         # Create class subdirectories
         for img_class in self.classes:
             (self.split_dir / img_class).mkdir(parents=True, exist_ok=True)
@@ -159,7 +185,7 @@ class CIFAR10(ImageFolder):
             )
             with open(filepath, "rb") as f:
                 entry = pickle.load(f, encoding="latin1")
-                data = np.array(entry["data"]).reshape(-1, 3, 32, 32).transpose((0, 2, 3, 1))
+                data = np.array(entry["data"]).reshape(-1, 3, 32, 32).transpose(0, 2, 3, 1)
                 targets = entry["labels"]
 
             for idx, (img, target) in enumerate(zip(data, targets)):
@@ -168,8 +194,12 @@ class CIFAR10(ImageFolder):
 
     @property
     def raw_folder(self) -> str:
-        return str(Path(self.root, "raw", self.__class__.__name__))
+        """Return the path of the raw data folder."""
+
+        return str(Path(self.data_dir, "raw", self.__class__.__name__))
 
     @property
     def processed_folder(self) -> str:
-        return str(Path(self.root, "processed", self.__class__.__name__))
+        """Return the path of the processed data folder."""
+
+        return str(Path(self.data_dir, "processed", self.__class__.__name__))

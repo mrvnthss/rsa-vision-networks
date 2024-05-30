@@ -7,11 +7,11 @@ norm_constants:
   std: [0.2021, 0.1993, 0.2009]
 train_set:
   _target_: datasets.CIFAR10
-  root: ${paths.data}
+  data_dir: ${paths.data}
   train: True
   transform: ${model.preprocessing}
 val_set:
   _target_: datasets.CIFAR10
-  root: ${paths.data}
+  data_dir: ${paths.data}
   train: False
   transform: ${model.preprocessing}

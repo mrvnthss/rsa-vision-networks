@@ -22,23 +22,32 @@ class ImageNet(ImageFolder):
     1,300 images per class in the training split and 50 images per class
     in the validation split.
 
-    Params:
-        root: The root directory of the dataset.
-        train: If True, loads the training split, else the validation
-          split.
-        transform: A transform to modify features (images).
-        target_transform: A transform to modify targets (labels).
-
-    (Additional) Attributes:
+    Attributes:
+        classes: The class labels of the dataset.
+        class_to_idx: A dictionary mapping class labels to indices.
+        data_dir: The path of the "data/" directory containing all
+          datasets.
+        logger: A logger instance to record logs.
+        meta_data: The name of the meta file.
+        raw_data: A dictionary containing the names and MD5 hashes of
+          the raw data archives.
         split: The dataset split to load, either "train" or "val".
         split_dir: The directory containing the dataset split.
-        logger: A logger instance to record logs.
+        target_transform: A transform to modify targets (labels).
+        transform: A transform to modify features (images).
+        wnids: The WordNet IDs of the dataset classes.
+        wnid_to_idx: A dictionary mapping WordNet IDs to indices.
+
+    Properties:
+        processed_folder: The path of the folder containing the
+          processed data.
+        raw_folder: The path of the folder containing the raw data.
 
     Note:
         Prior to using this class, the ImageNet 2012 classification
         dataset has to be downloaded from the official website
         (https://image-net.org/challenges/LSVRC/2012/2012-downloads.php)
-        and placed in the 'data/raw/ImageNet/' directory.
+        and placed in the "data/raw/ImageNet/" directory.
     """
 
     raw_data = {
@@ -51,12 +60,23 @@ class ImageNet(ImageFolder):
 
     def __init__(
             self,
-            root: str,
+            data_dir: str,
             train: bool = True,
             transform: Optional[Callable] = None,
             target_transform: Optional[Callable] = None
     ) -> None:
-        self.root = root
+        """Initialize the ImageNet dataset.
+
+        Args:
+            data_dir: The path of the "data/" directory containing all
+              datasets.
+            train: Whether to load the training split (True) or the
+              validation split (False).
+            transform: A transform to modify features (images).
+            target_transform: A transform to modify targets (labels).
+        """
+
+        self.data_dir = data_dir
         self.transform = transform
         self.target_transform = target_transform
 
@@ -68,26 +88,30 @@ class ImageNet(ImageFolder):
         if not self._is_parsed():
             self._parse_archive()
 
-        # Load dictionary mapping WordNet IDs to ImageNet classes
-        wnid_to_classes = load_meta_file(self.raw_folder)[0]
-
         super().__init__(
-            str(self.split_dir),
+            root=str(self.split_dir),
             transform=self.transform,
             target_transform=self.target_transform
         )
-        self.root = root
 
-        # Replace WordNet IDs with ImageNet class labels
+        # The "classes" attribute of the DatasetFolder class (parent class of ImageFolder) uses the
+        # names of the subdirectories in the dataset "root" directory as class names.  For
+        # ImageNet, these are the WordNet IDs of the classes.  We now replace these WordNet IDs
+        # with the ImageNet class labels.
+        wnid_to_classes = load_meta_file(self.raw_folder)[0]
         self.wnids = self.classes
         self.wnid_to_idx = self.class_to_idx
         self.classes = [wnid_to_classes[wnid] for wnid in self.wnids]
         self.class_to_idx = {cls: idx for idx, clss in enumerate(self.classes) for cls in clss}
 
     def _is_parsed(self) -> bool:
+        """Check if dataset archive has been parsed."""
+
         return self.split_dir.exists()
 
     def _parse_archive(self) -> None:
+        """Parse the dataset archive and extract images."""
+
         # Make sure that meta file ("meta.bin") is available
         meta_fpath = str(Path(self.raw_folder) / self.meta_data)
         if not check_integrity(meta_fpath):
@@ -104,7 +128,13 @@ class ImageNet(ImageFolder):
         else:
             self._parse_val_archive()
 
-    def _verify_archive(self, file: str, md5: str) -> None:
+    def _verify_archive(
+            self,
+            file: str,
+            md5: str
+    ) -> None:
+        """Verify the presence and integrity of an archive file."""
+
         if not check_integrity(str(Path(self.raw_folder) / file), md5):
             msg = (
                 "The archive {} is not present in the root directory or is corrupted. "
@@ -113,6 +143,8 @@ class ImageNet(ImageFolder):
             raise RuntimeError(msg.format(file, self.raw_folder))
 
     def _parse_train_archive(self) -> None:
+        """Parse the training archive and extract images."""
+
         filename, md5 = self.raw_data["train"]
         self.logger.info(
             "Verifying %s in %s, this may take a while",
@@ -146,6 +178,8 @@ class ImageNet(ImageFolder):
             extract_archive(str(archive), str(archive.with_suffix('')), remove_finished=True)
 
     def _parse_val_archive(self) -> None:
+        """Parse the validation archive and extract images."""
+
         filename, md5 = self.raw_data["val"]
         self.logger.info(
             "Verifying %s in %s",
@@ -188,8 +222,12 @@ class ImageNet(ImageFolder):
 
     @property
     def raw_folder(self) -> str:
-        return str(Path(self.root, "raw", self.__class__.__name__))
+        """Return the path of the raw data folder."""
+
+        return str(Path(self.data_dir, "raw", self.__class__.__name__))
 
     @property
     def processed_folder(self) -> str:
-        return str(Path(self.root, "processed", self.__class__.__name__))
+        """Return the path of the processed data folder."""
+
+        return str(Path(self.data_dir, "processed", self.__class__.__name__))
