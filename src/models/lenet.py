@@ -1,19 +1,23 @@
-"""A modified version of the LeNet-5 architecture."""
+"""Modified LeNet-5 architecture by LeCun et al. (1998)."""
 
 
 import torch
-import torch.nn as nn
+from torch import nn
 
 
 class LeNet(nn.Module):
     """Modified LeNet-5 architecture (LeCun et al., 1998).
 
     An implementation of the LeNet-5 architecture that can be used to
-    classify 32x32 grayscale images.  The model outputs logits for each
-    class.  The number of classes to predict can be specified.
+    classify 32x32 grayscale images.  The network outputs logits for
+    each class.  The number of classes to predict can be specified.
 
-    Params:
-        num_classes: The number of classes to predict.
+    Attributes:
+        features: The feature extractor of LeNet-5.
+        classifier: The classifier of LeNet-5.
+
+    Methods:
+        forward(x): Perform forward pass through the network.
 
     Note:
         This implementation deviates from the one suggested by LeCun et
@@ -38,6 +42,12 @@ class LeNet(nn.Module):
             self,
             num_classes: int = 10
     ) -> None:
+        """Initialize the LeNet-5 network.
+
+        Args:
+            num_classes: The number of classes to predict.
+        """
+
         super().__init__()
 
         # Create feature extractor
@@ -61,6 +71,8 @@ class LeNet(nn.Module):
         )
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
+        """Perform forward pass through the network."""
+
         x = self.features(x)
         x = x.view(x.size(0), -1)
         x = self.classifier(x)

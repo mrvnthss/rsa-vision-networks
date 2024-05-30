@@ -1,9 +1,10 @@
-"""The VGG architecture by Simonyan and Zisserman (2015)."""
+"""VGG architecture by Simonyan and Zisserman (2015)."""
 
 
 import torch
-import torch.nn as nn
+from torch import nn
 from torchvision import models
+
 
 # VGG configurations as described in Simonyan and Zisserman (2015)
 #   https://doi.org/10.48550/arXiv.1409.1556
@@ -20,16 +21,19 @@ configurations = {
 
 
 class VGG(nn.Module):
-    """VGG architecture introduced by Simonyan and Zisserman (2015).
+    """VGG architecture (Simonyan and Zisserman, 2015).
 
     An implementation of the VGG architecture that can be used to
     classify 224x224 color images.  The model outputs logits for each
     class.  The number of layers (11, 13, 16, or 19) and the number of
     classes to predict can be specified.
 
-    Params:
-        num_layers: The number of layers with trainable parameters.
-        num_classes: The number of classes to predict.
+    Attributes:
+        features: The feature extractor of VGG.
+        classifier: The classifier of VGG.
+
+    Methods:
+        forward(x): Perform forward pass through the network.
     """
 
     def __init__(
@@ -38,6 +42,16 @@ class VGG(nn.Module):
             num_classes: int = 1000,
             pretrained: bool = False
     ) -> None:
+        """Initialize the VGG network.
+
+        Args:
+            num_layers: The number of layers with trainable parameters.
+              Must be one of 11, 13, 16, or 19.
+            num_classes: The number of classes to predict.
+            pretrained: Whether to initialize the weights of the network
+              with pretrained weights (trained on ImageNet).
+        """
+
         super().__init__()
 
         # Create feature extractor
@@ -55,9 +69,23 @@ class VGG(nn.Module):
         )
 
         # Initialize weights
-        self._initialize_weights(num_layers, num_classes, pretrained)
+        self._initialize_weights(
+            num_layers,
+            num_classes,
+            pretrained
+        )
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        """Perform forward pass through the network."""
+
+        x = self.features(x)
+        x = x.view(x.size(0), -1)
+        x = self.classifier(x)
+        return x
 
     def _make_layers(self, num_layers: int) -> None:
+        """Create the feature extractor of VGG."""
+
         layers = []
         in_channels = 3
         for v in configurations[num_layers]:
@@ -75,6 +103,8 @@ class VGG(nn.Module):
             num_classes: int,
             pretrained: bool
     ) -> None:
+        """Initialize the weights of VGG."""
+
         if pretrained:
             # Load weights from TorchVision
             weights = models.get_weight(f"VGG{num_layers}_Weights.IMAGENET1K_V1")
@@ -107,9 +137,3 @@ class VGG(nn.Module):
                 elif isinstance(m, nn.Linear):
                     nn.init.normal_(m.weight, 0, 0.01)
                     nn.init.zeros_(m.bias)
-
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
-        x = self.features(x)
-        x = x.view(x.size(0), -1)
-        x = self.classifier(x)
-        return x
