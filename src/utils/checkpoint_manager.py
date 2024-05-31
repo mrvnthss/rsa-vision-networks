@@ -7,7 +7,7 @@ from typing import Optional, List
 
 from omegaconf import DictConfig
 import torch
-import torch.nn as nn
+from torch import nn
 
 from src.utils.performance_tracker import PerformanceTracker
 from src.utils.training_manager import TrainingManager
@@ -16,15 +16,20 @@ from src.utils.training_manager import TrainingManager
 class CheckpointManager:
     """A manager to save model checkpoints in PyTorch.
 
-    Params:
-        checkpoint_dir: The directory to save model checkpoints in.
+    Attributes:
         cfg: The training configuration.
-
-    (Additional) Attributes:
+        checkpoint_dir: The directory to save model checkpoints in.
         latest_checkpoint: The path pointing to the checkpoint saved
-          last, excluding the checkpoint corresponding to the best
-          performing model.
+            last, excluding the checkpoint corresponding to the best
+            performing model.
         logger: A logger instance to record logs.
+
+    Methods:
+        get_status(save_periodically, save_best): Get information about
+          the status of checkpoint saving.
+        resume_training(resume_from, model, ...): Resume training from a
+          saved checkpoint.
+        save_checkpoint(epoch, model, ...): Save a checkpoint.
     """
 
     def __init__(
@@ -32,6 +37,13 @@ class CheckpointManager:
             checkpoint_dir: str,
             cfg: DictConfig
     ) -> None:
+        """Initialize the CheckpointManager instance.
+
+        Args:
+            checkpoint_dir: The directory to save model checkpoints in.
+            cfg: The training configuration
+        """
+
         self.checkpoint_dir = Path(checkpoint_dir)
         self.checkpoint_dir.mkdir(parents=True, exist_ok=True)
         self.cfg = cfg
@@ -48,7 +60,21 @@ class CheckpointManager:
             is_best: bool = False,
             delete_previous: bool = False
     ) -> None:
-        # Set up checkpoint
+        """Save a checkpoint.
+
+        Args:
+            epoch: The epoch number.
+            model: The model to save.
+            optimizer: The optimizer to save.
+            best_score: The best score achieved during training.
+            is_best: Whether the checkpoint to save corresponds to the
+              best performing model.
+            delete_previous: Whether to delete a previously saved
+              checkpoint.  Only taken into account if ``is_best`` is
+              False.
+        """
+
+        # Set up dictionary to save
         state = {
             "epoch": epoch,
             "model": model.state_dict(),
@@ -86,6 +112,31 @@ class CheckpointManager:
             train_manager: Optional[TrainingManager] = None,
             performance_tracker: Optional[PerformanceTracker] = None
     ) -> None:
+        """Resume training from a saved checkpoint.
+
+        This method loads the model and optimizer states from a saved
+        checkpoint and updates the model's and the optimizer's states
+        accordingly.  If applicable, all relevant parameters of the
+        TrainingManager and PerformanceTracker instances are updated as
+        well.
+
+        Args:
+            resume_from: The path to the checkpoint to resume training
+              from.
+            model: The model to be trained.
+            optimizer: The optimizer used for training.
+            device: The device to train on.
+            train_manager: The TrainingManager instance used to train
+              the ``model``.
+            performance_tracker: The PerformanceTracker instance used
+              to train the ``model``.
+
+        Raises:
+            ValueError: If the model architecture or the optimizer
+              parameters in the configuration do not match those found
+              in the checkpoint.
+        """
+
         # Load checkpoint
         self.logger.info("Resuming training from checkpoint")
         self.logger.info(
@@ -157,13 +208,25 @@ class CheckpointManager:
 
     def get_status(
             self,
-            save_regularly: bool,
+            save_periodically: bool,
             save_best: bool
     ) -> List[str]:
-        if not save_regularly and not save_best:
+        """Get the status of checkpoint saving during training.
+
+        Args:
+            save_periodically: Whether to periodically save model
+              checkpoints.
+            save_best: Whether to save the best performing model.
+
+        Returns:
+            A list of messages describing the status of checkpoint
+            saving.
+        """
+
+        if not (save_periodically or save_best):
             return ["No checkpoints will be saved during training"]
 
-        if save_regularly:
+        if save_periodically:
             msgs = [
                 "Regular saving is enabled, checkpoints will be saved every "
                 f"{self.cfg.checkpoints.save_frequency} epochs"

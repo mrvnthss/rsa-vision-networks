@@ -19,18 +19,13 @@ class ToDtypeWrapper(transforms.Transform):
     convert to and a boolean indicating whether to scale the values for
     images or videos.
 
-    Params:
-        dtype: The dtype to convert to.  If a string is passed (e.g.,
-          "float32"), only images and videos will be converted to the
-          corresponding dtype (e.g., ``torch.float32``).  A dict can be
-          passed to specify per-tv_tensor conversions.
-        scale: Whether to scale the values for images or videos.
-          Default: False.
-
     Attributes:
         dtype_map: A mapping from strings to ``torch.dtype``.
-        tv_tensor_map: A mapping from strings to ``tv_tensors``.
         to_dtype: An instance of ``torchvision.transforms.v2.ToDtype``.
+        tv_tensor_map: A mapping from strings to ``tv_tensors``.
+
+    Methods:
+        forward(x): Convert the data type to the specified data type.
     """
 
     dtype_map = {
@@ -68,7 +63,19 @@ class ToDtypeWrapper(transforms.Transform):
             dtype: Union[str, Dict[str, str]],
             scale: bool = False
     ) -> None:
+        """Initialize the ToDtypeWrapper class.
+
+        Args:
+            dtype: The dtype to convert to.  If a string is passed
+              (e.g., "float32"), only images and videos will be
+              converted to the corresponding dtype (e.g.,
+              ``torch.float32``).  A dict can be passed to specify
+              per-tv_tensor conversions.
+            scale: Whether to scale the values for images or videos.
+        """
+
         super().__init__()
+
         if isinstance(dtype, str):
             assert dtype in self.dtype_map
         elif isinstance(dtype, dict):
@@ -80,7 +87,7 @@ class ToDtypeWrapper(transforms.Transform):
         else:
             raise ValueError(f"dtype must be a str or dict, got {type(dtype)} instead")
 
-        # Replace strings with actual torch.dtype and torchvision.tv_tensors instances
+        # Replace strings with actual ``torch.dtype`` and ``torchvision.tv_tensors`` instances
         if isinstance(dtype, str):
             dtype = self.dtype_map[dtype]
         else:
@@ -89,4 +96,6 @@ class ToDtypeWrapper(transforms.Transform):
         self.to_dtype = transforms.ToDtype(dtype, scale=scale)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
+        """Convert the data type to the specified data type."""
+
         return self.to_dtype(x)

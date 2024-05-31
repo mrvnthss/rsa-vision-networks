@@ -15,13 +15,15 @@ class BalancedSampler(torch.utils.data.sampler.Sampler):
     by sampling indices based on weights that are inversely proportional
     to the class frequencies in the dataset.
 
-    Params:
+    Attributes:
         dataset: The dataset to sample from.
-        shuffle: Whether to shuffle the data before sampling.
-        seed: The random seed used for deterministic shuffling.
-
-    (Additional) Attributes:
         epoch: The epoch used for deterministic shuffling.
+        seed: The random seed used for deterministic shuffling.
+        shuffle: Whether to shuffle the data before sampling.
+
+    Methods:
+        set_epoch(epoch): Set the epoch used for deterministic
+          shuffling.
     """
 
     def __init__(
@@ -30,6 +32,14 @@ class BalancedSampler(torch.utils.data.sampler.Sampler):
             shuffle: bool = True,
             seed: int = 0
     ) -> None:
+        """Initialize the BalancedSampler instance.
+
+        Args:
+            dataset: The dataset to sample from.
+            shuffle: Whether to shuffle the data before sampling.
+            seed: The random seed used for deterministic shuffling.
+        """
+
         super().__init__()
         self.dataset = dataset
         self.shuffle = shuffle
@@ -39,7 +49,7 @@ class BalancedSampler(torch.utils.data.sampler.Sampler):
     def __iter__(self):
         """Generate indices for balanced sampling of the dataset.
 
-        This method checks if the epoch has been set when shuffling is
+        This method checks if an epoch has been set when shuffling is
         enabled, initializes a random number generator with a seed that
         is either epoch-dependent (for deterministic shuffling) or fixed
         (for sampling without shuffling), and samples indices without
@@ -48,6 +58,7 @@ class BalancedSampler(torch.utils.data.sampler.Sampler):
         Yields:
             An index pointing to a sample in the dataset.
         """
+
         # Check if ``self.epoch`` has been set if shuffling is enabled
         if self.shuffle and self.epoch == -1:
             raise ValueError(
@@ -68,13 +79,19 @@ class BalancedSampler(torch.utils.data.sampler.Sampler):
         targets = torch.IntTensor(self.dataset.targets)
         class_weights = torch.bincount(targets) / len(targets)
         indices = torch.multinomial(
-            class_weights[targets], len(targets), replacement=False, generator=g
+            class_weights[targets],
+            len(targets),
+            replacement=False,
+            generator=g
         )
         return iter(indices)
 
     def __len__(self):
+        """Return the number of samples in the dataset."""
+
         return len(self.dataset)
 
     def set_epoch(self, epoch: int) -> None:
-        """Set the epoch used for deterministic shuffling."""
+        """Set the epoch, which is used for deterministic shuffling."""
+
         self.epoch = epoch
