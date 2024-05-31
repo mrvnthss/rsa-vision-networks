@@ -1,8 +1,8 @@
 """Compute the average mean and standard deviation of a dataset.
 
 This script is configured using the Hydra framework, with configuration
-details specified in the 'src/conf/' directory.  The configuration file
-associated with this script is named 'compute_dataset_stats.yaml'.
+details specified in the "src/conf/" directory.  The configuration file
+associated with this script is named "compute_dataset_stats.yaml".
 
 Typical usage example:
 
@@ -38,6 +38,7 @@ def compute_dataset_stats(
         A tuple containing the average mean and standard deviation of
           the ``dataset`` as NumPy arrays.
     """
+
     # Prepare dataloader
     # NOTE: We use a batch size of 1 to allow for varying image sizes within the dataset
     dataloader = torch.utils.data.DataLoader(dataset)
@@ -80,6 +81,8 @@ cs.store(name="compute_stats_conf", node=ComputeStatsConf)
 
 @hydra.main(version_base=None, config_path="conf", config_name="compute_dataset_stats")
 def main(cfg: ComputeStatsConf) -> None:
+    """Compute the average mean and standard deviation of a dataset."""
+
     # Prepare preprocessing pipeline
     identity = transforms.Lambda(lambda x: x)
     transforms_list = [

@@ -1,3 +1,6 @@
+"""Configuration file to be used by the Hydra framework."""
+
+
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Union
@@ -28,10 +31,10 @@ class ModelConf:
 
 @dataclass
 class VisionDatasetConf:
-    root: Union[str, Path] = MISSING,
-    transforms: Optional[Callable] = None,
-    transform: Optional[Callable] = None,
-    target_transform: Optional[Callable] = None,
+    root: Union[str, Path] = MISSING
+    transforms: Optional[Callable] = None
+    transform: Optional[Callable] = None
+    target_transform: Optional[Callable] = None
 
 
 @dataclass
