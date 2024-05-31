@@ -70,7 +70,10 @@ class LeNet(nn.Module):
             nn.Linear(84, num_classes),  # OUTPUT: Bx10
         )
 
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
+    def forward(
+            self,
+            x: torch.Tensor
+    ) -> torch.Tensor:
         """Perform forward pass through the network."""
 
         x = self.features(x)

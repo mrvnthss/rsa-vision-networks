@@ -75,7 +75,10 @@ class VGG(nn.Module):
             pretrained
         )
 
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
+    def forward(
+            self,
+            x: torch.Tensor
+    ) -> torch.Tensor:
         """Perform forward pass through the network."""
 
         x = self.features(x)
@@ -83,7 +86,10 @@ class VGG(nn.Module):
         x = self.classifier(x)
         return x
 
-    def _make_layers(self, num_layers: int) -> None:
+    def _make_layers(
+            self,
+            num_layers: int
+    ) -> None:
         """Create the feature extractor of VGG."""
 
         layers = []

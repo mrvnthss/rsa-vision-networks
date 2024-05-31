@@ -91,7 +91,10 @@ class BalancedSampler(torch.utils.data.sampler.Sampler):
 
         return len(self.dataset)
 
-    def set_epoch(self, epoch: int) -> None:
+    def set_epoch(
+            self,
+            epoch: int
+    ) -> None:
         """Set the epoch, which is used for deterministic shuffling."""
 
         self.epoch = epoch

@@ -95,7 +95,10 @@ class ToDtypeWrapper(transforms.Transform):
 
         self.to_dtype = transforms.ToDtype(dtype, scale=scale)
 
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
+    def forward(
+            self,
+            x: torch.Tensor
+    ) -> torch.Tensor:
         """Convert the data type to the specified data type."""
 
         return self.to_dtype(x)

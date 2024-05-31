@@ -135,7 +135,10 @@ class TrainingManager:
         self.prep_time = 0.
         self.proc_time = 0.
 
-    def prepare_run(self, state: str) -> None:
+    def prepare_run(
+            self,
+            state: str
+    ) -> None:
         """Perform setup before training/validation.
 
         Set the model to training or evaluation mode, reset the batch
@@ -157,7 +160,10 @@ class TrainingManager:
             "acc": f"acc/{'train' if self.is_training else 'val'}"
         }
 
-    def visualize_model(self, inputs: torch.Tensor) -> None:
+    def visualize_model(
+            self,
+            inputs: torch.Tensor
+    ) -> None:
         """Visualize the model architecture in TensorBoard.
 
         Args:
@@ -180,7 +186,10 @@ class TrainingManager:
         desc = f"Epoch [{self.epoch:0{num_digits}d}/{self.final_epoch}]    {mode}"
         return tqdm(dataloader, desc=desc, leave=False, unit="batch")
 
-    def update_pbar(self, pbar: tqdm) -> None:
+    def update_pbar(
+            self,
+            pbar: tqdm
+    ) -> None:
         """Update the progress bar with the latest metrics.
 
         Args:
@@ -225,7 +234,10 @@ class TrainingManager:
         self.running_mca.update(preds, targets)
         self.total_mca.update(preds, targets)
 
-    def compute_loss(self, total: bool = False) -> float:
+    def compute_loss(
+            self,
+            total: bool = False
+    ) -> float:
         """Compute the loss during training/validation.
 
         Args:
@@ -241,7 +253,10 @@ class TrainingManager:
             return self.total_loss / self.total_samples
         return self.running_loss / self.running_samples
 
-    def compute_mca(self, total: bool = False) -> float:
+    def compute_mca(
+            self,
+            total: bool = False
+    ) -> float:
         """Compute the multiclass accuracy during training/validation.
 
         Args:
@@ -278,7 +293,10 @@ class TrainingManager:
             # Reset loss and multiclass accuracy
             self._reset_metrics()
 
-    def take_time(self, stage: str) -> None:
+    def take_time(
+            self,
+            stage: str
+    ) -> None:
         """Record timestamp.
 
         Args:
@@ -350,7 +368,10 @@ class TrainingManager:
         total_duration = prep_duration + proc_duration
         return proc_duration / total_duration * 100
 
-    def _reset_metrics(self, total: bool = False) -> None:
+    def _reset_metrics(
+            self,
+            total: bool = False
+    ) -> None:
         """Reset the running or total metrics.
 
         Args:
