@@ -2,6 +2,7 @@
 
 
 import torch
+from einops.layers.torch import Rearrange
 from torch import nn
 from torchvision import models
 
@@ -57,7 +58,6 @@ class VGG(nn.Module):
         # Create feature extractor
         self._make_layers(num_layers)
 
-        # Create classifier
         self.classifier = nn.Sequential(
             nn.Linear(512 * 7 * 7, 4096),
             nn.ReLU(inplace=True),
@@ -81,16 +81,23 @@ class VGG(nn.Module):
     ) -> torch.Tensor:
         """Perform forward pass through the network."""
 
-        x = self.features(x)
-        x = x.view(x.size(0), -1)
-        x = self.classifier(x)
-        return x
+        return self.classifier(self.features(x))
 
     def _make_layers(
             self,
             num_layers: int
     ) -> None:
-        """Create the feature extractor of VGG."""
+        """Create the feature extractor of VGG.
+
+        The feature extractor consists of a series of convolutional
+        layers followed by max pooling layers.  Each convolutional layer
+        leaves the spatial dimensions of the input unchanged, while
+        each max pooling layer halves the spatial dimensions.  Since
+        there are a total of 5 max pooling layers, the feature extractor
+        reduces the spatial dimensions of the input from 224x224 to
+        7x7, before rearranging the tensor to have shape (batch_size,
+        512*7*7).
+        """
 
         layers = []
         in_channels = 3
@@ -101,7 +108,10 @@ class VGG(nn.Module):
                 conv2d = nn.Conv2d(in_channels, v, kernel_size=3, padding=1)
                 layers += [conv2d, nn.ReLU(inplace=True)]
                 in_channels = v
-        self.features = nn.Sequential(*layers)
+        self.features = nn.Sequential(
+            *layers,
+            Rearrange("b c h w -> b (c h w)", c=512, h=7, w=7)
+        )
 
     def _initialize_weights(
             self,

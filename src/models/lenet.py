@@ -2,6 +2,7 @@
 
 
 import torch
+from einops.layers.torch import Rearrange
 from torch import nn
 
 
@@ -50,18 +51,17 @@ class LeNet(nn.Module):
 
         super().__init__()
 
-        # Create feature extractor
         self.features = nn.Sequential(
-            # NOTE: Layer names (C1, S2, ...) are from the original paper, "B" = batch size
-            nn.Conv2d(1, 6, 5),     # C1: Bx6x28x28
+            # NOTE: Layer names (C1, S2, ...) are taken from the paper, "B" = batch size
+            nn.Conv2d(1, 6, 5),                                # C1: Bx6x28x28
             nn.ReLU(inplace=True),
-            nn.MaxPool2d(2, 2),     # S2: Bx6x14x14
-            nn.Conv2d(6, 16, 5),    # C3: Bx16x10x10
+            nn.MaxPool2d(2, 2),                                # S2: Bx6x14x14
+            nn.Conv2d(6, 16, 5),                               # C3: Bx16x10x10
             nn.ReLU(inplace=True),
-            nn.MaxPool2d(2, 2),     # S4: Bx16x5x5
+            nn.MaxPool2d(2, 2),                                # S4: Bx16x5x5
+            Rearrange("b c h w -> b (c h w)", c=16, h=5, w=5)  # OUTPUT: Bx400
         )
 
-        # Create classifier
         self.classifier = nn.Sequential(
             nn.Linear(16 * 5 * 5, 120),  # C5: Bx120
             nn.ReLU(inplace=True),
@@ -76,7 +76,4 @@ class LeNet(nn.Module):
     ) -> torch.Tensor:
         """Perform forward pass through the network."""
 
-        x = self.features(x)
-        x = x.view(x.size(0), -1)
-        x = self.classifier(x)
-        return x
+        return self.classifier(self.features(x))
