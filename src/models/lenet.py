@@ -2,7 +2,7 @@
 
 
 import torch
-from einops.layers.torch import Rearrange
+from einops import rearrange
 from torch import nn
 
 
@@ -14,8 +14,11 @@ class LeNet(nn.Module):
     each class.  The number of classes to predict can be specified.
 
     Attributes:
-        features: The feature extractor of LeNet-5.
-        classifier: The classifier of LeNet-5.
+        conv1: The first convolutional layer of LeNet-5.
+        conv2: The second convolutional layer of LeNet-5.
+        fc1: The first fully connected layer of LeNet-5.
+        fc2: The second fully connected layer of LeNet-5.
+        fc3: The output layer of LeNet-5.
 
     Methods:
         forward(x): Perform forward pass through the network.
@@ -51,24 +54,40 @@ class LeNet(nn.Module):
 
         super().__init__()
 
-        self.features = nn.Sequential(
-            # NOTE: Layer names (C1, S2, ...) are taken from the paper, "B" = batch size
-            nn.Conv2d(1, 6, 5),                                # C1: Bx6x28x28
+        self.conv1 = self._make_conv_layer(1, 6)
+        self.conv2 = self._make_conv_layer(6, 16)
+
+        self.fc1 = self._make_fc_layer(400, 120)
+        self.fc2 = self._make_fc_layer(120, 84)
+        self.fc3 = self._make_fc_layer(84, num_classes, add_relu=False)
+
+    @staticmethod
+    def _make_conv_layer(
+            in_channels: int,
+            out_channels: int,
+            conv_kernel_size: int = 5,
+            pool_kernel_size: int = 2,
+    ) -> nn.Module:
+        """Create a conv. layer w/ ReLU activation and max pooling."""
+
+        return nn.Sequential(
+            nn.Conv2d(in_channels, out_channels, conv_kernel_size),
             nn.ReLU(inplace=True),
-            nn.MaxPool2d(2, 2),                                # S2: Bx6x14x14
-            nn.Conv2d(6, 16, 5),                               # C3: Bx16x10x10
-            nn.ReLU(inplace=True),
-            nn.MaxPool2d(2, 2),                                # S4: Bx16x5x5
-            Rearrange("b c h w -> b (c h w)", c=16, h=5, w=5)  # OUTPUT: Bx400
+            nn.MaxPool2d(pool_kernel_size)
         )
 
-        self.classifier = nn.Sequential(
-            nn.Linear(16 * 5 * 5, 120),  # C5: Bx120
-            nn.ReLU(inplace=True),
-            nn.Linear(120, 84),          # F6: Bx84
-            nn.ReLU(inplace=True),
-            nn.Linear(84, num_classes),  # OUTPUT: Bx10
-        )
+    @staticmethod
+    def _make_fc_layer(
+            in_features: int,
+            out_features: int,
+            add_relu: bool = True
+    ) -> nn.Module:
+        """Create a fully connected layer w/ ReLU activation."""
+
+        fc_layer = [nn.Linear(in_features, out_features)]
+        if add_relu:
+            fc_layer.append(nn.ReLU(inplace=True))
+        return nn.Sequential(*fc_layer)
 
     def forward(
             self,
@@ -76,4 +95,10 @@ class LeNet(nn.Module):
     ) -> torch.Tensor:
         """Perform forward pass through the network."""
 
-        return self.classifier(self.features(x))
+        x = self.conv1(x)
+        x = self.conv2(x)
+        x = rearrange(x, "b c h w -> b (c h w)", c=16, h=5, w=5)
+        x = self.fc1(x)
+        x = self.fc2(x)
+        x = self.fc3(x)
+        return x
