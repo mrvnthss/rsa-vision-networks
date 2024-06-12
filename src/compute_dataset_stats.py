@@ -16,10 +16,10 @@ Typical usage example:
 from typing import Tuple
 
 import hydra
-from hydra.core.config_store import ConfigStore
-from hydra.utils import instantiate
 import numpy as np
 import torch
+from hydra.core.config_store import ConfigStore
+from hydra.utils import instantiate
 from torchvision.transforms import v2 as transforms
 from tqdm import tqdm
 

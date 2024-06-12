@@ -4,9 +4,9 @@
 import logging
 from typing import Tuple
 
+import torch
 from numpy import inf
 from omegaconf import DictConfig
-import torch
 from torch import nn
 
 from src.utils import BalancedSampler, CheckpointManager, PerformanceTracker, TrainingManager

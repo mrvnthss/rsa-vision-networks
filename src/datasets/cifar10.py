@@ -2,9 +2,9 @@
 
 
 import logging
-from pathlib import Path
 import pickle
 import shutil
+from pathlib import Path
 from typing import Callable, Optional
 
 import numpy as np

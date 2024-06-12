@@ -14,9 +14,9 @@ Typical usage example:
 import logging
 
 import hydra
+import torch
 from hydra.core.config_store import ConfigStore
 from hydra.utils import instantiate
-import torch
 
 from src.config import ClassifierConf
 from src.training import ClassificationTrainer

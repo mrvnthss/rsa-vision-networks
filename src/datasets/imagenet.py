@@ -2,8 +2,8 @@
 
 
 import logging
-from pathlib import Path
 import shutil
+from pathlib import Path
 from typing import Callable, Optional
 
 from torchvision.datasets.folder import ImageFolder

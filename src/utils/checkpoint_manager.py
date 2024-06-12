@@ -5,8 +5,8 @@ import logging
 from pathlib import Path
 from typing import Optional, List
 
-from omegaconf import DictConfig
 import torch
+from omegaconf import DictConfig
 from torch import nn
 
 from src.utils.performance_tracker import PerformanceTracker

@@ -3,8 +3,8 @@
 
 import time
 
-from omegaconf import DictConfig
 import torch
+from omegaconf import DictConfig
 from torch import nn
 from torch.utils.tensorboard import SummaryWriter
 from torchmetrics.classification import MulticlassAccuracy
