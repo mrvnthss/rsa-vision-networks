@@ -87,7 +87,7 @@ def main(cfg: ClassifierConf) -> None:
     loss_fn = instantiate(cfg.loss)
     optimizer = instantiate(
         cfg.optimizer,
-        model.parameters()
+        params=model.parameters()
     )
 
     # Instantiate trainer and start training

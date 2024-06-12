@@ -1,4 +1,12 @@
+# https://pytorch.org/docs/2.3/generated/torch.optim.SGD.html
 _target_: torch.optim.sgd.SGD
-lr: 0.1
-momentum: 0.9
-weight_decay: 1e-4
+params: ???
+lr: 1e-3
+momentum: 0
+dampening: 0
+weight_decay: 0
+nesterov: false
+maximize: false
+foreach: null
+differentiable: false
+fused: null

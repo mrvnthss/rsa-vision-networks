@@ -53,6 +53,22 @@ class LossConf:
 
 
 @dataclass
+class AdamConf:
+    _target_: str = "torch.optim.adam.Adam"
+    params: Any = MISSING
+    lr: float = 1e-3
+    betas: List[float] = (0.9, 0.999)
+    eps: float = 1e-8
+    weight_decay: float = 0
+    amsgrad: bool = False
+    foreach: Optional[bool] = None
+    maximize: bool = False
+    capturable: bool = False
+    differentiable: bool = False
+    fused: Optional[bool] = None
+
+
+@dataclass
 class SGDConf:
     _target_: str = "torch.optim.sgd.SGD"
     params: Any = MISSING
@@ -65,6 +81,13 @@ class SGDConf:
     foreach: Optional[bool] = None
     differentiable: bool = False
     fused: Optional[bool] = None
+
+
+@dataclass
+class OptimizerConf:
+    type: str = MISSING
+    adam: AdamConf = MISSING
+    sgd: SGDConf = MISSING
 
 
 @dataclass
@@ -102,7 +125,7 @@ class ClassifierConf(DictConfig):
     model: ModelConf
     dataset: DatasetConf
     loss: LossConf
-    optimizer: SGDConf
+    optimizer: OptimizerConf
     run: str
     paths: PathsConf
     dataloader: DataloaderConf

@@ -1,4 +1,0 @@
-# @package _global_
-
-optimizer:
-  lr: 0.01

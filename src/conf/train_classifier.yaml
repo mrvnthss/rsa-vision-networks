@@ -3,7 +3,6 @@ defaults:
   - dataset: fashionmnist
   - loss: cross_entropy
   - optimizer: sgd
-  - optional optimizer/model: ${optimizer}_${model}
   - _self_
 run: train_classifier/${model.name}/${dataset.name}/${now:%Y-%m-%d_%H-%M-%S}
 paths:
