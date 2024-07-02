@@ -66,11 +66,11 @@ class TrainingManager:
         compute_mca(total): Compute the multiclass accuracy during
           training/validation.
         flush_writer(): Flush the SummaryWriter instance.
-        get_pbar(): Get a progress bar for training or validation.
         increment_batch(): Increment the batch number.
         increment_epoch(): Increment the epoch number.
         log_scalars(): Log scalars to TensorBoard at specified batches.
         prepare_run(state): Perform setup before training/validation.
+        set_up_pbar(): Set up a progress bar for training or validation.
         take_time(stage): Record timestamp.
         update_loss(loss, batch_size): Update running and total loss.
         update_mca(preds, targets): Update running and total multiclass
@@ -173,8 +173,8 @@ class TrainingManager:
 
         self.writer.add_graph(self.model, inputs)
 
-    def get_pbar(self) -> tqdm:
-        """Get a progress bar for training or validation.
+    def set_up_pbar(self) -> tqdm:
+        """Set up a progress bar for training or validation.
 
         Returns:
             A progress bar for training or validation.
@@ -275,10 +275,10 @@ class TrainingManager:
     def log_scalars(self) -> None:
         """Log scalars to TensorBoard at specified batches.
 
-        Log the loss and multiclass accuracy to TensorBoard at specified
-        batch indices.  The batch indices are computed based on the
-        total number of samples in the dataset and the desired number of
-        per-epoch updates specified by ``self.tb_updates``.
+        Log the loss and multiclass accuracy to TensorBoard at batch
+        indices ``self.tb_indices``.  These batch indices have to be
+        computed prior to each epoch by calling the ``prepare_run``
+        method, which internally calls the ``_set_tb_indices`` method.
         """
 
         if self.batch in self.tb_indices:
@@ -333,19 +333,27 @@ class TrainingManager:
         self.writer.close()
 
     def _set_tb_indices(self) -> None:
-        """Set indices at which to log data to TensorBoard.
+        """Set batch indices at which to log data to TensorBoard.
 
-        Compute indices at which data is to be logged to TensorBoard.
-        The indices are computed based on the total number of samples in
-        the dataset and the desired number of per-epoch updates
-        specified by ``self.tb_updates``.
+        Compute batch indices ``self.tb_indices`` at which data is to be
+        logged to TensorBoard.  The indices are computed based on the
+        total number of samples in the dataset and the desired number
+        of per-epoch updates specified by ``self.tb_updates``.
+
+        Note:
+            The last entry of ``self.tb_indices`` always coincides with
+            the total number of batches in the dataloader.
         """
 
         dataloader = self.train_loader if self.is_training else self.val_loader
         total_samples = len(dataloader.dataset)
+
+        # Determine linearly spaced sample indices
         sample_indices = torch.linspace(
             0, total_samples, self.tb_updates + 1
         )
+
+        # Convert sample indices to batch indices
         self.tb_indices = (
             torch.ceil(sample_indices / dataloader.batch_size)
         ).int().tolist()[1:]

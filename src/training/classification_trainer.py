@@ -278,7 +278,7 @@ class ClassificationTrainer:
             This method modifies the network in place when training.
         """
 
-        pbar = self.train_manager.get_pbar()
+        pbar = self.train_manager.set_up_pbar()
 
         # Loop over mini-batches
         with torch.set_grad_enabled(self.train_manager.is_training):
