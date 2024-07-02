@@ -9,7 +9,8 @@ from numpy import inf
 from omegaconf import DictConfig
 from torch import nn
 
-from src.utils import BalancedSampler, CheckpointManager, PerformanceTracker, TrainingManager
+from src.training.utils import CheckpointManager, PerformanceTracker, TrainingManager
+from src.utils import BalancedSampler
 
 
 class ClassificationTrainer:

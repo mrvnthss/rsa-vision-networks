@@ -9,8 +9,8 @@ import torch
 from omegaconf import DictConfig
 from torch import nn
 
-from src.utils.performance_tracker import PerformanceTracker
-from src.utils.training_manager import TrainingManager
+from src.training.utils.performance_tracker import PerformanceTracker
+from src.training.utils.training_manager import TrainingManager
 
 
 class CheckpointManager:
