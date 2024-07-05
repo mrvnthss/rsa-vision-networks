@@ -59,11 +59,11 @@ class BalancedSampler(torch.utils.data.sampler.Sampler):
             An index pointing to a sample in the dataset.
         """
 
-        # Check if ``self.epoch_idx`` has been set if shuffling is enabled
+        # Check if ``epoch_idx`` has been set if shuffling is enabled
         if self.shuffle and self.epoch_idx == -1:
             raise ValueError(
-                "'self.shuffle' is set to True, but 'self.epoch_idx' has not been set. "
-                "Please set 'self.epoch_idx' using the 'set_epoch_idx' method."
+                "'shuffle' is set to True, but the 'epoch_idx' has not been set. "
+                "Please set 'epoch_idx' using the 'set_epoch_idx' method."
             )
 
         # Initialize random number generator
