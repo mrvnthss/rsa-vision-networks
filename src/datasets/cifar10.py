@@ -133,18 +133,19 @@ class CIFAR10(ImageFolder):
         # Remove intermediate "cifar-10-batches-py" directory
         intermediate_dir = Path(self.raw_folder) / "cifar-10-batches-py"
         self.logger.info(
-            "Moving all files from %s to %s",
+            "Moving all files from %s to %s ...",
             intermediate_dir,
             self.raw_folder
         )
         for file in intermediate_dir.iterdir():
             shutil.move(str(file), self.raw_folder)
         intermediate_dir.rmdir()
+        self.logger.info("All files moved successfully.")
 
         # Delete auxiliary files
         aux_files = ["batches.meta", "readme.html"]
         self.logger.info(
-            "Deleting auxiliary files %s and %s in %s",
+            "Deleting auxiliary files %s and %s in %s ...",
             *aux_files,
             self.raw_folder
         )
@@ -152,6 +153,7 @@ class CIFAR10(ImageFolder):
             filepath = Path(self.raw_folder) / filename
             if filepath.exists():
                 filepath.unlink()
+        self.logger.info("Auxiliary files deleted successfully.")
 
     def _is_parsed(self) -> bool:
         """Check if binary files have been parsed."""
@@ -174,7 +176,7 @@ class CIFAR10(ImageFolder):
         for filename, _ in batches:
             filepath = str(Path(self.raw_folder) / filename)
             self.logger.info(
-                "Processing %s and saving images in %s",
+                "Processing %s and saving images in %s ...",
                 filepath,
                 self.split_dir
             )
@@ -186,6 +188,7 @@ class CIFAR10(ImageFolder):
             for idx, (img, target) in enumerate(zip(data, targets)):
                 img = Image.fromarray(img, mode="RGB")
                 img.save(self.split_dir / self.classes[target] / f"img_{idx}.png")
+        self.logger.info("All images saved successfully.")
 
     @property
     def raw_folder(self) -> str:

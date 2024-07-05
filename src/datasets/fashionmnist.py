@@ -151,7 +151,7 @@ class FashionMNIST(ImageFolder):
         # Unpack raw data and save as PNG images
         image_file, label_file = self.data_by_split[self.split]
         self.logger.info(
-            "Processing %s and saving images in %s",
+            "Processing %s and saving images in %s ...",
             image_file,
             self.split_dir
         )
@@ -161,6 +161,7 @@ class FashionMNIST(ImageFolder):
         for idx, (img, target) in enumerate(zip(data, targets)):
             img = Image.fromarray(img.numpy(), mode="L")
             img.save(self.split_dir / self.classes[target] / f"img_{idx}.png")
+        self.logger.info("All images saved successfully.")
 
     @property
     def raw_folder(self) -> str:

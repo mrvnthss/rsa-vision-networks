@@ -111,12 +111,13 @@ class ImageNet(ImageFolder):
         meta_fpath = str(Path(self.raw_folder) / self.meta_data)
         if not check_integrity(meta_fpath):
             self.logger.info(
-                "Meta file not found in %s. Parsing %s to create meta.bin in %s",
+                "Meta file not found in %s. Parsing %s to create meta.bin in %s ...",
                 self.raw_folder,
                 self.raw_data["devkit"][0],
                 self.raw_folder
             )
             parse_devkit_archive(self.raw_folder, self.raw_data["devkit"][0])
+            self.logger.info("Meta file created successfully.")
 
         if self.split == "train":
             self._parse_train_archive()
@@ -142,23 +143,25 @@ class ImageNet(ImageFolder):
 
         filename, md5 = self.raw_data["train"]
         self.logger.info(
-            "Verifying %s in %s, this may take a while",
+            "Verifying %s in %s, this may take a while ...",
             filename,
             self.raw_folder
         )
         self._verify_archive(filename, md5)
+        self.logger.info("Verification successful.")
 
         train_archive = str(Path(self.raw_folder) / filename)
         train_root = str(Path(self.processed_folder) / "train")
         self.logger.info(
-            "Extracting %s to %s, this may take a while",
+            "Extracting %s to %s, this may take a while ...",
             train_archive,
             train_root
         )
         extract_archive(train_archive, train_root)
+        self.logger.info("Archive extracted successfully.")
 
         self.logger.info(
-            "Extracting archives in %s, this may take a while",
+            "Extracting archives in %s, this may take a while ...",
             train_root
         )
         desc = "Extracting archives"
@@ -171,26 +174,29 @@ class ImageNet(ImageFolder):
         )
         for archive in pbar:
             extract_archive(str(archive), str(archive.with_suffix('')), remove_finished=True)
+        self.logger.info("Archives extracted successfully.")
 
     def _parse_val_archive(self) -> None:
         """Parse the validation archive and extract images."""
 
         filename, md5 = self.raw_data["val"]
         self.logger.info(
-            "Verifying %s in %s",
+            "Verifying %s in %s ...",
             filename,
             self.raw_folder
         )
         self._verify_archive(filename, md5)
+        self.logger.info("Verification successful.")
 
         val_archive = str(Path(self.raw_folder) / filename)
         val_root = str(Path(self.processed_folder) / "val")
         self.logger.info(
-            "Extracting %s to %s",
+            "Extracting %s to %s ...",
             val_archive,
             val_root
         )
         extract_archive(val_archive, val_root)
+        self.logger.info("Archive extracted successfully.")
 
         wnids = load_meta_file(self.raw_folder)[1]
         images = sorted(str(image) for image in Path(val_root).iterdir())
@@ -201,7 +207,7 @@ class ImageNet(ImageFolder):
 
         # Move images to appropriate class subdirectories
         self.logger.info(
-            "Moving images to class subdirectories in %s",
+            "Moving images to class subdirectories in %s ...",
             val_root
         )
         desc = "Moving images"
@@ -214,6 +220,7 @@ class ImageNet(ImageFolder):
         )
         for wnid, image in pbar:
             shutil.move(image, Path(val_root) / wnid / Path(image).name)
+        self.logger.info("All images moved successfully.")
 
     @property
     def raw_folder(self) -> str:
