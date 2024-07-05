@@ -17,13 +17,13 @@ class BalancedSampler(torch.utils.data.sampler.Sampler):
 
     Attributes:
         dataset: The dataset to sample from.
-        epoch: The epoch used for deterministic shuffling.
+        epoch_idx: The epoch index used for deterministic shuffling.
         seed: The random seed used for deterministic shuffling.
         shuffle: Whether to shuffle the data before sampling.
 
     Methods:
-        set_epoch(epoch): Set the epoch used for deterministic
-          shuffling.
+        set_epoch_idx(epoch_idx): Set the epoch index used for
+          deterministic shuffling.
     """
 
     def __init__(
@@ -44,33 +44,33 @@ class BalancedSampler(torch.utils.data.sampler.Sampler):
         self.dataset = dataset
         self.shuffle = shuffle
         self.seed = seed
-        self.epoch = -1
+        self.epoch_idx = -1
 
     def __iter__(self):
         """Generate indices for balanced sampling of the dataset.
 
-        This method checks if an epoch has been set when shuffling is
-        enabled, initializes a random number generator with a seed that
-        is either epoch-dependent (for deterministic shuffling) or fixed
-        (for sampling without shuffling), and samples indices without
-        replacement based on class weights.
+        This method checks if an epoch index has been set when shuffling
+        is enabled, initializes a random number generator with a seed
+        that is either epoch-dependent (for deterministic shuffling) or
+        fixed (for sampling without shuffling), and samples indices
+        without replacement based on class weights.
 
         Yields:
             An index pointing to a sample in the dataset.
         """
 
-        # Check if ``self.epoch`` has been set if shuffling is enabled
-        if self.shuffle and self.epoch == -1:
+        # Check if ``self.epoch_idx`` has been set if shuffling is enabled
+        if self.shuffle and self.epoch_idx == -1:
             raise ValueError(
-                "self.shuffle is set to True, but self.epoch has not been set. "
-                "Please set self.epoch using the set_epoch method."
+                "'self.shuffle' is set to True, but 'self.epoch_idx' has not been set. "
+                "Please set 'self.epoch_idx' using the 'set_epoch_idx' method."
             )
 
         # Initialize random number generator
         g = torch.Generator()
         if self.shuffle:
             # Epoch-dependent seed to shuffle deterministically
-            g.manual_seed(self.seed + self.epoch)
+            g.manual_seed(self.seed + self.epoch_idx)
         else:
             # Fixed seed for sampling without shuffling
             g.manual_seed(self.seed)
@@ -91,10 +91,14 @@ class BalancedSampler(torch.utils.data.sampler.Sampler):
 
         return len(self.dataset)
 
-    def set_epoch(
+    def set_epoch_idx(
             self,
-            epoch: int
+            epoch_idx: int
     ) -> None:
-        """Set the epoch, which is used for deterministic shuffling."""
+        """Set the epoch index used for deterministic shuffling.
 
-        self.epoch = epoch
+        Args:
+            epoch_idx: The epoch index to set.
+        """
+
+        self.epoch_idx = epoch_idx
