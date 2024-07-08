@@ -77,15 +77,16 @@ class ToDtypeWrapper(transforms.Transform):
         super().__init__()
 
         if isinstance(dtype, str):
-            assert dtype in self.dtype_map
+            if dtype not in self.dtype_map:
+                raise ValueError(f"Invalid dtype: {dtype}.")
         elif isinstance(dtype, dict):
-            assert all(
-                k in self.tv_tensor_map
-                and v in self.dtype_map
-                for k, v in dtype.items()
-            )
+            for k, v in dtype.items():
+                if k not in self.tv_tensor_map:
+                    raise ValueError(f"Invalid tv_tensor: {k}.")
+                if v not in self.dtype_map:
+                    raise ValueError(f"Invalid dtype for tv_tensor {k}: {v}.")
         else:
-            raise ValueError(f"dtype must be a str or dict, got {type(dtype)} instead")
+            raise ValueError(f"dtype should be a str or dict, but got {type(dtype)}.")
 
         # Replace strings with actual ``torch.dtype`` and ``torchvision.tv_tensors`` instances
         if isinstance(dtype, str):

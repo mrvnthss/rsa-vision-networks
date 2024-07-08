@@ -63,7 +63,7 @@ class BalancedSampler(torch.utils.data.sampler.Sampler):
         if self.shuffle and self.epoch_idx == -1:
             raise ValueError(
                 "'shuffle' is set to True, but the 'epoch_idx' has not been set. "
-                "Please set 'epoch_idx' using the 'set_epoch_idx' method."
+                "Please set 'epoch_idx' using the 'set_epoch_idx()' method."
             )
 
         # Initialize random number generator
