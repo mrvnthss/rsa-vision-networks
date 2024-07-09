@@ -5,6 +5,7 @@ import torch
 from einops.layers.torch import Rearrange
 from torch import nn
 from torchvision import models
+from typing_extensions import Literal
 
 
 # VGG configurations as described in Simonyan and Zisserman (2015)
@@ -85,7 +86,7 @@ class VGG(nn.Module):
 
     def _make_layers(
             self,
-            num_layers: int
+            num_layers: Literal[11, 13, 16, 19]
     ) -> None:
         """Create the feature extractor of VGG.
 
@@ -97,7 +98,18 @@ class VGG(nn.Module):
         reduces the spatial dimensions of the input from 224x224 to
         7x7, before rearranging the tensor to have shape (batch_size,
         512*7*7).
+
+        Args:
+            num_layers: The number of layers with trainable parameters.
+
+        Raises:
+            ValueError: If an invalid number of layers is provided.
         """
+
+        if num_layers not in configurations:
+            raise ValueError(
+                f"Invalid number of layers: {num_layers}. Must be one of 11, 13, 16, or 19."
+            )
 
         layers = []
         in_channels = 3
@@ -119,14 +131,21 @@ class VGG(nn.Module):
             num_classes: int,
             pretrained: bool
     ) -> None:
-        """Initialize the weights of VGG."""
+        """Initialize the weights of VGG.
+
+        Args:
+            num_layers: The number of layers with trainable parameters.
+            num_classes: The number of classes to predict.
+            pretrained: Whether to initialize the weights of the network
+              with pretrained weights (trained on ImageNet).
+        """
 
         if pretrained:
             # Load weights from TorchVision
             weights = models.get_weight(f"VGG{num_layers}_Weights.IMAGENET1K_V1")
             state_dict = weights.get_state_dict()
 
-            # Delete weights of the last FC layer from `state_dict` if num_classes != 1000
+            # Delete weights of the last FC layer from ``state_dict`` if num_classes != 1000
             if num_classes != 1000:
                 state_dict.pop("classifier.6.weight")
                 state_dict.pop("classifier.6.bias")
@@ -135,11 +154,14 @@ class VGG(nn.Module):
             missing_keys, unexpected_keys = self.load_state_dict(state_dict, strict=False)
 
             # Make sure that loading was successful
-            assert len(unexpected_keys) == 0
-            if num_classes != 1000:
-                assert missing_keys == ["classifier.6.weight", "classifier.6.bias"]
-            else:
-                assert len(missing_keys) == 0
+            if not len(unexpected_keys) == 0:
+                raise ValueError(f"Unexpected keys found: {unexpected_keys}.")
+            if num_classes != 1000 and missing_keys != ["classifier.6.weight", "classifier.6.bias"]:
+                raise ValueError("Something went wrong in replacing the last FC layer of VGG.")
+            if num_classes == 1000 and len(missing_keys) != 0:
+                raise ValueError(
+                    f"Not all weights could properly be loaded. Missing keys: {missing_keys}."
+                )
 
             # Initialize the weights of the last FC layer
             if num_classes != 1000:

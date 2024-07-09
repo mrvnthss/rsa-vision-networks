@@ -68,7 +68,18 @@ class LeNet(nn.Module):
             conv_kernel_size: int = 5,
             pool_kernel_size: int = 2,
     ) -> nn.Module:
-        """Create a conv. layer w/ ReLU activation and max pooling."""
+        """Create a conv. layer w/ ReLU activation and max pooling.
+
+        Args:
+            in_channels: The number of input channels.
+            out_channels: The number of output channels.
+            conv_kernel_size: The size of the convolutional kernel.
+            pool_kernel_size: The size of the max pooling kernel.
+
+        Returns:
+            A convolutional layer, followed by a ReLU activation and a
+            max pooling layer.
+        """
 
         return nn.Sequential(
             nn.Conv2d(in_channels, out_channels, conv_kernel_size),
@@ -82,7 +93,17 @@ class LeNet(nn.Module):
             out_features: int,
             add_relu: bool = True
     ) -> nn.Module:
-        """Create a fully connected layer w/ ReLU activation."""
+        """Create a fully connected layer w/ ReLU activation.
+
+        Args:
+            in_features: The number of input features.
+            out_features: The number of output features.
+            add_relu: Whether to add a ReLU activation after the layer.
+
+        Returns:
+            A fully connected layer, followed by a ReLU activation if
+            specified.
+        """
 
         fc_layer = [nn.Linear(in_features, out_features)]
         if add_relu:
