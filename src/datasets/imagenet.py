@@ -100,7 +100,12 @@ class ImageNet(ImageFolder):
         self.class_to_idx = {cls: idx for idx, clss in enumerate(self.classes) for cls in clss}
 
     def _is_parsed(self) -> bool:
-        """Check if dataset archive has been parsed."""
+        """Check if dataset archive has been parsed.
+
+        Returns:
+            True if the dataset archive has been parsed, False
+            otherwise.
+        """
 
         return self.split_dir.exists()
 
@@ -129,7 +134,16 @@ class ImageNet(ImageFolder):
             file: str,
             md5: str
     ) -> None:
-        """Verify the presence and integrity of an archive file."""
+        """Verify the presence and integrity of an archive file.
+
+        Args:
+            file: The name of the archive file.
+            md5: The MD5 hash of the archive file.
+
+        Raises:
+            RuntimeError: If the archive file is not present or is
+              corrupted.
+        """
 
         if not check_integrity(str(Path(self.raw_folder) / file), md5):
             msg = (

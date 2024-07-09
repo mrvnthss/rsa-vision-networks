@@ -105,7 +105,11 @@ class CIFAR10(ImageFolder):
         )
 
     def _is_downloaded(self) -> bool:
-        """Check if the dataset has been downloaded."""
+        """Check if the dataset has been downloaded.
+
+        Returns:
+            True if the dataset has been downloaded, False otherwise.
+        """
 
         for filename, md5 in self.train_batches + self.test_batches:
             filepath = str(Path(self.raw_folder) / filename)
@@ -156,7 +160,11 @@ class CIFAR10(ImageFolder):
         self.logger.info("Auxiliary files deleted successfully.")
 
     def _is_parsed(self) -> bool:
-        """Check if binary files have been parsed."""
+        """Check if binary files have been parsed.
+
+        Returns:
+            True if binary files have been parsed, False otherwise.
+        """
 
         for img_class in self.classes:
             class_dir = self.split_dir / img_class
