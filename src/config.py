@@ -6,27 +6,12 @@ from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Union
 
 from omegaconf import DictConfig, MISSING
+from typing_extensions import Literal
 
 
 @dataclass
-class ArchConf:
+class CriterionConf:
     _target_: str = MISSING
-    num_layers: int = MISSING
-    num_classes: int = MISSING
-    pretrained: bool = MISSING
-
-
-@dataclass
-class ComposeConf:
-    _target_: str = "torchvision.transforms.v2.Compose"
-    transforms: Any = MISSING
-
-
-@dataclass
-class ModelConf:
-    name: str = MISSING
-    architecture: ArchConf = MISSING
-    preprocessing: ComposeConf = MISSING
 
 
 @dataclass
@@ -48,8 +33,24 @@ class DatasetConf:
 
 
 @dataclass
-class LossConf:
+class ArchConf:
     _target_: str = MISSING
+    num_layers: int = MISSING
+    num_classes: int = MISSING
+    pretrained: bool = MISSING
+
+
+@dataclass
+class ComposeConf:
+    _target_: str = "torchvision.transforms.v2.Compose"
+    transforms: Any = MISSING
+
+
+@dataclass
+class ModelConf:
+    name: str = MISSING
+    architecture: ArchConf = MISSING
+    preprocessing: ComposeConf = MISSING
 
 
 @dataclass
@@ -105,32 +106,52 @@ class DataloaderConf:
 @dataclass
 class TrainingConf:
     seed: int = MISSING
-    resume_from: str = MISSING
     num_epochs: int = MISSING
-    tb_updates: int = MISSING
-    performance_metric: str = MISSING
+    resume_from: Optional[str] = None
+
+
+@dataclass
+class MetricConf:
+    _target_: str = MISSING
+    params: Dict[str, Any] = MISSING
+
+
+@dataclass
+class PerformanceConf:
+    metric: str = MISSING
+    higher_is_better: bool = MISSING
+    dataset: Literal["train", "val"] = MISSING
+    patience: Optional[int] = None
+    keep_previous_best_score: bool = MISSING
 
 
 @dataclass
 class CheckpointsConf:
-    checkpoint_dir: str = MISSING
-    save_frequency: int = MISSING
+    dir: str = MISSING
+    save_frequency: Optional[int] = None
+    save_best_model: bool = MISSING
     delete_previous: bool = MISSING
-    save_best: bool = MISSING
-    patience: int = MISSING
 
 
 @dataclass
-class ClassifierConf(DictConfig):
-    model: ModelConf
+class TensorBoardConf:
+    updates_per_epoch: Optional[int] = None
+
+
+@dataclass
+class TrainClassifierConf(DictConfig):
+    criterion: CriterionConf
     dataset: DatasetConf
-    loss: LossConf
+    model: ModelConf
     optimizer: OptimizerConf
     run: str
     paths: PathsConf
     dataloader: DataloaderConf
     training: TrainingConf
+    metrics: Dict[str, MetricConf]
+    performance: PerformanceConf
     checkpoints: CheckpointsConf
+    tensorboard: TensorBoardConf
 
 
 @dataclass

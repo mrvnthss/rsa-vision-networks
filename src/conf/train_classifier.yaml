@@ -1,7 +1,7 @@
 defaults:
-  - model: lenet
+  - criterion: cross_entropy
   - dataset: fashionmnist
-  - loss: cross_entropy
+  - model: lenet
   - optimizer: sgd
   - _self_
 run: train_classifier/${model.name}/${dataset.name}/${now:%Y-%m-%d_%H-%M-%S}
@@ -13,16 +13,30 @@ hydra:
     dir: ${paths.logs}
 dataloader:
   batch_size: 32
-  num_workers: 16
+  num_workers: 0
 training:
   seed: 42
-  resume_from: null
   num_epochs: 100
-  tb_updates: 10
-  performance_metric: val_loss
+  resume_from: null  # null to start training from scratch
+metrics:  # empty dict ``{}`` to disable tracking of additional metrics
+  MulticlassAccuracy:
+    _target_: torchmetrics.classification.MulticlassAccuracy
+    num_classes: ${dataset.num_classes}
+    top_k: 1
+    average: micro
+    multidim_average: global
+performance:
+  metric: Loss  # either "Loss" or one of the keys in the ``metrics`` dict
+  higher_is_better: False
+  dataset: Val  # either "Train" or "Val"
+  patience: 10  # null to disable early stopping
+  keep_previous_best_score: True
 checkpoints:
-  checkpoint_dir: ../checkpoints/${run}
-  save_frequency: 10
+  dir: ../checkpoints/${run}
+  save_frequency: 10  # null to disable regular checkpoint saves
+  save_best_model: True
   delete_previous: True
-  save_best: True
-  patience: 10
+tensorboard:
+  updates_per_epoch:
+    Train: 10  # null to disable TensorBoard logging during training
+    Val: 10  # null to disable TensorBoard logging during validation

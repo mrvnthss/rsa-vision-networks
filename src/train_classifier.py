@@ -17,8 +17,9 @@ import hydra
 import torch
 from hydra.core.config_store import ConfigStore
 from hydra.utils import instantiate
+from torchmetrics import MetricCollection
 
-from src.config import ClassifierConf
+from src.config import TrainClassifierConf
 from src.training import ClassificationTrainer
 from src.utils import BalancedSampler
 
@@ -26,17 +27,17 @@ from src.utils import BalancedSampler
 logger = logging.getLogger(__name__)
 
 cs = ConfigStore.instance()
-cs.store(name="classifier_conf", node=ClassifierConf)
+cs.store(name="train_classifier_conf", node=TrainClassifierConf)
 
 
 @hydra.main(version_base=None, config_path="conf", config_name="train_classifier")
-def main(cfg: ClassifierConf) -> None:
+def main(cfg: TrainClassifierConf) -> None:
     """Train a model for image classification in PyTorch."""
 
     # Set random seeds for reproducibility
     torch.manual_seed(cfg.training.seed)
     torch.cuda.manual_seed_all(cfg.training.seed)
-    logger.info("Random seed is set to: %d", cfg.training.seed)
+    logger.info("Random seed is set to: %d.", cfg.training.seed)
 
     # Set target device
     device = torch.device(
@@ -44,15 +45,15 @@ def main(cfg: ClassifierConf) -> None:
         else "mps" if torch.backends.mps.is_available()
         else "cpu"
     )
-    logger.info("Target device is set to: %s", device)
+    logger.info("Target device is set to: %s.", device.type.upper())
 
     # Prepare datasets
-    logger.info("Preparing datasets")
+    logger.info("Preparing datasets ...")
     train_set = instantiate(cfg.dataset.train_set)
     val_set = instantiate(cfg.dataset.val_set)
 
     # Instantiate dataset samplers
-    logger.info("Instantiating dataset samplers")
+    logger.info("Instantiating dataset samplers ...")
     train_sampler = BalancedSampler(
         dataset=train_set,
         shuffle=True,
@@ -60,12 +61,11 @@ def main(cfg: ClassifierConf) -> None:
     )
     val_sampler = BalancedSampler(
         dataset=val_set,
-        shuffle=False,
-        seed=cfg.training.seed
+        shuffle=False
     )
 
     # Prepare dataloaders
-    logger.info("Setting up dataloaders")
+    logger.info("Setting up dataloaders ...")
     train_loader = torch.utils.data.DataLoader(
         dataset=train_set,
         batch_size=cfg.dataloader.batch_size,
@@ -81,24 +81,32 @@ def main(cfg: ClassifierConf) -> None:
         pin_memory=True
     )
 
-    # Instantiate model, loss function, and optimizer
-    logger.info("Instantiating model, setting up loss function and optimizer")
+    # Instantiate model, criterion, and optimizer
+    logger.info("Instantiating model, setting up criterion and optimizer ...")
     model = instantiate(cfg.model.architecture).to(device)
-    loss_fn = instantiate(cfg.loss)
+    criterion = instantiate(cfg.criterion)
     optimizer = instantiate(
         cfg.optimizer,
         params=model.parameters()
     )
+    cfg.optimizer.params = optimizer.state_dict()["param_groups"]
+
+    # Instantiate metrics to track during training
+    logger.info("Instantiating metrics ...")
+    metrics = MetricCollection({
+        name: instantiate(metric) for name, metric in cfg.metrics.items()
+    })
 
     # Instantiate trainer and start training
     # NOTE: Training is automatically resumed if a checkpoint is provided
-    logger.info("Setting up trainer")
+    logger.info("Setting up trainer ...")
     trainer = ClassificationTrainer(
         model,
+        optimizer,
+        criterion,
         train_loader,
         val_loader,
-        loss_fn,
-        optimizer,
+        metrics,
         device,
         cfg
     )
