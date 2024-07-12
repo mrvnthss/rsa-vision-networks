@@ -28,7 +28,7 @@ class CIFAR10(ImageFolder):
         logger: A logger instance to record logs.
         mirror: The URL mirror to download the dataset from.
         resource: The name and MD5 hash of the dataset archive.
-        split: The dataset split to load, either "train" or "val".
+        split: The dataset split to load, either "train" or "test".
         split_dir: The directory containing the dataset split.
         target_transform: A transform to modify targets (labels).
         test_batches: The names and MD5 hashes of the test batch.
@@ -78,7 +78,7 @@ class CIFAR10(ImageFolder):
             data_dir: The path of the "data/" directory containing all
               datasets.
             train: Whether to load the training split (True) or the
-              validation split (False).
+              testing split (False).
             transform: A transform to modify features (images).
             target_transform: A transform to modify targets (labels).
         """
@@ -87,7 +87,7 @@ class CIFAR10(ImageFolder):
         self.transform = transform
         self.target_transform = target_transform
 
-        self.split = "train" if train else "val"
+        self.split = "train" if train else "test"
         self.split_dir = Path(self.processed_folder) / self.split
 
         self.logger = logging.getLogger(__name__)
@@ -181,6 +181,7 @@ class CIFAR10(ImageFolder):
 
         # Unpack raw data and save as PNG images
         batches = self.train_batches if self.split == "train" else self.test_batches
+        img_idx = 0
         for filename, _ in batches:
             filepath = str(Path(self.raw_folder) / filename)
             self.logger.info(
@@ -190,12 +191,13 @@ class CIFAR10(ImageFolder):
             )
             with open(filepath, "rb") as f:
                 entry = pickle.load(f, encoding="latin1")
-                data = np.array(entry["data"]).reshape(-1, 3, 32, 32).transpose(0, 2, 3, 1)
+                data = entry["data"].reshape(-1, 3, 32, 32).transpose(0, 2, 3, 1)
                 targets = entry["labels"]
 
-            for idx, (img, target) in enumerate(zip(data, targets)):
+            for img, target in zip(data, targets):
                 img = Image.fromarray(img, mode="RGB")
-                img.save(self.split_dir / self.classes[target] / f"img_{idx}.png")
+                img.save(self.split_dir / self.classes[target] / f"img_{img_idx}.png")
+                img_idx += 1
         self.logger.info("All images saved successfully.")
 
     @property
