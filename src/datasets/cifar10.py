@@ -18,8 +18,8 @@ class CIFAR10(ImageFolder):
 
     The class can be used to download, parse, and load the CIFAR-10
     dataset.  The CIFAR-10 dataset consists of 60,000 32x32 color images
-    from 10 classes, with 6,000 images per class.  There are 50,000
-    training samples and 10,000 test samples.
+    from 10 classes, with 6,000 images per class.  Per class, there are
+    5,000 training samples and 1,000 test samples.
 
     Attributes:
         classes: The class labels of the dataset.
@@ -77,8 +77,8 @@ class CIFAR10(ImageFolder):
         Args:
             data_dir: The path of the "data/" directory containing all
               datasets.
-            train: Whether to load the training split (True) or the
-              testing split (False).
+            train: Whether to load the training split (True) or the test
+              split (False).
             transform: A transform to modify features (images).
             target_transform: A transform to modify targets (labels).
         """

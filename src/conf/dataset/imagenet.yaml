@@ -16,7 +16,7 @@ train_set:
   data_dir: ${paths.data}
   train: True
   transform: ${model.preprocessing}
-val_set:
+test_set:
   _target_: datasets.ImageNet
   data_dir: ${paths.data}
   train: False

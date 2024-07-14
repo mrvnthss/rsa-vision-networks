@@ -16,8 +16,8 @@ class FashionMNIST(ImageFolder):
 
     The class can be used to download, parse, and load the FashionMNIST
     dataset.  The FashionMNIST dataset consists of 70,000 28x28
-    grayscale images from 10 classes, with 7,000 images per class. There
-    are 60,000 training samples and 10,000 test samples.
+    grayscale images from 10 classes, with 7,000 images per class.  Per
+    class, there are 6,000 training samples and 1,000 test samples.
 
     Attributes:
         classes: The class labels of the dataset.
@@ -28,7 +28,7 @@ class FashionMNIST(ImageFolder):
         mirror: The URL mirror to download the dataset from.
         raw_data: The names and MD5 hashes of the raw data files.
         resources: The names and MD5 hashes of the dataset archives.
-        split: The dataset split to load, either "train" or "val".
+        split: The dataset split to load, either "train" or "test".
         split_dir: The directory containing the dataset split.
         target_transform: A transform to modify targets (labels).
         transform: A transform to modify features (images).
@@ -52,7 +52,7 @@ class FashionMNIST(ImageFolder):
 
     data_by_split = {
         "train": ("train-images-idx3-ubyte", "train-labels-idx1-ubyte"),
-        "val": ("t10k-images-idx3-ubyte", "t10k-labels-idx1-ubyte")
+        "test": ("t10k-images-idx3-ubyte", "t10k-labels-idx1-ubyte")
     }
 
     classes = [
@@ -80,8 +80,8 @@ class FashionMNIST(ImageFolder):
         Args:
             data_dir: The path of the "data/" directory containing all
               datasets.
-            train: Whether to load the training split (True) or the
-              validation split (False).
+            train: Whether to load the training split (True) or the test
+              split (False).
             transform: A transform to modify features (images).
             target_transform: A transform to modify targets (labels).
         """
@@ -90,7 +90,7 @@ class FashionMNIST(ImageFolder):
         self.transform = transform
         self.target_transform = target_transform
 
-        self.split = "train" if train else "val"
+        self.split = "train" if train else "test"
         self.split_dir = Path(self.processed_folder) / self.split
 
         self.logger = logging.getLogger(__name__)

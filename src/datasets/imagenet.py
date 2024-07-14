@@ -18,9 +18,9 @@ class ImageNet(ImageFolder):
     This class can be used to parse and load the ImageNet 2012
     classification dataset.  The ImageNet dataset consists of 1,331,167
     color images from 1,000 classes.  There are 1,281,167 training
-    samples and 50,000 validation samples.  There are between 732 and
-    1,300 images per class in the training split and 50 images per class
-    in the validation split.
+    samples and 50,000 test samples.  There are between 732 and 1,300
+    images per class in the training split and 50 images per class in
+    the test split.
 
     Attributes:
         classes: The class labels of the dataset.
@@ -31,7 +31,7 @@ class ImageNet(ImageFolder):
         meta_data: The name of the meta file.
         raw_data: A dictionary containing the names and MD5 hashes of
           the raw data archives.
-        split: The dataset split to load, either "train" or "val".
+        split: The dataset split to load, either "train" or "test".
         split_dir: The directory containing the dataset split.
         target_transform: A transform to modify targets (labels).
         transform: A transform to modify features (images).
@@ -42,12 +42,17 @@ class ImageNet(ImageFolder):
         Prior to using this class, the ImageNet 2012 classification
         dataset has to be downloaded from the official website
         (https://image-net.org/challenges/LSVRC/2012/2012-downloads.php)
-        and placed in the "data/raw/ImageNet/" directory.
+        and placed in the "data/raw/ImageNet/" directory.  Further, as
+        there are no labels provided for the test set of the ImageNet
+        2012 classification dataset, we treat the validation set as the
+        test set (and split the training set into training and
+        validation sets) in analogy to the remaining datasets in this
+        project.
     """
 
     raw_data = {
         "train": ("ILSVRC2012_img_train.tar", "1d675b47d978889d74fa0da5fadfb00e"),
-        "val": ("ILSVRC2012_img_val.tar", "29b22e2961454d5413ddabcf34fc5622"),
+        "test": ("ILSVRC2012_img_val.tar", "29b22e2961454d5413ddabcf34fc5622"),
         "devkit": ("ILSVRC2012_devkit_t12.tar.gz", "fa75699e90414af021442c21a62c3abf")
     }
 
@@ -65,8 +70,8 @@ class ImageNet(ImageFolder):
         Args:
             data_dir: The path of the "data/" directory containing all
               datasets.
-            train: Whether to load the training split (True) or the
-              validation split (False).
+            train: Whether to load the training split (True) or the test
+              split (False).
             transform: A transform to modify features (images).
             target_transform: A transform to modify targets (labels).
         """
@@ -75,7 +80,7 @@ class ImageNet(ImageFolder):
         self.transform = transform
         self.target_transform = target_transform
 
-        self.split = "train" if train else "val"
+        self.split = "train" if train else "test"
         self.split_dir = Path(self.processed_folder) / self.split
 
         self.logger = logging.getLogger(__name__)
@@ -127,7 +132,7 @@ class ImageNet(ImageFolder):
         if self.split == "train":
             self._parse_train_archive()
         else:
-            self._parse_val_archive()
+            self._parse_test_archive()
 
     def _verify_archive(
             self,
@@ -190,10 +195,10 @@ class ImageNet(ImageFolder):
             extract_archive(str(archive), str(archive.with_suffix('')), remove_finished=True)
         self.logger.info("Archives extracted successfully.")
 
-    def _parse_val_archive(self) -> None:
-        """Parse the validation archive and extract images."""
+    def _parse_test_archive(self) -> None:
+        """Parse the test archive and extract images."""
 
-        filename, md5 = self.raw_data["val"]
+        filename, md5 = self.raw_data["test"]
         self.logger.info(
             "Verifying %s in %s ...",
             filename,
@@ -202,27 +207,27 @@ class ImageNet(ImageFolder):
         self._verify_archive(filename, md5)
         self.logger.info("Verification successful.")
 
-        val_archive = str(Path(self.raw_folder) / filename)
-        val_root = str(Path(self.processed_folder) / "val")
+        test_archive = str(Path(self.raw_folder) / filename)
+        test_root = str(Path(self.processed_folder) / "test")
         self.logger.info(
             "Extracting %s to %s ...",
-            val_archive,
-            val_root
+            test_archive,
+            test_root
         )
-        extract_archive(val_archive, val_root)
+        extract_archive(test_archive, test_root)
         self.logger.info("Archive extracted successfully.")
 
         wnids = load_meta_file(self.raw_folder)[1]
-        images = sorted(str(image) for image in Path(val_root).iterdir())
+        images = sorted(str(image) for image in Path(test_root).iterdir())
 
         # Create class subdirectories
         for wnid in set(wnids):
-            Path(val_root, wnid).mkdir(parents=True, exist_ok=True)
+            Path(test_root, wnid).mkdir(parents=True, exist_ok=True)
 
         # Move images to appropriate class subdirectories
         self.logger.info(
             "Moving images to class subdirectories in %s ...",
-            val_root
+            test_root
         )
         desc = "Moving images"
         total_images = len(images)
@@ -233,7 +238,7 @@ class ImageNet(ImageFolder):
             unit="image"
         )
         for wnid, image in pbar:
-            shutil.move(image, Path(val_root) / wnid / Path(image).name)
+            shutil.move(image, Path(test_root) / wnid / Path(image).name)
         self.logger.info("All images moved successfully.")
 
     @property

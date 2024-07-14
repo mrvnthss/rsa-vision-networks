@@ -29,7 +29,7 @@ class DatasetConf:
     is_grayscale: bool = MISSING
     norm_constants: Dict[str, List[float]] = MISSING
     train_set: VisionDatasetConf = MISSING
-    val_set: VisionDatasetConf = MISSING
+    test_set: VisionDatasetConf = MISSING
 
 
 @dataclass

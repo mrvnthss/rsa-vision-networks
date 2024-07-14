@@ -50,7 +50,7 @@ def main(cfg: TrainClassifierConf) -> None:
     # Prepare datasets
     logger.info("Preparing datasets ...")
     train_set = instantiate(cfg.dataset.train_set)
-    val_set = instantiate(cfg.dataset.val_set)
+    val_set = instantiate(cfg.dataset.test_set)
 
     # Instantiate dataset samplers
     logger.info("Instantiating dataset samplers ...")
