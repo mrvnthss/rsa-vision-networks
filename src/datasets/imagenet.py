@@ -23,10 +23,11 @@ class ImageNet(ImageFolder):
     the test split.
 
     Attributes:
-        classes: The class labels of the dataset.
-        class_to_idx: A dictionary mapping class labels to indices.
+        class_to_idx: A dictionary mapping class names to class indices.
+        classes: The class labels of the dataset, sorted alphabetically.
         data_dir: The path of the "data/" directory containing all
           datasets.
+        imgs: A list of (image path, class index) tuples.
         logger: A logger instance to record logs.
         meta_data: The name of the meta file.
         raw_data: A dictionary containing the names and MD5 hashes of
@@ -34,9 +35,11 @@ class ImageNet(ImageFolder):
         split: The dataset split to load, either "train" or "test".
         split_dir: The directory containing the dataset split.
         target_transform: A transform to modify targets (labels).
+        targets: A list containing the class index for each image in the
+          dataset.
         transform: A transform to modify features (images).
         wnids: The WordNet IDs of the dataset classes.
-        wnid_to_idx: A dictionary mapping WordNet IDs to indices.
+        wnid_to_idx: A dictionary mapping WordNet IDs to class indices.
 
     Note:
         Prior to using this class, the ImageNet 2012 classification
@@ -88,6 +91,7 @@ class ImageNet(ImageFolder):
         if not self._is_parsed():
             self._parse_archive()
 
+        # NOTE: Parent class provides attributes "class_to_idx", "classes", "imgs", and "targets".
         super().__init__(
             root=str(self.split_dir),
             transform=self.transform,
@@ -97,7 +101,7 @@ class ImageNet(ImageFolder):
         # The "classes" attribute of the DatasetFolder class (parent class of ImageFolder) uses the
         # names of the subdirectories in the dataset "root" directory as class names.  For
         # ImageNet, these are the WordNet IDs of the classes.  We now replace these WordNet IDs
-        # with the ImageNet class labels.
+        # with the ImageNet class labels and store the WordNet IDs in a separate attribute.
         wnid_to_classes = load_meta_file(self.raw_folder)[0]
         self.wnids = self.classes
         self.wnid_to_idx = self.class_to_idx

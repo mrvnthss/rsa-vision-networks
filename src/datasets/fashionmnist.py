@@ -20,10 +20,12 @@ class FashionMNIST(ImageFolder):
     class, there are 6,000 training samples and 1,000 test samples.
 
     Attributes:
-        classes: The class labels of the dataset.
+        class_to_idx: A dictionary mapping class names to class indices.
+        classes: The class labels of the dataset, sorted alphabetically.
         data_dir: The path of the "data/" directory containing all
           datasets.
         data_by_split: The names of the raw data files for each dataset.
+        imgs: A list of (image path, class index) tuples.
         logger: A logger instance to record logs.
         mirror: The URL mirror to download the dataset from.
         raw_data: The names and MD5 hashes of the raw data files.
@@ -31,6 +33,8 @@ class FashionMNIST(ImageFolder):
         split: The dataset split to load, either "train" or "test".
         split_dir: The directory containing the dataset split.
         target_transform: A transform to modify targets (labels).
+        targets: A list containing the class index for each image in the
+          dataset.
         transform: A transform to modify features (images).
     """
 
@@ -56,16 +60,16 @@ class FashionMNIST(ImageFolder):
     }
 
     classes = [
-        "T-Shirt",  # T-shirt/top
-        "Trouser",
-        "Pullover",
-        "Dress",
+        "Bag",
+        "Boot",  # Ankle boot
         "Coat",
+        "Dress",
+        "Pullover",
         "Sandal",
         "Shirt",
         "Sneaker",
-        "Bag",
-        "Boot"  # Ankle boot
+        "T-Shirt",  # T-shirt/top
+        "Trouser",
     ]
 
     def __init__(
@@ -101,6 +105,7 @@ class FashionMNIST(ImageFolder):
         if not self._is_parsed():
             self._parse_binary()
 
+        # NOTE: Parent class provides attributes "class_to_idx", "classes", "imgs", and "targets".
         super().__init__(
             root=str(self.split_dir),
             transform=self.transform,

@@ -21,15 +21,19 @@ class CIFAR10(ImageFolder):
     5,000 training samples and 1,000 test samples.
 
     Attributes:
-        classes: The class labels of the dataset.
+        class_to_idx: A dictionary mapping class names to class indices.
+        classes: The class labels of the dataset, sorted alphabetically.
         data_dir: The path of the "data/" directory containing all
           datasets.
+        imgs: A list of (image path, class index) tuples.
         logger: A logger instance to record logs.
         mirror: The URL mirror to download the dataset from.
         resource: The name and MD5 hash of the dataset archive.
         split: The dataset split to load, either "train" or "test".
         split_dir: The directory containing the dataset split.
         target_transform: A transform to modify targets (labels).
+        targets: A list containing the class index for each image in the
+          dataset.
         test_batches: The names and MD5 hashes of the test batch.
         train_batches: The names and MD5 hashes of the training batches.
         transform: A transform to modify features (images).
@@ -97,6 +101,7 @@ class CIFAR10(ImageFolder):
         if not self._is_parsed():
             self._parse_binary()
 
+        # NOTE: Parent class provides attributes "class_to_idx", "classes", "imgs", and "targets".
         super().__init__(
             root=str(self.split_dir),
             transform=self.transform,
