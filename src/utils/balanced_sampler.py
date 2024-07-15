@@ -1,6 +1,8 @@
 """A class for balanced sampling of ImageFolder datasets."""
 
 
+from typing import Iterator
+
 import torch
 
 
@@ -18,12 +20,23 @@ class BalancedSampler(torch.utils.data.sampler.Sampler):
     Attributes:
         dataset: The dataset to sample from.
         epoch_idx: The epoch index used for deterministic shuffling.
+        sampling_probs: Sampling probabilities for each sample in the
+          dataset based on class frequencies.
         seed: The random seed used for deterministic shuffling.
         shuffle: Whether to shuffle the data before sampling.
 
     Methods:
         set_epoch_idx(epoch_idx): Set the epoch index used for
           deterministic shuffling.
+
+    Note:
+        This class is designed to create balanced batches.  Here,
+        "balanced" suggests that the relative class frequencies of
+        single batches (sets of batches if num_classes > batch_size)
+        are matched to the relative class frequencies of the entire
+        dataset.  In particular, "balanced" does not imply that the
+        number of samples per class is (even approximately) equal in
+        each batch.
     """
 
     def __init__(
@@ -46,14 +59,16 @@ class BalancedSampler(torch.utils.data.sampler.Sampler):
         self.seed = seed
         self.epoch_idx = -1
 
-    def __iter__(self):
+        self.sampling_probs = self._compute_sampling_probs()
+
+    def __iter__(self) -> Iterator[int]:
         """Generate indices for balanced sampling of the dataset.
 
         This method checks if an epoch index has been set when shuffling
         is enabled, initializes a random number generator with a seed
         that is either epoch-dependent (for deterministic shuffling) or
         fixed (for sampling without shuffling), and samples indices
-        without replacement based on class weights.
+        without replacement based on relative class frequencies.
 
         Yields:
             An index pointing to a sample in the dataset.
@@ -75,19 +90,17 @@ class BalancedSampler(torch.utils.data.sampler.Sampler):
             # Fixed seed for sampling without shuffling
             g.manual_seed(self.seed)
 
-        # Sample indices without replacement based on class weights
-        targets = torch.IntTensor(self.dataset.targets)
-        class_weights = torch.bincount(targets) / len(targets)
+        # Sample indices without replacement based on relative class frequencies
         indices = torch.multinomial(
-            class_weights[targets],
-            len(targets),
+            self.sampling_probs,
+            len(self.sampling_probs),
             replacement=False,
             generator=g
         )
         return iter(indices)
 
-    def __len__(self):
-        """Return the number of samples in the dataset."""
+    def __len__(self) -> int:
+        """The number of samples in the dataset."""
 
         return len(self.dataset)
 
@@ -102,3 +115,15 @@ class BalancedSampler(torch.utils.data.sampler.Sampler):
         """
 
         self.epoch_idx = epoch_idx
+
+    def _compute_sampling_probs(self) -> torch.Tensor:
+        """Compute sampling probabilities based on class frequencies.
+
+        Returns:
+            Sampling probabilities for each sample in the dataset based
+            on class frequencies.
+        """
+
+        targets = torch.tensor(self.dataset.targets)
+        rel_class_frequencies = torch.bincount(targets) / len(targets)
+        return rel_class_frequencies[targets]
