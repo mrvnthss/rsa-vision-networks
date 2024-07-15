@@ -7,7 +7,6 @@ import shutil
 from pathlib import Path
 from typing import Callable, Optional
 
-import numpy as np
 from PIL import Image
 from torchvision.datasets.folder import ImageFolder
 from torchvision.datasets.utils import check_integrity, download_and_extract_archive
