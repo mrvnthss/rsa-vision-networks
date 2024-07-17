@@ -12,6 +12,7 @@ hydra:
   run:
     dir: ${paths.logs}
 dataloader:
+  val_split: 0.15  # fraction of the training set to use as validation set
   batch_size: 32
   num_workers: 0
 training:

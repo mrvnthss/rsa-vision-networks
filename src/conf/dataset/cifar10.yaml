@@ -6,12 +6,12 @@ norm_constants:
   mean: [0.4910, 0.4819, 0.4465]
   std: [0.2021, 0.1993, 0.2009]
 train_set:
-  _target_: datasets.CIFAR10
+  _target_: datasets.cifar10.CIFAR10
   data_dir: ${paths.data}
   train: True
   transform: ${model.preprocessing}
 test_set:
-  _target_: datasets.CIFAR10
+  _target_: datasets.cifar10.CIFAR10
   data_dir: ${paths.data}
   train: False
   transform: ${model.preprocessing}

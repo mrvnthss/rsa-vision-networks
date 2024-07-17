@@ -19,10 +19,9 @@ from hydra.core.config_store import ConfigStore
 from hydra.utils import instantiate
 from torchmetrics import MetricCollection
 
+from src.base_classes.base_loader import BaseLoader
 from src.config import TrainClassifierConf
-from src.training import ClassificationTrainer
-from src.utils import BalancedSampler
-
+from src.training.classification_trainer import ClassificationTrainer
 
 logger = logging.getLogger(__name__)
 
@@ -47,39 +46,20 @@ def main(cfg: TrainClassifierConf) -> None:
     )
     logger.info("Target device is set to: %s.", device.type.upper())
 
-    # Prepare datasets
-    logger.info("Preparing datasets ...")
-    train_set = instantiate(cfg.dataset.train_set)
-    val_set = instantiate(cfg.dataset.test_set)
-
-    # Instantiate dataset samplers
-    logger.info("Instantiating dataset samplers ...")
-    train_sampler = BalancedSampler(
-        dataset=train_set,
-        shuffle=True,
-        seed=cfg.training.seed
-    )
-    val_sampler = BalancedSampler(
-        dataset=val_set,
-        shuffle=False
-    )
-
     # Prepare dataloaders
-    logger.info("Setting up dataloaders ...")
-    train_loader = torch.utils.data.DataLoader(
-        dataset=train_set,
+    logger.info("Preparing datasets and setting up dataloaders ...")
+    dataset = instantiate(cfg.dataset.train_set)
+    train_loader = BaseLoader(
+        dataset=dataset,
+        val_split=cfg.dataloader.val_split,
         batch_size=cfg.dataloader.batch_size,
-        sampler=train_sampler,
+        shuffle=True,
         num_workers=cfg.dataloader.num_workers,
-        pin_memory=True
+        pin_memory=True,
+        shuffle_seed=cfg.training.seed,
+        split_seed=cfg.training.seed
     )
-    val_loader = torch.utils.data.DataLoader(
-        dataset=val_set,
-        batch_size=cfg.dataloader.batch_size,
-        sampler=val_sampler,
-        num_workers=cfg.dataloader.num_workers,
-        pin_memory=True
-    )
+    val_loader = train_loader.get_val_loader()
 
     # Instantiate model, criterion, and optimizer
     logger.info("Instantiating model, setting up criterion and optimizer ...")
@@ -98,7 +78,7 @@ def main(cfg: TrainClassifierConf) -> None:
     })
 
     # Instantiate trainer and start training
-    # NOTE: Training is automatically resumed if a checkpoint is provided
+    # NOTE: Training is automatically resumed if a checkpoint is provided.
     logger.info("Setting up trainer ...")
     trainer = ClassificationTrainer(
         model,

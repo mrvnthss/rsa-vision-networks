@@ -12,12 +12,12 @@ norm_constants:
 #  mean: [0.4845, 0.4541, 0.4026]
 #  std: [0.2247, 0.2202, 0.2195]
 train_set:
-  _target_: datasets.ImageNet
+  _target_: datasets.imagenet.ImageNet
   data_dir: ${paths.data}
   train: True
   transform: ${model.preprocessing}
 test_set:
-  _target_: datasets.ImageNet
+  _target_: datasets.imagenet.ImageNet
   data_dir: ${paths.data}
   train: False
   transform: ${model.preprocessing}

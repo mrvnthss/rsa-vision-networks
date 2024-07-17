@@ -10,7 +10,7 @@ from torch import nn
 from torchmetrics import MetricCollection
 from typing_extensions import Literal
 
-from src.base_classes import BaseTrainer
+from src.base_classes.base_trainer import BaseTrainer
 
 
 class ClassificationTrainer(BaseTrainer):

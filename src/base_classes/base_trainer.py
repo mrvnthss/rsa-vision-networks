@@ -13,10 +13,11 @@ from torchmetrics import MetricCollection
 from tqdm import tqdm
 from typing_extensions import Literal
 
-from src.training.utils import (
-    CheckpointManager, ExperimentTracker, MetricTracker, PerformanceTracker
-)
-from src.utils import BalancedSampler
+from src.base_classes.base_sampler import BaseSampler
+from src.training.utils.checkpoint_manager import CheckpointManager
+from src.training.utils.experiment_tracker import ExperimentTracker
+from src.training.utils.metric_tracker import MetricTracker
+from src.training.utils.performance_tracker import PerformanceTracker
 
 
 class BaseTrainer:
@@ -119,8 +120,8 @@ class BaseTrainer:
         self.experiment_tracker = ExperimentTracker(
             cfg=cfg,
             updates_per_epoch=cfg.tensorboard.updates_per_epoch,
-            num_train_samples=len(train_loader.dataset),
-            num_val_samples=len(val_loader.dataset)
+            num_train_samples=self._get_num_samples("Train"),
+            num_val_samples=self._get_num_samples("Val")
         )
         self.experiment_tracker.report_status()
 
@@ -345,8 +346,32 @@ class BaseTrainer:
             "  ".join(validation_results_formatted)
         )
 
+    def _get_num_samples(
+            self,
+            mode: Literal["Train", "Val"]
+    ) -> int:
+        """Count the number of total samples provided by a dataloader.
+
+        Args:
+            mode: Which dataloader to evaluate, either "Train" or "Val".
+
+        Returns:
+            The number of samples iterated over by the dataloader.
+
+        Raises:
+            ValueError: If ``mode`` is not one of "Train" or "Val".
+        """
+
+        if mode not in ["Train", "Val"]:
+            raise ValueError(f"Mode should be either 'Train' or 'Val', but got {mode}.")
+
+        dataloader = self.train_loader if mode == "Train" else self.val_loader
+        if hasattr(dataloader, "sampler"):
+            return len(dataloader.sampler)
+        return len(dataloader.dataset)
+
     def _update_training_sampler(self) -> None:
         """Update the sampler's epoch for deterministic shuffling."""
 
-        if isinstance(self.train_loader.sampler, BalancedSampler):
+        if isinstance(self.train_loader.sampler, BaseSampler):
             self.train_loader.sampler.set_epoch_idx(self.epoch_idx)

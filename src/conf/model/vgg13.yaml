@@ -1,6 +1,6 @@
 name: vgg13
 architecture:
-  _target_: models.VGG
+  _target_: models.vgg.VGG
   num_layers: 13
   num_classes: ${dataset.num_classes}
   pretrained: False
@@ -14,7 +14,7 @@ preprocessing:
     - _target_: torchvision.transforms.v2.CenterCrop
       size: 224
     - _target_: torchvision.transforms.v2.ToImage
-    - _target_: utils.ToDtypeWrapper
+    - _target_: utils.to_dtype_wrapper.ToDtypeWrapper
       dtype: float32
       scale: True
     - _target_: torchvision.transforms.v2.Normalize

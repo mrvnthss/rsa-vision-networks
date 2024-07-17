@@ -6,12 +6,12 @@ norm_constants:
   mean: [0.2860]
   std: [0.3205]
 train_set:
-  _target_: datasets.FashionMNIST
+  _target_: datasets.fashionmnist.FashionMNIST
   data_dir: ${paths.data}
   train: True
   transform: ${model.preprocessing}
 test_set:
-  _target_: datasets.FashionMNIST
+  _target_: datasets.fashionmnist.FashionMNIST
   data_dir: ${paths.data}
   train: False
   transform: ${model.preprocessing}
