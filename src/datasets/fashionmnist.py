@@ -5,12 +5,11 @@ import logging
 from pathlib import Path
 from typing import Any, Callable, Optional, Tuple
 
-import torch
+import numpy as np
 from PIL import Image
 from torchvision.datasets.folder import default_loader, ImageFolder
 from torchvision.datasets.mnist import read_image_file, read_label_file
 from torchvision.datasets.utils import check_integrity, download_and_extract_archive
-from torchvision.transforms.functional import pil_to_tensor
 from tqdm import tqdm
 
 
@@ -123,7 +122,7 @@ class FashionMNIST(ImageFolder):
         )
 
         # Load all images into memory, if applicable
-        self.data: Optional[torch.Tensor] = None
+        self.data: Optional[np.ndarray] = None
         if load_into_memory:
             self.logger.info("Loading images into memory ...")
             pbar = tqdm(
@@ -133,10 +132,9 @@ class FashionMNIST(ImageFolder):
                 leave=False,
                 unit="image"
             )
-            self.data = torch.empty(len(self.imgs), 28, 28, dtype=torch.uint8)
+            self.data = np.empty(shape=(len(self.imgs), 28, 28), dtype=np.uint8)
             for idx, (img_path, _) in enumerate(pbar):
-                # NOTE: ``pil_to_tensor`` returns tensor of shape (1, H, W) for grayscale images
-                self.data[idx] = pil_to_tensor(Image.open(img_path)).squeeze()
+                self.data[idx] = np.array(Image.open(img_path), dtype=np.uint8)
 
         # Choose loader attribute depending on ``load_into_memory`` argument
         self.loader = self._load_from_memory if load_into_memory else self._load_from_disk
@@ -227,13 +225,18 @@ class FashionMNIST(ImageFolder):
             img.save(self.split_dir / self.classes[target] / f"img_{idx}.png")
         self.logger.info("All images saved successfully.")
 
-    def _load_from_memory(self, index: int) -> Image.Image:
+    def _load_from_memory(
+            self,
+            index: int
+    ) -> Image.Image:
         """Load a sample from memory."""
 
-        img = self.data[index]
-        return Image.fromarray(img.numpy(), mode="L")
+        return Image.fromarray(self.data[index], mode="L")
 
-    def _load_from_disk(self, index: int) -> Image.Image:
+    def _load_from_disk(
+            self,
+            index: int
+    ) -> Image.Image:
         """Load a sample from disk."""
 
         return default_loader(self.imgs[index][0])
