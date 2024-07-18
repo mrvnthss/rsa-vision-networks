@@ -3,12 +3,15 @@
 
 import logging
 from pathlib import Path
-from typing import Callable, Optional
+from typing import Any, Callable, Optional, Tuple
 
+import torch
 from PIL import Image
-from torchvision.datasets.folder import ImageFolder
+from torchvision.datasets.folder import default_loader, ImageFolder
 from torchvision.datasets.mnist import read_image_file, read_label_file
 from torchvision.datasets.utils import check_integrity, download_and_extract_archive
+from torchvision.transforms.functional import pil_to_tensor
+from tqdm import tqdm
 
 
 class FashionMNIST(ImageFolder):
@@ -22,10 +25,14 @@ class FashionMNIST(ImageFolder):
     Attributes:
         class_to_idx: A dictionary mapping class names to class indices.
         classes: The class labels of the dataset, sorted alphabetically.
+        data: A tensor containing all images in the dataset if
+          ``load_into_memory`` is set to True when initializing the
+          dataset.
         data_dir: The path of the "data/" directory containing all
           datasets.
         data_by_split: The names of the raw data files for each dataset.
         imgs: A list of (image path, class index) tuples.
+        loader: A function to load a sample given its index.
         logger: A logger instance to record logs.
         mirror: The URL mirror to download the dataset from.
         raw_data: The names and MD5 hashes of the raw data files.
@@ -76,6 +83,7 @@ class FashionMNIST(ImageFolder):
             self,
             data_dir: str,
             train: bool = True,
+            load_into_memory: bool = False,
             transform: Optional[Callable] = None,
             target_transform: Optional[Callable] = None
     ) -> None:
@@ -86,6 +94,8 @@ class FashionMNIST(ImageFolder):
               datasets.
             train: Whether to load the training split (True) or the test
               split (False).
+            load_into_memory: Whether to load the entire dataset into
+              memory.
             transform: A transform to modify features (images).
             target_transform: A transform to modify targets (labels).
         """
@@ -111,6 +121,47 @@ class FashionMNIST(ImageFolder):
             transform=self.transform,
             target_transform=self.target_transform
         )
+
+        # Load all images into memory, if applicable
+        self.data: Optional[torch.Tensor] = None
+        if load_into_memory:
+            self.logger.info("Loading images into memory ...")
+            pbar = tqdm(
+                self.imgs,
+                desc="Loading FashionMNIST",
+                total=len(self.imgs),
+                leave=False,
+                unit="image"
+            )
+            self.data = torch.empty(len(self.imgs), 28, 28, dtype=torch.uint8)
+            for idx, (img_path, _) in enumerate(pbar):
+                # NOTE: ``pil_to_tensor`` returns tensor of shape (1, H, W) for grayscale images
+                self.data[idx] = pil_to_tensor(Image.open(img_path)).squeeze()
+
+        # Choose loader attribute depending on ``load_into_memory`` argument
+        self.loader = self._load_from_memory if load_into_memory else self._load_from_disk
+
+    def __getitem__(
+            self,
+            index: int
+    ) -> Tuple[Any, Any]:
+        """Retrieve a sample from the dataset.
+
+        Args:
+            index: The index of the sample to retrieve.
+
+        Returns:
+            A tuple (sample, target), where target is the class index of
+            the target class.
+        """
+
+        sample, target = self.loader(index), self.targets[index]
+        if self.transform is not None:
+            sample = self.transform(sample)
+        if self.target_transform is not None:
+            target = self.target_transform(target)
+
+        return sample, target
 
     def _is_downloaded(self) -> bool:
         """Check if the dataset has been downloaded.
@@ -175,6 +226,17 @@ class FashionMNIST(ImageFolder):
             img = Image.fromarray(img.numpy(), mode="L")
             img.save(self.split_dir / self.classes[target] / f"img_{idx}.png")
         self.logger.info("All images saved successfully.")
+
+    def _load_from_memory(self, index: int) -> Image.Image:
+        """Load a sample from memory."""
+
+        img = self.data[index]
+        return Image.fromarray(img.numpy(), mode="L")
+
+    def _load_from_disk(self, index: int) -> Image.Image:
+        """Load a sample from disk."""
+
+        return default_loader(self.imgs[index][0])
 
     @property
     def raw_folder(self) -> str:
