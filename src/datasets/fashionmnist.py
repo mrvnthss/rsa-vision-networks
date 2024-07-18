@@ -24,7 +24,7 @@ class FashionMNIST(ImageFolder):
     Attributes:
         class_to_idx: A dictionary mapping class names to class indices.
         classes: The class labels of the dataset, sorted alphabetically.
-        data: A tensor containing all images in the dataset if
+        data: A NumPy array containing all images in the dataset if
           ``load_into_memory`` is set to True when initializing the
           dataset.
         data_dir: The path of the "data/" directory containing all
@@ -132,7 +132,10 @@ class FashionMNIST(ImageFolder):
                 leave=False,
                 unit="image"
             )
-            self.data = np.empty(shape=(len(self.imgs), 28, 28), dtype=np.uint8)
+            self.data = np.empty(
+                shape=(len(self.imgs), 28, 28),
+                dtype=np.uint8
+            )
             for idx, (img_path, _) in enumerate(pbar):
                 self.data[idx] = np.array(Image.open(img_path), dtype=np.uint8)
 
