@@ -9,9 +9,11 @@ train_set:
   _target_: datasets.cifar10.CIFAR10
   data_dir: ${paths.data}
   train: True
+  load_into_memory: True
   transform: ${model.preprocessing}
 test_set:
   _target_: datasets.cifar10.CIFAR10
   data_dir: ${paths.data}
   train: False
+  load_into_memory: True
   transform: ${model.preprocessing}
