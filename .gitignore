@@ -195,3 +195,7 @@ Temporary Items
 # Exclude logs and checkpoints directories
 /logs/
 /checkpoints/
+
+# Dependency management
+/.python-version
+/poetry.lock
