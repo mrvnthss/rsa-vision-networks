@@ -3,7 +3,7 @@
 
 import logging
 import time
-from abc import abstractmethod
+from abc import ABC, abstractmethod
 from typing import Dict
 
 import torch
@@ -20,7 +20,7 @@ from src.training.utils.metric_tracker import MetricTracker
 from src.training.utils.performance_tracker import PerformanceTracker
 
 
-class BaseTrainer:
+class BaseTrainer(ABC):
     """A base trainer pooling common training functionality.
 
     Attributes:
@@ -305,8 +305,6 @@ class BaseTrainer:
             metrics computed during training.
         """
 
-        raise NotImplementedError
-
     @abstractmethod
     def eval_epoch(self) -> Dict[str, float]:
         """Evaluate the model on the validation set for a single epoch.
@@ -315,8 +313,6 @@ class BaseTrainer:
             A dictionary containing the average loss and additional
             metrics computed during evaluation.
         """
-
-        raise NotImplementedError
 
     def _log_results(
             self,

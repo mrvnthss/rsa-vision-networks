@@ -143,8 +143,7 @@ class ClassificationTrainer(BaseTrainer):
         with torch.set_grad_enabled(is_training):
             self.record_timestamp("start")
             for batch_idx, (features, targets) in enumerate(wrapped_loader):
-                features = features.to(self.device)
-                targets = targets.to(self.device)
+                features, targets = features.to(self.device), targets.to(self.device)
 
                 self.record_timestamp("preparation")
 
@@ -164,8 +163,9 @@ class ClassificationTrainer(BaseTrainer):
                 self.metric_tracker.update(predictions, targets, loss)
 
                 # Update progress bar
+                metric_values = self.metric_tracker.compute("partial")
                 ordered_metrics = OrderedDict()
-                for metric, value in self.metric_tracker.compute("partial").items():
+                for metric, value in metric_values.items():
                     ordered_metrics[metric] = value
                 ordered_metrics["ComputeEfficiency"] = self.eval_compute_efficiency()
                 wrapped_loader.set_postfix(ordered_metrics)
@@ -178,7 +178,7 @@ class ClassificationTrainer(BaseTrainer):
 
                         # Log metrics to TensorBoard
                         self.experiment_tracker.log_scalars(
-                            scalars=self.metric_tracker.compute("partial"),
+                            scalars=metric_values,
                             step=step,
                             mode=mode
                         )
