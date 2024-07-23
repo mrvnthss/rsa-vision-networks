@@ -241,7 +241,7 @@ class BaseTrainer:
 
                 if self.performance_metric["metric"] not in performance_results:
                     raise ValueError(
-                        f"Performance metric '{self.performance_metric["metric"]}' not found in "
+                        f"Performance metric '{self.performance_metric['metric']}' not found in "
                         "training results. Please ensure that the performance metric is included "
                         "in the dictionary returned by the 'train_epoch()' and 'eval_epoch()' "
                         "methods."
