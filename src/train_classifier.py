@@ -66,7 +66,7 @@ def main(cfg: TrainClassifierConf) -> None:
     model = instantiate(cfg.model.architecture).to(device)
     criterion = instantiate(cfg.criterion)
     optimizer = instantiate(
-        cfg.optimizer,
+        {k: cfg.optimizer[k] for k in cfg.optimizer if k not in ["name", "params"]},
         params=model.parameters()
     )
     cfg.optimizer.params = optimizer.state_dict()["param_groups"]

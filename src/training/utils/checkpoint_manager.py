@@ -159,6 +159,12 @@ class CheckpointManager:
 
         self.logger.info("Loading optimizer state ...")
 
+        if checkpoint["config"].optimizer.name != self.cfg.optimizer.name:
+            raise ValueError(
+                f"Optimizer in config ({self.cfg.optimizer.name}) does not match optimizer found "
+                f"in checkpoint ({checkpoint['config'].optimizer.name})."
+            )
+
         for hparam in checkpoint["config"].optimizer.params[0]:
             if hparam == "params":
                 continue

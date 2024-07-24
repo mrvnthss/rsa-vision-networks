@@ -1,4 +1,5 @@
 # https://pytorch.org/docs/2.3/generated/torch.optim.Adam.html
+name: Adam
 _target_: torch.optim.adam.Adam
 params: ???
 lr: 1e-3

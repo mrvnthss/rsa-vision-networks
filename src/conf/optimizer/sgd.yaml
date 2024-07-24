@@ -1,4 +1,5 @@
 # https://pytorch.org/docs/2.3/generated/torch.optim.SGD.html
+name: SGD
 _target_: torch.optim.sgd.SGD
 params: ???
 lr: 1e-3
