@@ -95,7 +95,7 @@ class OptimizerConf:
 class PathsConf:
     data: str = MISSING
     logs: str = MISSING
-    checkpoint: Optional[str] = None
+    checkpoint: str = MISSING
 
 
 @dataclass
@@ -146,6 +146,15 @@ class TensorBoardConf:
 class ComputeStatsConf(DictConfig):
     dataset: DatasetConf = MISSING
     paths: PathsConf = MISSING
+
+
+@dataclass
+class TestClassifierConf(DictConfig):
+    criterion: CriterionConf = MISSING
+    dataset: DatasetConf = MISSING
+    model: ModelConf = MISSING
+    paths: PathsConf = MISSING
+    dataloader: DataloaderConf = MISSING
 
 
 @dataclass

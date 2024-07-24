@@ -1,0 +1,22 @@
+defaults:
+  - criterion: cross_entropy
+  - dataset: fashionmnist
+  - model: lenet
+  - override hydra/hydra_logging: disabled
+  - override hydra/job_logging: disabled
+  - _self_
+paths:
+  data: ../data
+  checkpoint: ../checkpoints/train_classifier/lenet/fashionmnist/2024-07-24_14-44-44/epoch_10.pt
+dataloader:
+  which_split: Val  # either "Train", "Val", or "Test"
+  val_split: 0.15  # fraction of the training set to use as validation set
+  split_seed: 23  # controls random split of the dataset into training and validation sets
+  batch_size: 32
+  num_workers: 0
+# NOTE: The following "hydra" settings disable logging, as this is irrelevant for the task at hand.
+#       Do not change these settings.
+hydra:
+  output_subdir: null
+  run:
+    dir: .
