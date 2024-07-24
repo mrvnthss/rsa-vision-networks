@@ -48,8 +48,8 @@ class BaseLoader(torch.utils.data.DataLoader):
             collate_fn: Optional[_collate_fn_t] = None,
             pin_memory: bool = False,
             drop_last: bool = False,
-            shuffle_seed: int = 0,
-            split_seed: int = 0
+            split_seed: int = 0,
+            shuffle_seed: int = 0
     ) -> None:
         """Initialize the BaseLoader instance.
 
@@ -69,12 +69,12 @@ class BaseLoader(torch.utils.data.DataLoader):
               transfers.
             drop_last: Whether to drop the last incomplete batch in case
               the dataset size is not divisible by the batch size.
-            shuffle_seed: The random seed that controls deterministic
-              shuffling of the main sampler.  See also the ``seed``
-              argument of the BaseSampler class.
             split_seed: The random seed that controls the random split
               of the dataset into main samples and samples used
               for validation.  Has no effect if ``val_split`` is None.
+            shuffle_seed: The random seed that controls deterministic
+              shuffling of the main sampler.  See also the ``seed``
+              argument of the BaseSampler class.
 
         Raises:
             ValueError: If the dataset does not have a ``targets``
@@ -96,10 +96,10 @@ class BaseLoader(torch.utils.data.DataLoader):
 
         self.main_sampler, self.val_sampler = self._get_samplers(
             dataset.targets,
-            shuffle,
-            shuffle_seed,
             val_split,
-            split_seed
+            split_seed,
+            shuffle,
+            shuffle_seed
         )
 
         self.shared_kwargs = {
@@ -127,27 +127,27 @@ class BaseLoader(torch.utils.data.DataLoader):
     @staticmethod
     def _get_samplers(
             targets: Union[torch.Tensor, List[int]],
-            shuffle: bool = True,
-            shuffle_seed: int = 0,
             val_split: Optional[float] = None,
-            split_seed: int = 0
+            split_seed: int = 0,
+            shuffle: bool = True,
+            shuffle_seed: int = 0
     ) -> Tuple[Sampler, Optional[Sampler]]:
         """Build samplers for the main and validation dataloaders.
 
         Args:
             targets: A list or tensor containing the class index for
               each image in the dataset.
+            val_split: The proportion of the dataset to use for
+              validation.
+            split_seed: The random seed that controls the random split
+              of the dataset indices into main indices and indices used
+              for validation.  Has no effect if ``val_split`` is None.
             shuffle: Whether to enable shuffling for the main sampler.
               See also the ``shuffle`` argument of the BaseSampler
               class.
             shuffle_seed: The random seed that controls deterministic
               shuffling of the main sampler.  See also the ``seed``
               argument of the BaseSampler class.
-            val_split: The proportion of the dataset to use for
-              validation.
-            split_seed: The random seed that controls the random split
-              of the dataset indices into main indices and indices used
-              for validation.  Has no effect if ``val_split`` is None.
 
         Returns:
             A tuple containing the samplers for the main and validation

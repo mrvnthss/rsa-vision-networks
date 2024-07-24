@@ -100,6 +100,8 @@ class PathsConf:
 @dataclass
 class DataloaderConf:
     val_split: float = MISSING
+    split_seed: int = MISSING
+    shuffle_seed: int = MISSING
     batch_size: int = MISSING
     num_workers: int = MISSING
 

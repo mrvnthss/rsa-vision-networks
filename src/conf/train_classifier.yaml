@@ -13,6 +13,8 @@ hydra:
     dir: ${paths.logs}
 dataloader:
   val_split: 0.15  # fraction of the training set to use as validation set
+  split_seed: 23  # controls random split of the dataset into training and validation sets
+  shuffle_seed: 41  # controls shuffling of the training set
   batch_size: 32
   num_workers: 0
 training:

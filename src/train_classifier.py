@@ -36,7 +36,6 @@ def main(cfg: TrainClassifierConf) -> None:
     # Set random seeds for reproducibility
     torch.manual_seed(cfg.training.seed)
     torch.cuda.manual_seed_all(cfg.training.seed)
-    logger.info("Random seed is set to: %d.", cfg.training.seed)
 
     # Set target device
     device = torch.device(
@@ -56,8 +55,8 @@ def main(cfg: TrainClassifierConf) -> None:
         shuffle=True,
         num_workers=cfg.dataloader.num_workers,
         pin_memory=True,
-        shuffle_seed=cfg.training.seed,
-        split_seed=cfg.training.seed
+        split_seed=cfg.dataloader.split_seed,
+        shuffle_seed=cfg.dataloader.shuffle_seed
     )
     val_loader = train_loader.get_val_loader()
 
