@@ -159,10 +159,20 @@ class CheckpointManager:
 
         self.logger.info("Loading optimizer state ...")
 
-        for hparam in checkpoint["config"].optimizer:
-            if checkpoint["config"].optimizer[hparam] != self.cfg.optimizer[hparam]:
+        for hparam in checkpoint["config"].optimizer.params[0]:
+            if hparam == "params":
+                continue
+
+            if hparam not in self.cfg.optimizer:
                 raise ValueError(
-                    "Optimizer in config does not match configuration found in checkpoint."
+                    "Optimizer in config does not match configuration found in checkpoint. "
+                    f"Parameter '{hparam}' is missing in training configuration."
+                )
+
+            if checkpoint["config"].optimizer.params[0][hparam] != self.cfg.optimizer[hparam]:
+                raise ValueError(
+                    "Optimizer in config does not match configuration found in checkpoint. "
+                    f"Parameter '{hparam}' differs."
                 )
 
         try:
