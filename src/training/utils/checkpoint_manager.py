@@ -16,6 +16,12 @@ from src.training.utils.performance_tracker import PerformanceTracker
 class CheckpointManager:
     """A manager to save model checkpoints in PyTorch.
 
+    Note:
+        This class may also be used for testing purposes to load
+        checkpoints and initialize models.  In that case, the
+        training configuration ``cfg`` may omit the "checkpoints" key
+        altogether.
+
     Attributes:
         cfg: The training configuration.
         checkpoint_dir: The directory to save model checkpoints in.
@@ -63,24 +69,44 @@ class CheckpointManager:
               or None.
         """
 
-        self.checkpoint_dir = Path(cfg.checkpoints.dir)
-        self.checkpoint_dir.mkdir(parents=True, exist_ok=True)
+        self.logger = logging.getLogger(__name__)
 
-        if cfg.checkpoints.save_frequency is None:
+        if "checkpoints" in cfg and "dir" not in cfg.checkpoints:
+            self.logger.warning(
+                "The 'checkpoints' key is present in the training configuration, but no "
+                "directory is specified to save checkpoints in. Checkpoints will not be saved."
+            )
+
+        if "checkpoints" not in cfg or "dir" not in cfg.checkpoints:
+            # Disable checkpointing altogether
+            self.checkpoint_dir = None
             self.save_frequency = inf
-        elif cfg.checkpoints.save_frequency > 0:
-            self.save_frequency = cfg.checkpoints.save_frequency
+            self.save_best_model = False
+            self.is_checkpointing = False
+            self.delete_previous = False
         else:
-            raise ValueError("Save frequency must be a positive integer or None.")
+            self.checkpoint_dir = Path(cfg.checkpoints.dir)
+            self.checkpoint_dir.mkdir(parents=True, exist_ok=True)
 
-        self.save_best_model = cfg.checkpoints.save_best_model
-        self.is_checkpointing = self.save_frequency < inf or self.save_best_model
+            if "save_frequency" not in cfg.checkpoints or cfg.checkpoints.save_frequency is None:
+                self.save_frequency = inf
+            elif cfg.checkpoints.save_frequency > 0:
+                self.save_frequency = cfg.checkpoints.save_frequency
+            else:
+                raise ValueError("Save frequency must be a positive integer or None.")
+
+            self.save_best_model = (
+                cfg.checkpoints.save_best_model if "best_model" in cfg.checkpoints else False
+            )
+
+            self.is_checkpointing = self.save_frequency < inf or self.save_best_model
+
+            self.delete_previous = (
+                cfg.checkpoints.delete_previous if "delete_previous" in cfg.checkpoints else False
+            )
 
         self.latest_checkpoint: Optional[Path] = None
-        self.delete_previous = cfg.checkpoints.delete_previous
-
         self.cfg = cfg
-        self.logger = logging.getLogger(__name__)
 
     def load_checkpoint(
             self,
