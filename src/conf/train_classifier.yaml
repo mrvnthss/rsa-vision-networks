@@ -8,6 +8,7 @@ run: train_classifier/${model.name}/${dataset.name}/${now:%Y-%m-%d_%H-%M-%S}
 paths:
   data: ../data
   logs: ../logs/${run}
+  checkpoint: null  # checkpoint to resume training from, null to start training from scratch
 hydra:
   run:
     dir: ${paths.logs}
@@ -20,7 +21,6 @@ dataloader:
 training:
   seed: 42
   num_epochs: 100
-  resume_from: null  # null to start training from scratch
 metrics:  # empty dict ``{}`` to disable tracking of additional metrics
   MulticlassAccuracy:
     _target_: torchmetrics.classification.MulticlassAccuracy

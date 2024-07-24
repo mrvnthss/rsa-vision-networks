@@ -95,10 +95,12 @@ class OptimizerConf:
 class PathsConf:
     data: str = MISSING
     logs: str = MISSING
+    checkpoint: Optional[str] = None
 
 
 @dataclass
 class DataloaderConf:
+    which_split: Literal["Train", "Val", "Test"] = MISSING
     val_split: float = MISSING
     split_seed: int = MISSING
     shuffle_seed: int = MISSING
@@ -110,7 +112,6 @@ class DataloaderConf:
 class TrainingConf:
     seed: int = MISSING
     num_epochs: int = MISSING
-    resume_from: Optional[str] = None
 
 
 @dataclass
@@ -142,22 +143,22 @@ class TensorBoardConf:
 
 
 @dataclass
-class TrainClassifierConf(DictConfig):
-    criterion: CriterionConf
-    dataset: DatasetConf
-    model: ModelConf
-    optimizer: OptimizerConf
-    run: str
-    paths: PathsConf
-    dataloader: DataloaderConf
-    training: TrainingConf
-    metrics: Dict[str, MetricConf]
-    performance: PerformanceConf
-    checkpoints: CheckpointsConf
-    tensorboard: TensorBoardConf
+class ComputeStatsConf(DictConfig):
+    dataset: DatasetConf = MISSING
+    paths: PathsConf = MISSING
 
 
 @dataclass
-class ComputeStatsConf(DictConfig):
-    dataset: DatasetConf
-    paths: PathsConf
+class TrainClassifierConf(DictConfig):
+    criterion: CriterionConf = MISSING
+    dataset: DatasetConf = MISSING
+    model: ModelConf = MISSING
+    optimizer: OptimizerConf = MISSING
+    run: str = MISSING
+    paths: PathsConf = MISSING
+    dataloader: DataloaderConf = MISSING
+    training: TrainingConf = MISSING
+    metrics: Dict[str, MetricConf] = MISSING
+    performance: PerformanceConf = MISSING
+    checkpoints: CheckpointsConf = MISSING
+    tensorboard: TensorBoardConf = MISSING
