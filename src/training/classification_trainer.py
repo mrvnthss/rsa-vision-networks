@@ -90,26 +90,6 @@ class ClassificationTrainer(BaseTrainer):
         )
         self.criterion = criterion
 
-    def train_epoch(self) -> Dict[str, float]:
-        """Train the model for a single epoch.
-
-        Returns:
-            A dictionary containing the average loss and additional
-            metrics computed during training.
-        """
-
-        return self._run_epoch(is_training=True)
-
-    def eval_epoch(self) -> Dict[str, float]:
-        """Evaluate the model on the validation set for a single epoch.
-
-        Returns:
-            A dictionary containing the average loss and additional
-            metrics computed during evaluation.
-        """
-
-        return self._run_epoch(is_training=False)
-
     def _run_epoch(
             self,
             is_training: bool

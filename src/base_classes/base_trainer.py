@@ -50,11 +50,14 @@ class BaseTrainer(ABC):
     Methods:
         eval_compute_efficiency(): Evaluate the compute efficiency for
           an individual mini-batch.
+        eval_epoch(): Evaluate the model on the validation set for a
+          single epoch.
         get_pbar(dataloader, mode): Wrap the provided dataloader with a
           progress bar.
         record_timestamp(stage): Record timestamp to monitor compute
           efficiency.
         train(): Train the model for multiple epochs.
+        train_epoch(): Train the model for a single epoch.
     """
 
     def __init__(
@@ -157,6 +160,16 @@ class BaseTrainer(ABC):
         total_time = self.processing_time - self.start_time
         processing_time = self.processing_time - self.preparation_time
         return processing_time / total_time
+
+    def eval_epoch(self) -> Dict[str, float]:
+        """Evaluate the model on the validation set for a single epoch.
+
+        Returns:
+            A dictionary containing the average loss and additional
+            metrics computed during evaluation.
+        """
+
+        return self._run_epoch(is_training=False)
 
     def get_pbar(
             self,
@@ -296,7 +309,6 @@ class BaseTrainer(ABC):
         self.experiment_tracker.close()
         self.logger.info("Training completed successfully.")
 
-    @abstractmethod
     def train_epoch(self) -> Dict[str, float]:
         """Train the model for a single epoch.
 
@@ -305,13 +317,24 @@ class BaseTrainer(ABC):
             metrics computed during training.
         """
 
+        return self._run_epoch(is_training=True)
+
     @abstractmethod
-    def eval_epoch(self) -> Dict[str, float]:
-        """Evaluate the model on the validation set for a single epoch.
+    def _run_epoch(
+            self,
+            is_training: bool
+    ) -> Dict[str, float]:
+        """Run a single epoch of training or validation.
+
+        Args:
+            is_training: Whether to train the model or evaluate it.
 
         Returns:
             A dictionary containing the average loss and additional
-            metrics computed during evaluation.
+            metrics computed over the epoch.
+
+        Note:
+            This method modifies the model in place when training.
         """
 
     def _log_results(
@@ -334,7 +357,7 @@ class BaseTrainer(ABC):
             f"{metric}: {value:.3f}" for metric, value in validation_results.items()
         ]
         self.logger.info(
-            "Epoch [%0*d/%d]    Train: %s    Val: %s",
+            "EPOCH [%0*d/%d]    TRAIN: %s    VAL: %s",
             len(str(self.final_epoch_idx)),
             self.epoch_idx,
             self.final_epoch_idx,
