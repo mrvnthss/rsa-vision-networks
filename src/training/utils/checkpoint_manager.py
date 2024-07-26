@@ -128,7 +128,7 @@ class CheckpointManager:
             Path(checkpoint_path).name,
             Path(checkpoint_path).parent
         )
-        checkpoint = torch.load(checkpoint_path, map_location=device)
+        checkpoint = torch.load(checkpoint_path, map_location=device, weights_only=False)
         self.logger.info("Checkpoint loaded successfully.")
         return checkpoint
 

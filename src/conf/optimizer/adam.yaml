@@ -1,4 +1,4 @@
-# https://pytorch.org/docs/2.3/generated/torch.optim.Adam.html
+# https://pytorch.org/docs/2.4/generated/torch.optim.Adam.html
 name: Adam
 _target_: torch.optim.adam.Adam
 params: ???
