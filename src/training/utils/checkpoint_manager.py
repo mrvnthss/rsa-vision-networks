@@ -52,7 +52,8 @@ class CheckpointManager:
           training.
         resume_training(resume_from, model, ...): Resume training from a
           saved checkpoint.
-        save_checkpoint(epoch, model, ...): Save a checkpoint.
+        save_checkpoint(epoch, model_state_dict, ...): Save a
+          checkpoint.
     """
 
     def __init__(
@@ -65,8 +66,8 @@ class CheckpointManager:
             cfg: The training configuration.
 
         Raises:
-            ValueError: If the save frequency is not a positive integer
-              or None.
+            ValueError: If ``save_frequency`` is neither a positive
+              integer nor None.
         """
 
         self.logger = logging.getLogger(__name__)
@@ -93,7 +94,10 @@ class CheckpointManager:
             elif cfg.checkpoints.save_frequency > 0:
                 self.save_frequency = cfg.checkpoints.save_frequency
             else:
-                raise ValueError("Save frequency must be a positive integer or None.")
+                raise ValueError(
+                    "'save_frequency' should be either a positive integer or None, "
+                    f"but got {cfg.checkpoints.save_frequency}."
+                )
 
             self.save_best_model = (
                 cfg.checkpoints.save_best_model if "best_model" in cfg.checkpoints else False
@@ -294,8 +298,8 @@ class CheckpointManager:
     def save_checkpoint(
             self,
             epoch_idx: int,
-            model: nn.Module,
-            optimizer: torch.optim.Optimizer,
+            model_state_dict: Dict[str, Any],
+            optimizer_state_dict: Dict[str, Any],
             best_score: Optional[float] = None,
             is_regular_save: bool = False
     ) -> None:
@@ -307,8 +311,9 @@ class CheckpointManager:
 
         Args:
             epoch_idx: The current epoch index.
-            model: The model to save.
-            optimizer: The optimizer to save.
+            model_state_dict: The model state dictionary to save.
+            optimizer_state_dict: The optimizer state dictionary to
+              save.
             best_score: The best score achieved during training.
             is_regular_save: Whether the checkpoint to save is a
               periodically saved checkpoint.
@@ -317,8 +322,8 @@ class CheckpointManager:
         # Set up dictionary to save
         state = {
             "epoch_idx": epoch_idx,
-            "model_state_dict": model.state_dict(),
-            "optimizer_state_dict": optimizer.state_dict(),
+            "model_state_dict": model_state_dict,
+            "optimizer_state_dict": optimizer_state_dict,
             "best_score": best_score,
             "config": self.cfg
         }

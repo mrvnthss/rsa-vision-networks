@@ -114,7 +114,8 @@ class FashionMNIST(ImageFolder):
         if not self._is_parsed():
             self._parse_binary()
 
-        # NOTE: Parent class provides attributes "class_to_idx", "classes", "imgs", and "targets".
+        # NOTE: Parent class provides attributes ``class_to_idx``, ``classes``, ``imgs``, and
+        #       ``targets``.
         super().__init__(
             root=str(self.split_dir),
             transform=self.transform,
@@ -139,7 +140,7 @@ class FashionMNIST(ImageFolder):
             for idx, (img_path, _) in enumerate(pbar):
                 self.data[idx] = np.array(Image.open(img_path), dtype=np.uint8)
 
-        # Choose loader attribute depending on ``load_into_memory`` argument
+        # Choose appropriate loader
         self.loader = self._load_from_memory if load_into_memory else self._load_from_disk
 
     def __getitem__(

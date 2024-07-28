@@ -21,13 +21,13 @@ class MetricTracker:
     Note:
         The current implementation only supports metrics that accept as
         inputs the model predictions and target values, and return a
-        tensor consisting of a single element (so that the ``item()``
+        tensor consisting of a single element (so that the ``item``
         method can be called on the tensor to return a scalar value).
         A metric that can be tracked, for example, is ``BinaryAccuracy``
         with the ``multidim_average`` parameter set to "global".  In
         contrast, a metric that cannot be tracked by this class is
-        ``BinaryConfusionMatrix``, as is returns a 2x2 matrix.  When the
-        ``compute()`` method of this class is called for the first time,
+        ``BinaryConfusionMatrix``, as it returns a 2x2 matrix.  When the
+        ``compute`` method of this class is called for the first time,
         it will check the output of the metrics to ensure that they
         return a scalar value.  If a metric does not return a scalar
         value, a warning will be logged, and the metric will no longer
@@ -105,7 +105,7 @@ class MetricTracker:
             The computed metric values including the average loss value.
 
         Raises:
-            ValueError: If the ``level`` is not "partial" or "total".
+            ValueError: If ``level`` is neither "partial" nor "total".
         """
 
         def is_scalar(tensor: torch.Tensor) -> bool:
@@ -122,7 +122,7 @@ class MetricTracker:
             avg_loss = self.total_loss / self.total_samples
         else:
             raise ValueError(
-                f"Level should be either 'partial' or 'total', but got {level}."
+                f"'level' should be either 'partial' or 'total', but got {level}."
             )
 
         # Convert metric values from tensors to scalars

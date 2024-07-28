@@ -90,7 +90,7 @@ class BaseLoader(torch.utils.data.DataLoader):
         if val_split is not None:
             if not 0 < val_split < 1:
                 raise ValueError(
-                    "The validation split should be either None or a float in the range (0, 1), "
+                    "'val_split' should be either None or a float in the range (0, 1), "
                     f"but got {val_split}."
                 )
 
@@ -126,7 +126,7 @@ class BaseLoader(torch.utils.data.DataLoader):
 
     @staticmethod
     def _get_samplers(
-            targets: Union[torch.Tensor, List[int]],
+            targets: Union[List[int], torch.Tensor],
             val_split: Optional[float] = None,
             split_seed: int = 0,
             shuffle: bool = True,

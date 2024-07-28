@@ -53,6 +53,10 @@ class PerformanceTracker:
             patience: The number of consecutive epochs without a new
               best performance to wait before stopping the training
               process early.  Set to None to disable early stopping.
+
+        Raises:
+            ValueError: If ``patience`` is neither a positive integer
+              nor None.
         """
 
         self.higher_is_better = higher_is_better
@@ -63,7 +67,9 @@ class PerformanceTracker:
         elif patience > 0:
             self.patience = patience
         else:
-            raise ValueError("Patience must be a positive integer or None.")
+            raise ValueError(
+                f"'patience' should be either a positive integer or None, but got {patience}."
+            )
 
         self.track_for_early_stopping = self.patience < inf
         self.is_tracking = self.track_for_checkpointing or self.track_for_early_stopping

@@ -8,7 +8,7 @@ import torch
 from omegaconf import DictConfig
 from torch import nn
 from torchmetrics import MetricCollection
-from typing_extensions import Literal
+from typing_extensions import Literal, override
 
 from src.base_classes.base_trainer import BaseTrainer
 
@@ -90,23 +90,11 @@ class ClassificationTrainer(BaseTrainer):
         )
         self.criterion = criterion
 
+    @override
     def _run_epoch(
             self,
             is_training: bool
     ) -> Dict[str, float]:
-        """Run a single epoch of training or validation.
-
-        Args:
-            is_training: Whether to train the model or evaluate it.
-
-        Returns:
-            A dictionary containing the average loss and additional
-            metrics computed over the epoch.
-
-        Note:
-            This method modifies the model in place when training.
-        """
-
         mode: Literal["Train", "Val"] = "Train" if is_training else "Val"
 
         # Dataloader

@@ -48,6 +48,12 @@ class ExperimentTracker:
               training dataset.
             num_val_samples: The total number of samples in the
               validation dataset.
+
+        Raises:
+            ValueError: If one of the entries in ``updates_per_epoch``
+              is neither a positive integer nor None or if
+              ``num_val_samples`` is None while
+              ``updates_per_epoch['Val']`` is not None.
         """
 
         # Determine the number of updates per epoch during training and validation
@@ -58,15 +64,13 @@ class ExperimentTracker:
                 self.updates_per_epoch[mode] = updates_per_epoch[mode]
             else:
                 raise ValueError(
-                    "The number of updates per epoch during "
-                    f"{'training' if mode == 'Train' else 'validation'} should be either a "
-                    f"positive integer or None, but got {updates_per_epoch[mode]}."
+                    f"'updates_per_epoch['{mode}']' should be either a positive integer or None, "
+                    f"but got {updates_per_epoch[mode]}."
                 )
 
         if self.updates_per_epoch["Val"] is not None and num_val_samples is None:
             raise ValueError(
-                "The total number of samples in the validation dataset must be provided if "
-                "updates are to be logged to TensorBoard during validation."
+                "'num_val_samples' must be provided if 'updates_per_epoch['Val']' is not None."
             )
 
         self.is_tracking = any(updates is not None for updates in self.updates_per_epoch.values())
@@ -110,11 +114,11 @@ class ExperimentTracker:
               collected.  This should be either "Train" or "Val".
 
         Raises:
-            ValueError: If ``mode`` is not one of "Train" or "Val".
+            ValueError: If ``mode`` is neither "Train" nor "Val".
         """
 
         if mode not in ["Train", "Val"]:
-            raise ValueError(f"Mode should be either 'Train' or 'Val', but got {mode}.")
+            raise ValueError(f"'mode' should be either 'Train' or 'Val', but got {mode}.")
 
         for key, value in scalars.items():
             self.writer.add_scalar(
@@ -155,16 +159,16 @@ class ExperimentTracker:
     ) -> None:
         """Set batch indices at which to log to TensorBoard.
 
-        Args:
-            num_samples: A dictionary of the total number of samples in
-              the training and validation datasets.
-            batch_size: The number of samples in each batch.
-
         Note:
             The batch indices start from 1 and end at the total number
             of batches.  If the number of batches is less than the
             desired number of updates per epoch, updates are logged to
             TensorBoard at the end of each batch.
+
+        Args:
+            num_samples: A dictionary of the total number of samples in
+              the training and validation datasets.
+            batch_size: The number of samples in each batch.
         """
 
         mode: Literal["Train", "Val"]

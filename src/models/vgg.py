@@ -40,7 +40,7 @@ class VGG(nn.Module):
 
     def __init__(
             self,
-            num_layers: int,
+            num_layers: Literal[11, 13, 16, 19],
             num_classes: int = 1000,
             pretrained: bool = False
     ) -> None:
@@ -52,7 +52,16 @@ class VGG(nn.Module):
             num_classes: The number of classes to predict.
             pretrained: Whether to initialize the weights of the network
               with pretrained weights (trained on ImageNet).
+
+        Raises:
+            ValueError: If ``num_layers`` is not one of 11, 13, 16, or
+              19.
         """
+
+        if num_layers not in [11, 13, 16, 19]:
+            raise ValueError(
+                f"'num_layers' should be one of 11, 13, 16, or 19, but got {num_layers}."
+            )
 
         super().__init__()
 
@@ -101,15 +110,7 @@ class VGG(nn.Module):
 
         Args:
             num_layers: The number of layers with trainable parameters.
-
-        Raises:
-            ValueError: If an invalid number of layers is provided.
         """
-
-        if num_layers not in configurations:
-            raise ValueError(
-                f"Invalid number of layers: {num_layers}. Must be one of 11, 13, 16, or 19."
-            )
 
         layers = []
         in_channels = 3
@@ -127,7 +128,7 @@ class VGG(nn.Module):
 
     def _initialize_weights(
             self,
-            num_layers: int,
+            num_layers: Literal[11, 13, 16, 19],
             num_classes: int,
             pretrained: bool
     ) -> None:
@@ -141,7 +142,7 @@ class VGG(nn.Module):
         """
 
         if pretrained:
-            # Load weights from TorchVision
+            # Load weights from torchvision
             weights = models.get_weight(f"VGG{num_layers}_Weights.IMAGENET1K_V1")
             state_dict = weights.get_state_dict()
 

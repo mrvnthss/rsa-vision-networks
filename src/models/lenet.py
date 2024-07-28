@@ -13,16 +13,6 @@ class LeNet(nn.Module):
     classify 32x32 grayscale images.  The network outputs logits for
     each class.  The number of classes to predict can be specified.
 
-    Attributes:
-        conv1: The first convolutional layer of LeNet-5.
-        conv2: The second convolutional layer of LeNet-5.
-        fc1: The first fully connected layer of LeNet-5.
-        fc2: The second fully connected layer of LeNet-5.
-        fc3: The output layer of LeNet-5.
-
-    Methods:
-        forward(x): Perform forward pass through the network.
-
     Note:
         This implementation deviates from the one suggested by LeCun et
         al. (1998) in the following ways:
@@ -40,6 +30,16 @@ class LeNet(nn.Module):
           3) The output layer in the original implementation uses
              Euclidean Radial Basis Functions (RBF), whereas this
              implementation employs a fully connected layer.
+
+    Attributes:
+        conv1: The first convolutional layer of LeNet-5.
+        conv2: The second convolutional layer of LeNet-5.
+        fc1: The first fully connected layer of LeNet-5.
+        fc2: The second fully connected layer of LeNet-5.
+        fc3: The output layer of LeNet-5.
+
+    Methods:
+        forward(x): Perform forward pass through the network.
     """
 
     def __init__(

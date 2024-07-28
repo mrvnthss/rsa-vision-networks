@@ -80,13 +80,17 @@ class BaseSampler(Sampler):
 
         Yields:
             An index pointing to a sample in the dataset.
+
+        Raises:
+            ValueError: If ``shuffle`` is True and ``epoch_idx`` has not
+              been set yet.
         """
 
         # Make sure ``epoch_idx`` has been set if shuffling is enabled
         if self.shuffle and self.epoch_idx == -1:
             raise ValueError(
-                "'shuffle' is set to True, but the 'epoch_idx' has not been set. "
-                "Please set 'epoch_idx' using the 'set_epoch_idx()' method."
+                "'shuffle' is set to True, but 'epoch_idx' has not been set yet. "
+                "Please set 'epoch_idx' using the 'set_epoch_idx' method."
             )
 
         # NOTE: We use an epoch-dependent seed if shuffling is enabled and a fixed seed otherwise

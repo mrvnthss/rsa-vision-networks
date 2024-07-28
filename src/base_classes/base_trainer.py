@@ -191,7 +191,7 @@ class BaseTrainer(ABC):
         """
 
         if mode not in ["Train", "Val"]:
-            raise ValueError(f"Mode should be either 'Train' or 'Val', but got {mode}.")
+            raise ValueError(f"'mode' should be either 'Train' or 'Val', but got {mode}.")
 
         # Construct description for progress bar
         num_digits = len(str(self.final_epoch_idx))
@@ -232,7 +232,7 @@ class BaseTrainer(ABC):
                 self.processing_time = timestamp
             case _:
                 raise ValueError(
-                    "Stage should be either 'start', 'preparation', or 'processing', "
+                    "'stage' should be either 'start', 'preparation', or 'processing', "
                     f"but got {stage}."
                 )
 
@@ -247,22 +247,17 @@ class BaseTrainer(ABC):
 
             # Update PerformanceTracker
             if self.performance_tracker.is_tracking:
-                if self.performance_metric["dataset"] == "Train":
-                    performance_results = training_results
-                else:
-                    performance_results = validation_results
+                results = training_results if self.performance_metric["dataset"] == "Train" \
+                    else validation_results
 
-                if self.performance_metric["metric"] not in performance_results:
+                if self.performance_metric["metric"] not in results:
                     raise ValueError(
                         f"Performance metric '{self.performance_metric['metric']}' not found in "
                         "training results. Please ensure that the performance metric is included "
-                        "in the dictionary returned by the 'train_epoch()' and 'eval_epoch()' "
-                        "methods."
+                        "in the dictionary returned by the 'train_epoch' and 'eval_epoch' methods."
                     )
 
-                self.performance_tracker.update(
-                    performance_results[self.performance_metric["metric"]]
-                )
+                self.performance_tracker.update(results[self.performance_metric["metric"]])
 
             # Log results
             self._log_results(
@@ -286,8 +281,8 @@ class BaseTrainer(ABC):
                 if self.performance_tracker.latest_is_best:
                     self.checkpoint_manager.save_checkpoint(
                         epoch_idx=self.epoch_idx,
-                        model=self.model,
-                        optimizer=self.optimizer,
+                        model_state_dict=self.model.state_dict(),
+                        optimizer_state_dict=self.optimizer.state_dict(),
                         best_score=self.performance_tracker.best_score,
                         is_regular_save=False
                     )
@@ -296,8 +291,8 @@ class BaseTrainer(ABC):
             if self.epoch_idx % self.checkpoint_manager.save_frequency == 0:
                 self.checkpoint_manager.save_checkpoint(
                     epoch_idx=self.epoch_idx,
-                    model=self.model,
-                    optimizer=self.optimizer,
+                    model_state_dict=self.model.state_dict(),
+                    optimizer_state_dict=self.optimizer.state_dict(),
                     best_score=self.performance_tracker.best_score,
                     is_regular_save=True
                 )
@@ -326,15 +321,16 @@ class BaseTrainer(ABC):
     ) -> Dict[str, float]:
         """Run a single epoch of training or validation.
 
+        Note:
+            This method modifies the model in place when ``is_training``
+            is True.
+
         Args:
-            is_training: Whether to train the model or evaluate it.
+            is_training: Whether to train or evaluate the model.
 
         Returns:
             A dictionary containing the average loss and additional
             metrics computed over the epoch.
-
-        Note:
-            This method modifies the model in place when training.
         """
 
     def _log_results(
@@ -382,7 +378,7 @@ class BaseTrainer(ABC):
         """
 
         if mode not in ["Train", "Val"]:
-            raise ValueError(f"Mode should be either 'Train' or 'Val', but got {mode}.")
+            raise ValueError(f"'mode' should be either 'Train' or 'Val', but got {mode}.")
 
         dataloader = self.train_loader if mode == "Train" else self.val_loader
         if hasattr(dataloader, "sampler"):

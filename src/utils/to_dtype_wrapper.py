@@ -72,6 +72,10 @@ class ToDtypeWrapper(transforms.Transform):
               ``torch.float32``).  A dict can be passed to specify
               per-tv_tensor conversions.
             scale: Whether to scale the values for images or videos.
+
+        Raises:
+            ValueError: If an invalid argument is passed to the
+              ``dtype`` parameter.
         """
 
         super().__init__()

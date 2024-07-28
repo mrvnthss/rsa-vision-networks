@@ -22,6 +22,17 @@ class ImageNet(ImageFolder):
     images per class in the training split and 50 images per class in
     the test split.
 
+    Note:
+        Prior to using this class, the ImageNet 2012 classification
+        dataset has to be downloaded from the official website
+        (https://image-net.org/challenges/LSVRC/2012/2012-downloads.php)
+        and placed in the "data/raw/ImageNet/" directory.  Further, as
+        there are no labels provided for the test set of the ImageNet
+        2012 classification dataset, we treat the validation set as the
+        test set (and split the training set into training and
+        validation sets) in analogy to the remaining datasets in this
+        project.
+
     Attributes:
         class_to_idx: A dictionary mapping class names to class indices.
         classes: The class labels of the dataset, sorted alphabetically.
@@ -40,17 +51,6 @@ class ImageNet(ImageFolder):
         transform: A transform to modify features (images).
         wnids: The WordNet IDs of the dataset classes.
         wnid_to_idx: A dictionary mapping WordNet IDs to class indices.
-
-    Note:
-        Prior to using this class, the ImageNet 2012 classification
-        dataset has to be downloaded from the official website
-        (https://image-net.org/challenges/LSVRC/2012/2012-downloads.php)
-        and placed in the "data/raw/ImageNet/" directory.  Further, as
-        there are no labels provided for the test set of the ImageNet
-        2012 classification dataset, we treat the validation set as the
-        test set (and split the training set into training and
-        validation sets) in analogy to the remaining datasets in this
-        project.
     """
 
     raw_data = {
@@ -91,15 +91,16 @@ class ImageNet(ImageFolder):
         if not self._is_parsed():
             self._parse_archive()
 
-        # NOTE: Parent class provides attributes "class_to_idx", "classes", "imgs", and "targets".
+        # NOTE: Parent class provides attributes ``class_to_idx``, ``classes``, ``imgs``, and
+        #       ``targets``.
         super().__init__(
             root=str(self.split_dir),
             transform=self.transform,
             target_transform=self.target_transform
         )
 
-        # The "classes" attribute of the DatasetFolder class (parent class of ImageFolder) uses the
-        # names of the subdirectories in the dataset "root" directory as class names.  For
+        # The ``classes`` attribute of the DatasetFolder class (parent class of ImageFolder) uses
+        # the names of the subdirectories in the dataset ``root`` directory as class names.  For
         # ImageNet, these are the WordNet IDs of the classes.  We now replace these WordNet IDs
         # with the ImageNet class labels and store the WordNet IDs in a separate attribute.
         wnid_to_classes = load_meta_file(self.raw_folder)[0]
