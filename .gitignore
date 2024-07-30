@@ -194,4 +194,5 @@ Temporary Items
 
 # Exclude logs and checkpoints directories
 /logs/
+/notebooks/logs/
 /checkpoints/
