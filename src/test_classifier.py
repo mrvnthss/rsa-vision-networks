@@ -8,6 +8,7 @@ Typical usage example:
 
   >>> python test_classifier.py model=lenet dataset=fashionmnist
   ...                           dataloader.which_split=Test
+  ...                           paths.checkpoint=<path_to_checkpoint>
 """
 
 
@@ -71,7 +72,7 @@ def main(cfg: TestClassifierConf) -> None:
         shuffle=False,
         num_workers=cfg.dataloader.num_workers,
         pin_memory=True,
-        split_seed=cfg.dataloader.split_seed
+        split_seed=cfg.seeds.split_data
     )
     if cfg.dataloader.which_split == "Val":
         test_loader = test_loader.get_val_loader()

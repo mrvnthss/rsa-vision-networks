@@ -99,18 +99,22 @@ class PathsConf:
 
 
 @dataclass
+class SeedsConf:
+    torch: int = MISSING
+    shuffle_data: int = MISSING
+    split_data: int = MISSING
+
+
+@dataclass
 class DataloaderConf:
     which_split: Literal["Train", "Val", "Test"] = MISSING
     val_split: float = MISSING
-    split_seed: int = MISSING
-    shuffle_seed: int = MISSING
     batch_size: int = MISSING
     num_workers: int = MISSING
 
 
 @dataclass
 class TrainingConf:
-    seed: int = MISSING
     num_epochs: int = MISSING
 
 
@@ -139,7 +143,7 @@ class CheckpointsConf:
 
 @dataclass
 class TensorBoardConf:
-    updates_per_epoch: Optional[int] = None
+    updates_per_epoch: Dict[Literal['Train', 'Val'], Optional[int]] = MISSING
 
 
 @dataclass
@@ -154,6 +158,7 @@ class TestClassifierConf(DictConfig):
     dataset: DatasetConf = MISSING
     model: ModelConf = MISSING
     paths: PathsConf = MISSING
+    seeds: SeedsConf = MISSING
     dataloader: DataloaderConf = MISSING
 
 
@@ -163,8 +168,9 @@ class TrainClassifierConf(DictConfig):
     dataset: DatasetConf = MISSING
     model: ModelConf = MISSING
     optimizer: OptimizerConf = MISSING
-    run: str = MISSING
     paths: PathsConf = MISSING
+    experiment_name: str = MISSING
+    seeds: SeedsConf = MISSING
     dataloader: DataloaderConf = MISSING
     training: TrainingConf = MISSING
     metrics: Dict[str, MetricConf] = MISSING

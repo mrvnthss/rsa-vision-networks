@@ -4,28 +4,35 @@ defaults:
   - model: lenet
   - optimizer: sgd
   - _self_
-run: train_classifier/${model.name}/${dataset.name}/${now:%Y-%m-%d_%H-%M-%S}
 paths:
   data: ../data
-  logs: ../logs/${run}
+  logs: ../logs/${experiment_name}/${now:%Y-%m-%d_%H-%M-%S}
   checkpoint: null  # checkpoint to resume training from, null to start training from scratch
 hydra:
   run:
     dir: ${paths.logs}
+experiment_name: ???
+seeds:
+  torch: ???
+  shuffle_data: ???  # controls shuffling of the training set
+  split_data: 42  # controls random splitting of the dataset into training and validation sets
 dataloader:
   val_split: 0.15  # fraction of the training set to use as validation set
-  split_seed: 23  # controls random split of the dataset into training and validation sets
-  shuffle_seed: 41  # controls shuffling of the training set
-  batch_size: 32
-  num_workers: 0
+  batch_size: ???
+  num_workers: ???
 training:
-  seed: 42
-  num_epochs: 100
+  num_epochs: 90
 metrics:  # empty dict ``{}`` to disable tracking of additional metrics
-  MulticlassAccuracy:
+  Accuracy@1:
     _target_: torchmetrics.classification.MulticlassAccuracy
     num_classes: ${dataset.num_classes}
     top_k: 1
+    average: micro
+    multidim_average: global
+  Accuracy@5:
+    _target_: torchmetrics.classification.MulticlassAccuracy
+    num_classes: ${dataset.num_classes}
+    top_k: 5
     average: micro
     multidim_average: global
 performance:
@@ -35,7 +42,7 @@ performance:
   patience: 10  # null to disable early stopping
   keep_previous_best_score: True
 checkpoints:
-  dir: ../checkpoints/${run}
+  dir: ../checkpoints/${experiment_name}/${now:%Y-%m-%d_%H-%M-%S}
   save_frequency: 10  # null to disable regular checkpoint saves
   save_best_model: True
   delete_previous: True

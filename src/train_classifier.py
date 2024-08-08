@@ -6,8 +6,7 @@ associated with this script is named "train_classifier.yaml".
 
 Typical usage example:
 
-  >>> python train_classifier.py model=lenet dataset=fashionmnist
-  ...                            training.num_epochs=10
+  >>> python train_classifier.py +experiment=basic_training_lenet_fashionmnist
 """
 
 
@@ -34,8 +33,8 @@ def main(cfg: TrainClassifierConf) -> None:
     """Train a model for image classification in PyTorch."""
 
     # Set random seeds for reproducibility
-    torch.manual_seed(cfg.training.seed)
-    torch.cuda.manual_seed_all(cfg.training.seed)
+    torch.manual_seed(cfg.seeds.torch)
+    torch.cuda.manual_seed_all(cfg.seeds.torch)
 
     # Set target device
     device = torch.device(
@@ -55,8 +54,8 @@ def main(cfg: TrainClassifierConf) -> None:
         shuffle=True,
         num_workers=cfg.dataloader.num_workers,
         pin_memory=True,
-        split_seed=cfg.dataloader.split_seed,
-        shuffle_seed=cfg.dataloader.shuffle_seed
+        split_seed=cfg.seeds.split_data,
+        shuffle_seed=cfg.seeds.shuffle_data
     )
     val_loader = train_loader.get_val_loader()
 
