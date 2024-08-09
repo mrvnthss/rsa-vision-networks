@@ -8,8 +8,8 @@ Typical usage example:
 
   >>> python compute_dataset_stats.py dataset=cifar10
   norm_constants:
-    mean: [0.491, 0.4819, 0.4465]
-    std: [0.2021, 0.1993, 0.2009]
+    mean: [0.4914, 0.4822, 0.4465]
+    std: [0.2023, 0.1994, 0.201]
 """
 
 
