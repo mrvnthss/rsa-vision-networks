@@ -6,16 +6,15 @@ defaults:
   - _self_
   - experiment: ???
 paths:
-  checkpoints: ../out/checkpoints
+  checkpoints: ${experiment.dir}/checkpoints
   data: ../data
-  logs: ../out/logs
-  tensorboard: ../out/tensorboard
+  tensorboard: ${experiment.dir}/logs
 hydra:
   run:
-    dir: ${paths.logs}/${experiment.subdir}
+    dir: ${experiment.dir}/logs
 experiment:
   name: ???
-  subdir: ${experiment.name}/${now:%Y-%m_%d-%H-%M-%S}
+  dir: ../out/${experiment.name}/${now:%Y-%m_%d-%H-%M-%S}
 seeds:
   torch: ???
   shuffle: ???  # controls shuffling of the training set
@@ -47,12 +46,10 @@ performance:
   patience: 10  # null to disable early stopping
   keep_previous_best_score: True
 checkpoints:
-  dir: ${paths.checkpoints}/${experiment.subdir}
   save_frequency: 10  # null to disable regular checkpoint saves
   save_best_model: True
   delete_previous: True
 tensorboard:
-  dir:  ${paths.tensorboard}/${experiment.subdir}
   updates_per_epoch:
     Train: 10  # null to disable TensorBoard logging during training
     Val: 10  # null to disable TensorBoard logging during validation

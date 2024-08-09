@@ -72,13 +72,15 @@ class CheckpointManager:
 
         self.logger = logging.getLogger(__name__)
 
-        if "checkpoints" in cfg and "dir" not in cfg.checkpoints:
+        is_dir_specified = "checkpoints" in cfg.paths and cfg.paths.checkpoints is not None
+
+        if "checkpoints" in cfg and not is_dir_specified:
             self.logger.warning(
                 "The 'checkpoints' key is present in the training configuration, but no "
                 "directory is specified to save checkpoints in. Checkpoints will not be saved."
             )
 
-        if "checkpoints" not in cfg or "dir" not in cfg.checkpoints:
+        if "checkpoints" not in cfg or not is_dir_specified:
             # Disable checkpointing altogether
             self.checkpoint_dir = None
             self.save_frequency = inf
@@ -86,7 +88,7 @@ class CheckpointManager:
             self.is_checkpointing = False
             self.delete_previous = False
         else:
-            self.checkpoint_dir = Path(cfg.checkpoints.dir)
+            self.checkpoint_dir = Path(cfg.paths.checkpoints)
             self.checkpoint_dir.mkdir(parents=True, exist_ok=True)
 
             if "save_frequency" not in cfg.checkpoints or cfg.checkpoints.save_frequency is None:

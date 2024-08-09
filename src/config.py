@@ -95,14 +95,13 @@ class OptimizerConf:
 class PathsConf:
     checkpoints: str = MISSING
     data: str = MISSING
-    logs: str = MISSING
     tensorboard: str = MISSING
 
 
 @dataclass
 class ExperimentConf:
     name: str = MISSING
-    subdir: str = MISSING
+    dir: str = MISSING
 
 
 @dataclass
@@ -143,7 +142,6 @@ class PerformanceConf:
 
 @dataclass
 class CheckpointsConf:
-    dir: str = MISSING
     save_frequency: Optional[int] = None
     save_best_model: bool = MISSING
     delete_previous: bool = MISSING
@@ -151,7 +149,6 @@ class CheckpointsConf:
 
 @dataclass
 class TensorBoardConf:
-    dir: str = MISSING
     updates_per_epoch: Dict[Literal['Train', 'Val'], Optional[int]] = MISSING
 
 
