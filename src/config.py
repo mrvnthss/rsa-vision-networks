@@ -102,6 +102,7 @@ class PathsConf:
 class ExperimentConf:
     name: str = MISSING
     dir: str = MISSING
+    sub_dir: str = MISSING
 
 
 @dataclass
