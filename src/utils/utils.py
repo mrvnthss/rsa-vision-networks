@@ -28,15 +28,22 @@ def evaluate_classifier(
         device: The device to perform evaluation on.
 
     Returns:
-        The classification accuracy and the loss evaluated on the test
-        set.
+        The classification accuracy (top-1 and top-5) and the loss
+        evaluated on the test set.
     """
 
     model.eval()
 
-    metric = MulticlassAccuracy(
+    acc_1 = MulticlassAccuracy(
         num_classes=len(test_loader.dataset.classes),
         top_k=1,
+        average="micro",
+        multidim_average="global"
+    ).to(device)
+
+    acc_5 = MulticlassAccuracy(
+        num_classes=len(test_loader.dataset.classes),
+        top_k=5,
         average="micro",
         multidim_average="global"
     ).to(device)
@@ -61,7 +68,8 @@ def evaluate_classifier(
             predictions = model(features)
 
             # Track multiclass accuracy
-            metric.update(predictions, targets)
+            acc_1.update(predictions, targets)
+            acc_5.update(predictions, targets)
 
             # Compute loss and accumulate
             loss = criterion(predictions, targets)
@@ -70,8 +78,9 @@ def evaluate_classifier(
             running_samples += samples
 
     results = {
-        "mca": metric.compute().item(),
-        "loss": running_loss / running_samples
+        "loss": running_loss / running_samples,
+        "acc@1": acc_1.compute().item(),
+        "acc@5": acc_5.compute().item()
     }
 
     return results
