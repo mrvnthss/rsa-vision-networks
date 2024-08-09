@@ -4,25 +4,30 @@ defaults:
   - model: lenet
   - optimizer: sgd
   - _self_
+  - experiment: ???
 paths:
+  checkpoints: ../out/checkpoints
   data: ../data
-  logs: ../logs/${experiment_name}/${now:%Y-%m-%d_%H-%M-%S}
-  checkpoint: null  # checkpoint to resume training from, null to start training from scratch
+  logs: ../out/logs
+  tensorboard: ../out/tensorboard
 hydra:
   run:
-    dir: ${paths.logs}
-experiment_name: ???
+    dir: ${paths.logs}/${experiment.subdir}
+experiment:
+  name: ???
+  subdir: ${experiment.name}/${now:%Y-%m_%d-%H-%M-%S}
 seeds:
   torch: ???
-  shuffle_data: ???  # controls shuffling of the training set
-  split_data: 42  # controls random splitting of the dataset into training and validation sets
+  shuffle: ???  # controls shuffling of the training set
+  split: 42  # controls random splitting of the dataset into training and validation sets
 dataloader:
   val_split: 0.15  # fraction of the training set to use as validation set
   batch_size: ???
   num_workers: ???
 training:
   num_epochs: 90
-metrics:  # empty dict ``{}`` to disable tracking of additional metrics
+  resume_from: null  # checkpoint to resume training from, null to start training from scratch
+metrics:  # pass empty dict ``{}`` to disable tracking of additional metrics
   Accuracy@1:
     _target_: torchmetrics.classification.MulticlassAccuracy
     num_classes: ${dataset.num_classes}
@@ -42,11 +47,12 @@ performance:
   patience: 10  # null to disable early stopping
   keep_previous_best_score: True
 checkpoints:
-  dir: ../checkpoints/${experiment_name}/${now:%Y-%m-%d_%H-%M-%S}
+  dir: ${paths.checkpoints}/${experiment.subdir}
   save_frequency: 10  # null to disable regular checkpoint saves
   save_best_model: True
   delete_previous: True
 tensorboard:
+  dir:  ${paths.tensorboard}/${experiment.subdir}
   updates_per_epoch:
     Train: 10  # null to disable TensorBoard logging during training
     Val: 10  # null to disable TensorBoard logging during validation

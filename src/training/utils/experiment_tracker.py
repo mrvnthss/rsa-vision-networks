@@ -75,7 +75,7 @@ class ExperimentTracker:
 
         self.is_tracking = any(updates is not None for updates in self.updates_per_epoch.values())
 
-        self.writer = SummaryWriter(log_dir=cfg.paths.logs)
+        self.writer = SummaryWriter(log_dir=cfg.tensorboard.dir)
         self.logger = logging.getLogger(__name__)
 
         # Set log indices (batch-based, starting at 1)

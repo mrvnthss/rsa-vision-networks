@@ -6,7 +6,7 @@ associated with this script is named "train_classifier.yaml".
 
 Typical usage example:
 
-  >>> python train_classifier.py +experiment=basic_training_lenet_fashionmnist
+  >>> python train_classifier.py experiment=lenet_fashionmnist_baseline
 """
 
 
@@ -54,8 +54,8 @@ def main(cfg: TrainClassifierConf) -> None:
         shuffle=True,
         num_workers=cfg.dataloader.num_workers,
         pin_memory=True,
-        split_seed=cfg.seeds.split_data,
-        shuffle_seed=cfg.seeds.shuffle_data
+        split_seed=cfg.seeds.split,
+        shuffle_seed=cfg.seeds.shuffle
     )
     val_loader = train_loader.get_val_loader()
 

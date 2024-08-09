@@ -7,9 +7,9 @@ defaults:
   - _self_
 paths:
   data: ../data
-  checkpoint: ???  # path to model checkpoint
 seeds:
-  split_data: 42  # controls random split of the dataset into training and validation sets
+  split: 42  # controls random split of the dataset into training and validation sets
+model_checkpoint: ???  # path to model checkpoint
 dataloader:
   which_split: Val  # either "Train", "Val", or "Test"
   val_split: 0.15  # fraction of the training set to use as validation set

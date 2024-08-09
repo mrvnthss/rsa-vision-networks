@@ -93,16 +93,23 @@ class OptimizerConf:
 
 @dataclass
 class PathsConf:
+    checkpoints: str = MISSING
     data: str = MISSING
     logs: str = MISSING
-    checkpoint: str = MISSING
+    tensorboard: str = MISSING
+
+
+@dataclass
+class ExperimentConf:
+    name: str = MISSING
+    subdir: str = MISSING
 
 
 @dataclass
 class SeedsConf:
     torch: int = MISSING
-    shuffle_data: int = MISSING
-    split_data: int = MISSING
+    shuffle: int = MISSING
+    split: int = MISSING
 
 
 @dataclass
@@ -116,6 +123,7 @@ class DataloaderConf:
 @dataclass
 class TrainingConf:
     num_epochs: int = MISSING
+    resume_from: Optional[str] = None
 
 
 @dataclass
@@ -143,6 +151,7 @@ class CheckpointsConf:
 
 @dataclass
 class TensorBoardConf:
+    dir: str = MISSING
     updates_per_epoch: Dict[Literal['Train', 'Val'], Optional[int]] = MISSING
 
 
@@ -159,6 +168,7 @@ class TestClassifierConf(DictConfig):
     model: ModelConf = MISSING
     paths: PathsConf = MISSING
     seeds: SeedsConf = MISSING
+    model_checkpoint: str = MISSING
     dataloader: DataloaderConf = MISSING
 
 
@@ -168,8 +178,8 @@ class TrainClassifierConf(DictConfig):
     dataset: DatasetConf = MISSING
     model: ModelConf = MISSING
     optimizer: OptimizerConf = MISSING
+    experiment: ExperimentConf = MISSING
     paths: PathsConf = MISSING
-    experiment_name: str = MISSING
     seeds: SeedsConf = MISSING
     dataloader: DataloaderConf = MISSING
     training: TrainingConf = MISSING

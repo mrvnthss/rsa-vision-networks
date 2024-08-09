@@ -8,7 +8,7 @@ Typical usage example:
 
   >>> python test_classifier.py model=lenet dataset=fashionmnist
   ...                           dataloader.which_split=Test
-  ...                           paths.checkpoint=<path_to_checkpoint>
+  ...                           model_checkpoint=<path_to_checkpoint>
 """
 
 
@@ -50,7 +50,7 @@ def main(cfg: TestClassifierConf) -> None:
     model = instantiate(cfg.model.architecture).to(device)
     checkpoint_manager = CheckpointManager(cfg)
     checkpoint = checkpoint_manager.load_checkpoint(
-        checkpoint_path=cfg.paths.checkpoint,
+        checkpoint_path=cfg.model_checkpoint,
         device=device
     )
     checkpoint_manager.load_model(
@@ -72,7 +72,7 @@ def main(cfg: TestClassifierConf) -> None:
         shuffle=False,
         num_workers=cfg.dataloader.num_workers,
         pin_memory=True,
-        split_seed=cfg.seeds.split_data
+        split_seed=cfg.seeds.split
     )
     if cfg.dataloader.which_split == "Val":
         test_loader = test_loader.get_val_loader()

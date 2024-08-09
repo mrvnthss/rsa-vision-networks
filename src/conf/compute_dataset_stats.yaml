@@ -5,6 +5,11 @@ defaults:
   - _self_
 paths:
   data: ../data
+dataset:
+  train_set:
+    load_into_memory: False
+  test_set:
+    load_into_memory: False
 # NOTE: The following "hydra" settings disable logging, as this is irrelevant for the task at hand.
 #       Do not change these settings.
 hydra:

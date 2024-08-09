@@ -129,9 +129,9 @@ class BaseTrainer(ABC):
         self.experiment_tracker.report_status()
 
         # Resume training from checkpoint
-        if cfg.paths.checkpoint is not None:
+        if cfg.training.resume_from is not None:
             self.epoch_idx = self.checkpoint_manager.resume_training(
-                resume_from=cfg.paths.checkpoint,
+                resume_from=cfg.training.resume_from,
                 device=self.device,
                 model=self.model,
                 optimizer=self.optimizer,
