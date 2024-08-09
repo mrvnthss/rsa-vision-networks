@@ -102,7 +102,7 @@ class CheckpointManager:
                 )
 
             self.save_best_model = (
-                cfg.checkpoints.save_best_model if "best_model" in cfg.checkpoints else False
+                cfg.checkpoints.save_best_model if "save_best_model" in cfg.checkpoints else False
             )
 
             self.is_checkpointing = self.save_frequency < inf or self.save_best_model
