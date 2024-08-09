@@ -121,8 +121,9 @@ class BaseTrainer(ABC):
 
         # ExperimentTracker
         self.experiment_tracker = ExperimentTracker(
-            cfg=cfg,
+            log_dir=cfg.paths.tensorboard,
             updates_per_epoch=cfg.tensorboard.updates_per_epoch,
+            batch_size=cfg.dataloader.batch_size,
             num_train_samples=self._get_num_samples("Train"),
             num_val_samples=self._get_num_samples("Val")
         )

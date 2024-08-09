@@ -7,7 +7,6 @@ from typing import Dict, List, Optional
 from typing_extensions import Literal
 
 import torch
-from omegaconf import DictConfig
 from torch.utils.tensorboard import SummaryWriter
 
 
@@ -33,17 +32,19 @@ class ExperimentTracker:
 
     def __init__(
             self,
-            cfg: DictConfig,
+            log_dir: str,
             updates_per_epoch: Dict[Literal["Train", "Val"], Optional[int]],
+            batch_size: int,
             num_train_samples: int,
             num_val_samples: Optional[int] = None
     ) -> None:
         """Initialize the ExperimentTracker instance.
 
         Args:
-            cfg: The training configuration.
+            log_dir: The directory to save the event file in.
             updates_per_epoch: The number of times per epoch to log
               updates to TensorBoard during training and validation.
+            batch_size: The number of samples in each batch.
             num_train_samples: The total number of samples in the
               training dataset.
             num_val_samples: The total number of samples in the
@@ -75,7 +76,7 @@ class ExperimentTracker:
 
         self.is_tracking = any(updates is not None for updates in self.updates_per_epoch.values())
 
-        self.writer = SummaryWriter(log_dir=cfg.paths.tensorboard)
+        self.writer = SummaryWriter(log_dir=log_dir)
         self.logger = logging.getLogger(__name__)
 
         # Set log indices (batch-based, starting at 1)
@@ -86,7 +87,7 @@ class ExperimentTracker:
                     "Train": num_train_samples,
                     "Val": num_val_samples
                 },
-                batch_size=cfg.dataloader.batch_size
+                batch_size=batch_size
             )
 
     def close(self) -> None:
