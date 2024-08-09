@@ -190,9 +190,8 @@ Temporary Items
 .apdisk
 
 # Exclude data directory by default
-/data/
+data/
 
 # Exclude logs and checkpoints directories
-/logs/
-/notebooks/logs/
-/checkpoints/
+out/
+notebooks/logs/
