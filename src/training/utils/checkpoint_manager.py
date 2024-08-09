@@ -62,12 +62,25 @@ class CheckpointManager:
     ) -> None:
         """Initialize the CheckpointManager instance.
 
+        Note:
+            The CheckpointManager instance makes use of the following
+            entries of the training configuration ``cfg``:
+              * paths.checkpoints
+              * checkpoints.save_frequency
+              * checkpoints.save_best_model
+              * checkpoints.delete_previous
+              * model.name
+              * optimizer.name
+              * optimizer.params
+              * performance.dataset
+              * performance.metric
+
         Args:
             cfg: The training configuration.
 
         Raises:
-            ValueError: If ``save_frequency`` is neither a positive
-              integer nor None.
+            ValueError: If ``cfg.checkpoints.save_frequency`` is neither
+              a positive integer nor None.
         """
 
         self.logger = logging.getLogger(__name__)
