@@ -18,9 +18,9 @@ from typing import Tuple
 import hydra
 import numpy as np
 import torch
+import torchvision.transforms.v2 as T
 from hydra.core.config_store import ConfigStore
 from hydra.utils import instantiate
-from torchvision.transforms import v2 as transforms
 from tqdm import tqdm
 
 from src.config import ComputeStatsConf
@@ -83,17 +83,20 @@ cs.store(name="compute_stats_conf", node=ComputeStatsConf)
 def main(cfg: ComputeStatsConf) -> None:
     """Compute the average mean and standard deviation of a dataset."""
 
-    # Prepare preprocessing pipeline
-    identity = transforms.Lambda(lambda x: x)
-    transforms_list = [
-        transforms.Grayscale() if cfg.dataset.is_grayscale else identity,
-        transforms.ToImage(),
-        transforms.ToDtype(torch.float32, scale=True)
+    transforms = []
+    if cfg.dataset.is_grayscale:
+        transforms.append(T.Grayscale())
+    transforms += [
+        T.PILToTensor(),
+        T.ToDtype(torch.float, scale=True),
+        T.ToPureTensor()
     ]
-    preprocessing = transforms.Compose(transforms_list)
 
     # Load dataset
-    dataset = instantiate(cfg.dataset.train_set, transform=preprocessing)
+    dataset = instantiate(
+        cfg.dataset.train_set,
+        transform=T.Compose(transforms)
+    )
 
     # Compute dataset statistics
     mean, std = compute_dataset_stats(dataset)
