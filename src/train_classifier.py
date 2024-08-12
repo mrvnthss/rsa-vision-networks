@@ -21,6 +21,7 @@ from torchmetrics import MetricCollection
 from src.base_classes.base_loader import BaseLoader
 from src.config import TrainClassifierConf
 from src.training.classification_trainer import ClassificationTrainer
+from src.utils.classification_presets import ClassificationPresets
 
 logger = logging.getLogger(__name__)
 
@@ -44,11 +45,35 @@ def main(cfg: TrainClassifierConf) -> None:
     )
     logger.info("Target device is set to: %s.", device.type.upper())
 
-    # Prepare dataloaders
+    # Prepare datasets
     logger.info("Preparing datasets and setting up dataloaders ...")
-    dataset = instantiate(cfg.dataset.train_set)
+    train_transform = ClassificationPresets(
+        mean=cfg.dataset.transform_params.mean,
+        std=cfg.dataset.transform_params.std,
+        crop_size=cfg.dataset.transform_params.crop_size,
+        crop_scale=cfg.dataset.transform_params.crop_scale,
+        flip_prob=cfg.dataset.transform_params.flip_prob,
+        is_training=True
+    )
+    train_set = instantiate(
+        cfg.dataset.train_set,
+        transform=train_transform
+    )
+    val_transform = ClassificationPresets(
+        mean=cfg.dataset.transform_params.mean,
+        std=cfg.dataset.transform_params.std,
+        crop_size=cfg.dataset.transform_params.crop_size,
+        resize_size=cfg.dataset.transform_params.resize_size,
+        is_training=False
+    )
+    val_set = instantiate(
+        cfg.dataset.train_set,
+        transform=val_transform
+    )
+
+    # Set up dataloaders
     train_loader = BaseLoader(
-        dataset=dataset,
+        dataset=train_set,
         val_split=cfg.dataloader.val_split,
         batch_size=cfg.dataloader.batch_size,
         shuffle=True,
@@ -57,7 +82,16 @@ def main(cfg: TrainClassifierConf) -> None:
         split_seed=cfg.seeds.split,
         shuffle_seed=cfg.seeds.shuffle
     )
-    val_loader = train_loader.get_val_loader()
+    val_loader = BaseLoader(
+        dataset=val_set,
+        val_split=cfg.dataloader.val_split,
+        batch_size=cfg.dataloader.batch_size,
+        shuffle=True,
+        num_workers=cfg.dataloader.num_workers,
+        pin_memory=True,
+        split_seed=cfg.seeds.split,
+        shuffle_seed=cfg.seeds.shuffle
+    ).get_val_loader()
 
     # Instantiate model, criterion, and optimizer
     logger.info("Instantiating model, setting up criterion and optimizer ...")

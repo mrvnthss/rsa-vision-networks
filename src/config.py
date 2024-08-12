@@ -3,7 +3,7 @@
 
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Union
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 from omegaconf import DictConfig, MISSING
 from typing_extensions import Literal
@@ -15,9 +15,18 @@ class CriterionConf:
 
 
 @dataclass
+class TransformConf:
+    mean: List[float] = MISSING
+    std: List[float] = MISSING
+    crop_size: int = MISSING
+    crop_scale: Tuple[float, float] = MISSING
+    resize_size: int = MISSING
+    flip_prob: float = MISSING
+
+
+@dataclass
 class VisionDatasetConf:
     root: Union[str, Path] = MISSING
-    transforms: Optional[Callable] = None
     transform: Optional[Callable] = None
     target_transform: Optional[Callable] = None
 
@@ -27,7 +36,7 @@ class DatasetConf:
     name: str = MISSING
     num_classes: int = MISSING
     is_grayscale: bool = MISSING
-    norm_constants: Dict[str, List[float]] = MISSING
+    transform_params: TransformConf = MISSING
     train_set: VisionDatasetConf = MISSING
     test_set: VisionDatasetConf = MISSING
 
@@ -41,16 +50,10 @@ class ArchConf:
 
 
 @dataclass
-class ComposeConf:
-    _target_: str = "torchvision.transforms.v2.Compose"
-    transforms: Any = MISSING
-
-
-@dataclass
 class ModelConf:
     name: str = MISSING
     architecture: ArchConf = MISSING
-    preprocessing: ComposeConf = MISSING
+    input_size: int = MISSING
 
 
 @dataclass
