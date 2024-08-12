@@ -20,6 +20,7 @@ from hydra.utils import instantiate
 from src.base_classes.base_loader import BaseLoader
 from src.config import TestClassifierConf
 from src.training.utils.checkpoint_manager import CheckpointManager
+from src.utils.classification_presets import ClassificationPresets
 from src.utils.utils import evaluate_classifier
 
 cs = ConfigStore.instance()
@@ -59,8 +60,16 @@ def main(cfg: TestClassifierConf) -> None:
     )
 
     # Initialize dataloader providing test samples
+    transform = ClassificationPresets(
+        mean=cfg.dataset.transform_params.mean,
+        std=cfg.dataset.transform_params.std,
+        crop_size=cfg.dataset.transform_params.crop_size,
+        resize_size=cfg.dataset.transform_params.resize_size,
+        is_training=False
+    )
     dataset = instantiate(
-        cfg.dataset.test_set if cfg.dataloader.which_split == "Test" else cfg.dataset.train_set
+        cfg.dataset.test_set if cfg.dataloader.which_split == "Test" else cfg.dataset.train_set,
+        transform=transform
     )
     val_split = (
         cfg.dataloader.val_split if cfg.dataloader.which_split in ["Train", "Val"] else None
