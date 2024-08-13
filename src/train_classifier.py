@@ -10,6 +10,7 @@ Typical usage example:
 """
 
 
+import copy
 import logging
 
 import hydra
@@ -55,10 +56,6 @@ def main(cfg: TrainClassifierConf) -> None:
         flip_prob=cfg.dataset.transform_params.flip_prob,
         is_training=True
     )
-    train_set = instantiate(
-        cfg.dataset.train_set,
-        transform=train_transform
-    )
     val_transform = ClassificationPresets(
         mean=cfg.dataset.transform_params.mean,
         std=cfg.dataset.transform_params.std,
@@ -66,10 +63,12 @@ def main(cfg: TrainClassifierConf) -> None:
         resize_size=cfg.dataset.transform_params.resize_size,
         is_training=False
     )
-    val_set = instantiate(
+    train_set = instantiate(
         cfg.dataset.train_set,
-        transform=val_transform
+        transform=train_transform
     )
+    val_set = copy.deepcopy(train_set)
+    val_set.transform = val_transform
 
     # Set up dataloaders
     train_loader = BaseLoader(
