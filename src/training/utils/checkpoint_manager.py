@@ -316,6 +316,7 @@ class CheckpointManager:
             model_state_dict: Dict[str, Any],
             optimizer_state_dict: Dict[str, Any],
             best_score: Optional[float] = None,
+            best_epoch_idx: Optional[int] = None,
             is_regular_save: bool = False
     ) -> None:
         """Save a checkpoint.
@@ -330,6 +331,8 @@ class CheckpointManager:
             optimizer_state_dict: The optimizer state dictionary to
               save.
             best_score: The best score achieved during training.
+            best_epoch_idx: The epoch index at which the best score was
+              observed.
             is_regular_save: Whether the checkpoint to save is a
               periodically saved checkpoint.
         """
@@ -340,6 +343,7 @@ class CheckpointManager:
             "model_state_dict": model_state_dict,
             "optimizer_state_dict": optimizer_state_dict,
             "best_score": best_score,
+            "best_epoch_idx": best_epoch_idx,
             "config": self.cfg
         }
         checkpoint_name = f"epoch_{epoch_idx}.pt" if is_regular_save else "best_performing.pt"
@@ -403,12 +407,17 @@ class CheckpointManager:
                 default_best_score
             )
         elif checkpoint["best_score"] is not None:
+            # NOTE: We assume that the ``best_epoch_idx`` is always set when the ``best_score``
+            #       is set in the checkpoint.
             performance_tracker.best_score = checkpoint["best_score"]
+            performance_tracker.best_epoch_idx = checkpoint["best_epoch_idx"]
             self.logger.info(
-                "Best score (%s/%s) set to %.4f for tracking purposes.",
+                "Best score (%s on the %s set) set to %.4f (achieved after %d epochs) for "
+                "tracking purposes.",
                 self.cfg.performance.metric,
-                self.cfg.performance.dataset,
-                checkpoint["best_score"]
+                "training" if self.cfg.performance.dataset == "Train" else "validation",
+                performance_tracker.best_score,
+                performance_tracker.best_epoch_idx
             )
         else:
             self.logger.warning(

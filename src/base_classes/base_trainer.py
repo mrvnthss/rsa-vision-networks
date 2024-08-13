@@ -258,7 +258,10 @@ class BaseTrainer(ABC):
                         "in the dictionary returned by the 'train_epoch' and 'eval_epoch' methods."
                     )
 
-                self.performance_tracker.update(results[self.performance_metric["metric"]])
+                self.performance_tracker.update(
+                    latest_score=results[self.performance_metric["metric"]],
+                    epoch_idx=self.epoch_idx
+                )
 
             # Log results
             self._log_results(
@@ -275,6 +278,7 @@ class BaseTrainer(ABC):
                         "training now.",
                         self.performance_tracker.patience
                     )
+                    self._report_results()
                     return
 
             # Save checkpoint of best performing model, if applicable
@@ -285,6 +289,7 @@ class BaseTrainer(ABC):
                         model_state_dict=self.model.state_dict(),
                         optimizer_state_dict=self.optimizer.state_dict(),
                         best_score=self.performance_tracker.best_score,
+                        best_epoch_idx=self.performance_tracker.best_epoch_idx,
                         is_regular_save=False
                     )
 
@@ -295,6 +300,7 @@ class BaseTrainer(ABC):
                     model_state_dict=self.model.state_dict(),
                     optimizer_state_dict=self.optimizer.state_dict(),
                     best_score=self.performance_tracker.best_score,
+                    best_epoch_idx=self.performance_tracker.best_epoch_idx,
                     is_regular_save=True
                 )
 
@@ -304,6 +310,7 @@ class BaseTrainer(ABC):
         # End of training
         self.experiment_tracker.close()
         self.logger.info("Training completed successfully.")
+        self._report_results()
 
     def train_epoch(self) -> Dict[str, float]:
         """Train the model for a single epoch.
@@ -334,6 +341,30 @@ class BaseTrainer(ABC):
             metrics computed over the epoch.
         """
 
+    def _get_num_samples(
+            self,
+            mode: Literal["Train", "Val"]
+    ) -> int:
+        """Count the number of total samples provided by a dataloader.
+
+        Args:
+            mode: Which dataloader to evaluate, either "Train" or "Val".
+
+        Returns:
+            The number of samples iterated over by the dataloader.
+
+        Raises:
+            ValueError: If ``mode`` is not one of "Train" or "Val".
+        """
+
+        if mode not in ["Train", "Val"]:
+            raise ValueError(f"'mode' should be either 'Train' or 'Val', but got {mode}.")
+
+        dataloader = self.train_loader if mode == "Train" else self.val_loader
+        if hasattr(dataloader, "sampler"):
+            return len(dataloader.sampler)
+        return len(dataloader.dataset)
+
     def _log_results(
             self,
             training_results: Dict[str, float],
@@ -362,29 +393,19 @@ class BaseTrainer(ABC):
             "  ".join(validation_results_formatted)
         )
 
-    def _get_num_samples(
-            self,
-            mode: Literal["Train", "Val"]
-    ) -> int:
-        """Count the number of total samples provided by a dataloader.
+    def _report_results(self) -> None:
+        """Report and log the final results of training."""
 
-        Args:
-            mode: Which dataloader to evaluate, either "Train" or "Val".
-
-        Returns:
-            The number of samples iterated over by the dataloader.
-
-        Raises:
-            ValueError: If ``mode`` is not one of "Train" or "Val".
-        """
-
-        if mode not in ["Train", "Val"]:
-            raise ValueError(f"'mode' should be either 'Train' or 'Val', but got {mode}.")
-
-        dataloader = self.train_loader if mode == "Train" else self.val_loader
-        if hasattr(dataloader, "sampler"):
-            return len(dataloader.sampler)
-        return len(dataloader.dataset)
+        dataset_str = "training" if self.performance_metric["dataset"] == "Train" \
+            else "validation"
+        self.logger.info(
+            "Best performing model achieved a score of %.3f (%s) on the %s set after %d epochs of "
+            "training.",
+            self.performance_tracker.best_score,
+            self.performance_metric["metric"],
+            dataset_str,
+            self.performance_tracker.best_epoch_idx
+        )
 
     def _update_training_sampler(self) -> None:
         """Update the sampler's epoch for deterministic shuffling."""

@@ -11,6 +11,8 @@ class PerformanceTracker:
     """A tracker to monitor model performance and handle early stopping.
 
     Attributes:
+        best_epoch_idx: The epoch index at which the best score was
+          observed.
         best_score: The best score observed during training.
         higher_is_better: A flag to indicate whether higher values of
           the metric being tracked reflect better performance.
@@ -74,6 +76,7 @@ class PerformanceTracker:
         self.track_for_early_stopping = self.patience < inf
         self.is_tracking = self.track_for_checkpointing or self.track_for_early_stopping
 
+        self.best_epoch_idx = -inf
         self.best_score = -inf if self.higher_is_better else inf
         self.latest_is_best = False
         self.patience_counter = 0
@@ -126,17 +129,21 @@ class PerformanceTracker:
 
     def update(
             self,
-            latest_score: float
+            latest_score: float,
+            epoch_idx: int
     ) -> None:
         """Update the tracker with the latest score.
 
         Note:
             This method may change the values of ``best_score``,
-            ``latest_is_best``, and ``patience_counter``.
+            ``latest_is_best``, ``best_epoch_idx``, and
+            ``patience_counter``.
 
         Args:
             latest_score: The latest score (of the metric determining
               performance) observed while training the model.
+            epoch_idx: The epoch index at which the ``latest_score`` was
+              observed.
         """
 
         if self.higher_is_better:
@@ -146,6 +153,7 @@ class PerformanceTracker:
 
         if self.latest_is_best:
             self.best_score = latest_score
+            self.best_epoch_idx = epoch_idx
             self.patience_counter = 0
         else:
             self.patience_counter += 1

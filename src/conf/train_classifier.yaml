@@ -24,7 +24,7 @@ dataloader:
   batch_size: ???
   num_workers: ???
 training:
-  num_epochs: 90
+  num_epochs: 100
   resume_from: null  # checkpoint to resume training from, null to start training from scratch
 metrics:  # pass empty dict ``{}`` to disable tracking of additional metrics
   Accuracy@1:
@@ -43,10 +43,10 @@ performance:
   metric: Loss  # either "Loss" or one of the keys in the ``metrics`` dict
   higher_is_better: False
   dataset: Val  # either "Train" or "Val"
-  patience: 10  # null to disable early stopping
+  patience: 20  # null to disable early stopping
   keep_previous_best_score: True
 checkpoints:
-  save_frequency: 10  # null to disable regular checkpoint saves
+  save_frequency: 5  # null to disable regular checkpoint saves
   save_best_model: True
   delete_previous: True
 tensorboard:
