@@ -2,7 +2,7 @@
 
 
 import torch
-from einops import rearrange
+from einops.layers.torch import Rearrange
 from torch import nn
 
 
@@ -17,26 +17,26 @@ class LeNet(nn.Module):
         This implementation deviates from the one suggested by LeCun et
         al. (1998) in the following ways:
           1) In the original implementation, outputs of convolutional
-             layers are sub-sampled using average pooling, and are then
-             passed through a hyperbolic tangent activation function.
-             In this implementation, outputs are first passed through a
-             ReLU activation function, and are then sub-sampled using
+             layers are sub-sampled by 2x2 receptive fields.  The four
+             inputs to each receptive field are summed, multiplied by a
+             trainable parameter, and are added to a trainable bias.
+             In this implementation, sub-sampling is performed using
              max pooling.
-          2) In the original implementation, not every feature map of
-             S2 is connected to every feature map of C3.  See Table 1
-             on page 8 of LeCun et al. (1998) for details.  In contrast,
-             this implementation does connect every feature map of S2 to
-             every feature map of C3.
-          3) The output layer in the original implementation uses
-             Euclidean Radial Basis Functions (RBF), whereas this
-             implementation employs a fully connected layer.
+          2) The activations of layers up to and including F6 are passed
+             through a scaled hyperbolic tangent function in the
+             original implementation.  Here, we replace the scaled
+             hyperbolic tangent by the ReLU activation function.
+          3) In the original implementation, not every feature map of
+             S2 is connected to every feature map of C3 (cf. Table 1
+             on page 8 of LeCun et al. (1998) for details).  In
+             contrast, this implementation does connect every feature
+             map of S2 to every feature map of C3.
+          4) The output layer in the original implementation uses
+             Euclidean Radial Basis Functions (RBF), which here has been
+             replaced with a fully connected layer.
 
     Attributes:
-        conv1: The first convolutional layer of LeNet-5.
-        conv2: The second convolutional layer of LeNet-5.
-        fc1: The first fully connected layer of LeNet-5.
-        fc2: The second fully connected layer of LeNet-5.
-        fc3: The output layer of LeNet-5.
+        net: The network architecture.
 
     Methods:
         forward(x): Perform forward pass through the network.
@@ -54,61 +54,20 @@ class LeNet(nn.Module):
 
         super().__init__()
 
-        self.conv1 = self._make_conv_layer(1, 6)
-        self.conv2 = self._make_conv_layer(6, 16)
-
-        self.fc1 = self._make_fc_layer(400, 120)
-        self.fc2 = self._make_fc_layer(120, 84)
-        self.fc3 = self._make_fc_layer(84, num_classes, add_relu=False)
-
-    @staticmethod
-    def _make_conv_layer(
-            in_channels: int,
-            out_channels: int,
-            conv_kernel_size: int = 5,
-            pool_kernel_size: int = 2,
-    ) -> nn.Module:
-        """Create a conv. layer w/ ReLU activation and max pooling.
-
-        Args:
-            in_channels: The number of input channels.
-            out_channels: The number of output channels.
-            conv_kernel_size: The size of the convolutional kernel.
-            pool_kernel_size: The size of the max pooling kernel.
-
-        Returns:
-            A convolutional layer, followed by a ReLU activation and a
-            max pooling layer.
-        """
-
-        return nn.Sequential(
-            nn.Conv2d(in_channels, out_channels, conv_kernel_size),
+        self.net = nn.Sequential(
+            nn.Conv2d(1, 6, 5),                                  # C1
+            nn.MaxPool2d(2),                                     # S2
             nn.ReLU(inplace=True),
-            nn.MaxPool2d(pool_kernel_size)
+            nn.Conv2d(6, 16, 5),                                 # C3
+            nn.MaxPool2d(2),                                     # S4
+            nn.ReLU(inplace=True),
+            nn.Conv2d(16, 120, 5),                               # C5 (equiv. to full connection)
+            nn.ReLU(inplace=True),
+            Rearrange("b c h w -> b (c h w)", c=120, h=1, w=1),
+            nn.Linear(120, 84),                                  # F6
+            nn.ReLU(inplace=True),
+            nn.Linear(84, num_classes)                           # Output
         )
-
-    @staticmethod
-    def _make_fc_layer(
-            in_features: int,
-            out_features: int,
-            add_relu: bool = True
-    ) -> nn.Module:
-        """Create a fully connected layer w/ ReLU activation.
-
-        Args:
-            in_features: The number of input features.
-            out_features: The number of output features.
-            add_relu: Whether to add a ReLU activation after the layer.
-
-        Returns:
-            A fully connected layer, followed by a ReLU activation if
-            specified.
-        """
-
-        fc_layer = [nn.Linear(in_features, out_features)]
-        if add_relu:
-            fc_layer.append(nn.ReLU(inplace=True))
-        return nn.Sequential(*fc_layer)
 
     def forward(
             self,
@@ -116,10 +75,4 @@ class LeNet(nn.Module):
     ) -> torch.Tensor:
         """Perform forward pass through the network."""
 
-        x = self.conv1(x)
-        x = self.conv2(x)
-        x = rearrange(x, "b c h w -> b (c h w)", c=16, h=5, w=5)
-        x = self.fc1(x)
-        x = self.fc2(x)
-        x = self.fc3(x)
-        return x
+        return self.net(x)
