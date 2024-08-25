@@ -6,7 +6,7 @@ associated with this script is named "train_classifier.yaml".
 
 Typical usage example:
 
-  >>> python train_classifier.py experiment=lenet_fashionmnist_gridsearch_run_1
+  >>> python train_classifier.py experiment=lenet_fashionmnist/grid_search/batch_size_lr
 """
 
 
@@ -52,7 +52,10 @@ def main(cfg: TrainClassifierConf) -> None:
         mean=cfg.dataset.transform_params.mean,
         std=cfg.dataset.transform_params.std,
         crop_size=cfg.dataset.transform_params.crop_size,
-        crop_scale=cfg.dataset.transform_params.crop_scale,
+        crop_scale=(
+            cfg.dataset.transform_params.crop_scale["lower"],
+            cfg.dataset.transform_params.crop_scale["upper"]
+        ),
         flip_prob=cfg.dataset.transform_params.flip_prob,
         is_training=True
     )

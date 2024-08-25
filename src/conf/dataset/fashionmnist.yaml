@@ -6,7 +6,9 @@ transform_params:
   mean: [0.2860]
   std: [0.3205]
   crop_size: ${model.input_size}
-  crop_scale: ???
+  crop_scale:
+    lower: ???
+    upper: ???
   resize_size: ???
   flip_prob: 0.5
 train_set:
