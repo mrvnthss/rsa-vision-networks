@@ -1,0 +1,39 @@
+# @package _global_
+
+# Multi-run configuration
+experiment:
+  name: lenet_fashionmnist/grid_search/batch_size_lr
+  dir:  ../out/${experiment.name}/${now:%Y-%m-%d_%H-%M-%S}
+  sub_dir: b=${dataloader.batch_size},lr=${optimizer.lr}
+paths:
+  checkpoints: ${experiment.dir}/${experiment.sub_dir}/checkpoints
+  tensorboard: ${experiment.dir}/${experiment.sub_dir}/logs
+hydra:
+  mode: MULTIRUN
+  sweep:
+    dir: ${experiment.dir}
+    subdir: ${experiment.sub_dir}/logs
+  sweeper:
+    params:
+      # Grid search parameters
+      dataloader.batch_size: 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096
+      optimizer.lr: 0.1, 0.01, 0.001
+
+# Fixed training parameters
+seeds:
+  torch: 89
+  shuffle: 858
+dataset:
+  transform_params:
+    crop_scale:
+      lower: 1.0
+      upper: 1.0
+    resize_size: ${model.input_size}  # matches the input size of the model
+    flip_prob: 0.0
+dataloader:
+  num_workers: 0
+optimizer:
+  momentum: 0.9
+  weight_decay: 1e-4
+performance:
+  patience: 5
