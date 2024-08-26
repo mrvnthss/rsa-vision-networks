@@ -258,7 +258,7 @@ def _extract_params(run_dir: str) -> Dict[str, Union[int, float, str]]:
     """
 
     params_dict = {}
-    for param in run_dir.split("_"):
+    for param in run_dir.split(","):
         tag, value = param.split("=")
         # Convert parameter value to numeric, if possible
         try:
