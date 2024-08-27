@@ -7,8 +7,18 @@ Functions:
     * get_training_results: Parse a single log file to determine
         training results.
     * parse_log_dir: Parse a directory of log files.
+    * preprocess_training_data: Preprocess training data in the form of
+        TensorBoard event files.
 """
 
+
+__all__ = [
+    "evaluate_classifier",
+    "get_training_durations",
+    "get_training_results",
+    "parse_log_dir",
+    "preprocess_training_data"
+]
 
 import os
 import re
@@ -18,6 +28,7 @@ from typing import Callable, Dict, Literal, Optional, Union
 
 import pandas as pd
 import torch
+from tbparse import SummaryReader
 from torch import nn
 from torchmetrics.classification import MulticlassAccuracy
 from tqdm import tqdm
@@ -240,6 +251,34 @@ def parse_log_dir(
     combined_df.reset_index(drop=True, inplace=True)
 
     return combined_df
+
+
+def preprocess_training_data(log_dir: str) -> pd.DataFrame:
+    """Preprocess training data in the form of TensorBoard event files.
+
+    Args:
+        log_dir: The path of the directory storing the TensorBoard
+           event files.
+
+    Returns:
+        A DataFrame containing the training data in long format.
+    """
+
+    # Read in data in long format
+    df = SummaryReader(log_dir, extra_columns={"dir_name"}).scalars
+
+    # Add run_id
+    df["run_id"] = df.groupby("dir_name").ngroup()
+
+    # Extract name of metric and mode of training (training vs. validation)
+    df[["metric", "mode"]] = df["tag"].str.split("/", expand=True)
+
+    # Extract parameters from directory name
+    params = df["dir_name"].str.rstrip("/logs").apply(_extract_params)
+    df = pd.concat([df, pd.DataFrame(params.tolist())], axis=1)
+    unique_params = list(params[0].keys())
+
+    return df[["run_id", *unique_params, "mode", "metric", "step", "value"]]
 
 
 def _extract_params(run_dir: str) -> Dict[str, Union[int, float, str]]:
