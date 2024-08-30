@@ -253,12 +253,17 @@ def parse_log_dir(
     return combined_df
 
 
-def preprocess_training_data(log_dir: str) -> pd.DataFrame:
+def preprocess_training_data(
+        log_dir: str,
+        add_wt_col: bool = False
+) -> pd.DataFrame:
     """Preprocess training data in the form of TensorBoard event files.
 
     Args:
         log_dir: The path of the directory storing the TensorBoard
            event files.
+        add_wt_col: Whether to add a column storing the weight used when
+          smoothing the raw data via EMA.
 
     Returns:
         A DataFrame containing the training data in long format.
@@ -278,7 +283,14 @@ def preprocess_training_data(log_dir: str) -> pd.DataFrame:
     df = pd.concat([df, pd.DataFrame(params.tolist())], axis=1)
     unique_params = list(params[0].keys())
 
-    return df[["run_id", *unique_params, "mode", "metric", "step", "value"]]
+    # Add weight column, if specified
+    if add_wt_col:
+        df["smooth_wt"] = 0.
+        col_order = ["run_id", *unique_params, "mode", "metric", "smooth_wt", "step", "value"]
+    else:
+        col_order = ["run_id", *unique_params, "mode", "metric", "step", "value"]
+
+    return df[col_order]
 
 
 def _extract_params(run_dir: str) -> Dict[str, Union[int, float, str]]:
