@@ -290,6 +290,9 @@ def preprocess_training_data(
     else:
         col_order = ["run_id", *unique_params, "mode", "metric", "step", "value"]
 
+    # Sort DataFrame
+    df = df.sort_values(by=["run_id", "mode", "metric", "step"], ascending=True)
+
     return df[col_order]
 
 
