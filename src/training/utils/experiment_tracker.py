@@ -28,6 +28,7 @@ class ExperimentTracker:
         flush(): Flush the SummaryWriter instance.
         log_scalars(scalars, step, mode): Log scalar values to
           TensorBoard.
+        report_status(): Report the status of experiment tracking.
     """
 
     def __init__(

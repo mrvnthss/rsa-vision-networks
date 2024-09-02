@@ -38,8 +38,8 @@ class BaseLoader:
           provided by the validation loader.
 
     Methods:
-        get_main_loader: Construct the main dataloader.
-        get_val_loader: Construct the validation dataloader.
+        get_main_loader(): Construct the main dataloader.
+        get_val_loader(): Construct the validation dataloader.
     """
 
     def __init__(
@@ -106,6 +106,8 @@ class BaseLoader:
                 )
 
         self.dataset = dataset
+        self.main_transform = main_transform
+        self.val_transform = val_transform
 
         self.main_sampler, self.val_sampler = self._get_samplers(
             dataset.targets,
@@ -114,9 +116,6 @@ class BaseLoader:
             shuffle,
             shuffle_seed
         )
-
-        self.main_transform = main_transform
-        self.val_transform = val_transform
 
         self.shared_kwargs = {
             "batch_size": batch_size,

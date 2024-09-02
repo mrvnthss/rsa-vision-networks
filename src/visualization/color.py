@@ -1,7 +1,8 @@
 """Utility functions related to color.
 
 Functions:
-    * get_tinted_color: Get a tinted version of a base color.
+    * get_tinted_color(base_color, tint=0): Get a tinted version of a
+        base color.
 """
 
 

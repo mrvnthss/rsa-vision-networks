@@ -36,7 +36,8 @@ class PerformanceTracker:
           the training process should be stopped early.
         report_status(): Report the status of performance tracking
           during training.
-        update(latest_score): Update the tracker with the latest score.
+        update(latest_score, epoch_idx): Update the tracker with the
+          latest score.
     """
 
     def __init__(

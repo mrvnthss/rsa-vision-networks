@@ -1,14 +1,16 @@
 """Utility functions used throughout this project.
 
 Functions:
-    * evaluate_classifier: Evaluate a classification model.
-    * get_training_durations: Parse a single log file to determine
-        training durations.
-    * get_training_results: Parse a single log file to determine
-        training results.
-    * parse_log_dir: Parse a directory of log files.
-    * preprocess_training_data: Preprocess training data in the form of
-        TensorBoard event files.
+    * evaluate_classifier(model, test_loader, ...): Evaluate a
+        classification model.
+    * get_training_durations(log_file): Parse a single log file to
+        determine training durations.
+    * get_training_results(log_file, mode): Parse a single log file to
+        determine training results.
+    * parse_log_dir(log_dir, parse_fn, mode): Parse a directory of log
+        files.
+    * preprocess_training_data(log_dir, add_wt_col): Preprocess training
+        data in the form of TensorBoard event files.
 """
 
 

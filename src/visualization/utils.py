@@ -1,8 +1,8 @@
 """Utility functions for general visualization purposes.
 
 Functions:
-    * save_figure: Save a matplotlib figure.
-    * smooth_ts: Smooth a time series using EMA.
+    * save_figure(fig, f_path, dpi=300): Save a matplotlib figure.
+    * smooth_ts(raw_ts, weight): Smooth a time series using EMA.
 """
 
 

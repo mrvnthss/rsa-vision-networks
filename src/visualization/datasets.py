@@ -1,9 +1,10 @@
 """Utility functions for visualizing datasets.
 
 Functions:
-    * create_sprite: Combine individual images into a sprite.
-    * get_samples: Grab a subset of samples from each class in the
-        dataset.
+    * create_sprite(images, n_rows, n_cols): Combine individual images
+        into a sprite.
+    * get_samples(data_dir, num_samples, ...): Grab a subset of samples
+        from each class in the dataset.
 """
 
 

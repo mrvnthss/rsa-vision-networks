@@ -34,7 +34,7 @@ class BaseSampler(Sampler):
         total_samples: The total number of samples in the dataset.
 
     Methods:
-        set_epoch_idx: Set the current epoch index used for
+        set_epoch_idx(epoch_idx): Set the current epoch index used for
           deterministic shuffling.
     """
 

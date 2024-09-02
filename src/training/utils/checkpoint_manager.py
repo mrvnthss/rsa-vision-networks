@@ -50,9 +50,9 @@ class CheckpointManager:
           from a saved checkpoint.
         report_status(): Report the status of checkpoint saving during
           training.
-        resume_training(resume_from, model, ...): Resume training from a
-          saved checkpoint.
-        save_checkpoint(epoch, model_state_dict, ...): Save a
+        resume_training(resume_from, device, ...): Resume training from
+          a saved checkpoint.
+        save_checkpoint(epoch_idx, model_state_dict, ...): Save a
           checkpoint.
     """
 
