@@ -127,6 +127,7 @@ class DataloaderConf:
 class TrainingConf:
     num_epochs: int = MISSING
     resume_from: Optional[str] = None
+    num_folds: Optional[int] = None
 
 
 @dataclass

@@ -10,7 +10,6 @@ Typical usage example:
 """
 
 
-import copy
 import logging
 
 import hydra
@@ -46,8 +45,8 @@ def main(cfg: TrainClassifierConf) -> None:
     )
     logger.info("Target device is set to: %s.", device.type.upper())
 
-    # Prepare datasets
-    logger.info("Preparing datasets and setting up dataloaders ...")
+    # Prepare transforms and dataset
+    logger.info("Preparing transforms and dataset ...")
     train_transform = ClassificationPresets(
         mean=cfg.dataset.transform_params.mean,
         std=cfg.dataset.transform_params.std,
@@ -66,65 +65,64 @@ def main(cfg: TrainClassifierConf) -> None:
         resize_size=cfg.dataset.transform_params.resize_size,
         is_training=False
     )
-    train_set = instantiate(
-        cfg.dataset.train_set,
-        transform=train_transform
-    )
-    val_set = copy.deepcopy(train_set)
-    val_set.transform = val_transform
+    # NOTE: Transforms are handled by the ``BaseLoader`` class, see below.
+    dataset = instantiate(cfg.dataset.train_set)
 
-    # Set up dataloaders
-    train_loader = BaseLoader(
-        dataset=train_set,
-        val_split=cfg.dataloader.val_split,
-        batch_size=cfg.dataloader.batch_size,
-        shuffle=True,
-        num_workers=cfg.dataloader.num_workers,
-        pin_memory=True,
-        split_seed=cfg.seeds.split,
-        shuffle_seed=cfg.seeds.shuffle
-    )
-    val_loader = BaseLoader(
-        dataset=val_set,
-        val_split=cfg.dataloader.val_split,
-        batch_size=cfg.dataloader.batch_size,
-        shuffle=True,
-        num_workers=cfg.dataloader.num_workers,
-        pin_memory=True,
-        split_seed=cfg.seeds.split,
-        shuffle_seed=cfg.seeds.shuffle
-    ).get_val_loader()
+    if cfg.training.num_folds is None:
+        # Set up dataloaders
+        logger.info("Preparing dataloaders ...")
+        base_loader = BaseLoader(
+            dataset=dataset,
+            main_transform=train_transform,
+            val_transform=val_transform,
+            val_split=cfg.dataloader.val_split,
+            batch_size=cfg.dataloader.batch_size,
+            shuffle=True,
+            num_workers=cfg.dataloader.num_workers,
+            pin_memory=True,
+            split_seed=cfg.seeds.split,
+            shuffle_seed=cfg.seeds.shuffle
+        )
+        train_loader = base_loader.get_main_loader()
+        val_loader = base_loader.get_val_loader()
 
-    # Instantiate model, criterion, and optimizer
-    logger.info("Instantiating model, setting up criterion and optimizer ...")
-    model = instantiate(cfg.model.architecture).to(device)
-    criterion = instantiate(cfg.criterion)
-    optimizer = instantiate(
-        {k: cfg.optimizer[k] for k in cfg.optimizer if k not in ["name", "params"]},
-        params=model.parameters()
-    )
-    cfg.optimizer.params = optimizer.state_dict()["param_groups"]
+        # Instantiate model, criterion, and optimizer
+        logger.info("Instantiating model, setting up criterion and optimizer ...")
+        model = instantiate(cfg.model.architecture).to(device)
+        criterion = instantiate(cfg.criterion)
+        optimizer = instantiate(
+            {k: cfg.optimizer[k] for k in cfg.optimizer if k not in ["name", "params"]},
+            params=model.parameters()
+        )
+        cfg.optimizer.params = optimizer.state_dict()["param_groups"]
 
-    # Instantiate metrics to track during training
-    logger.info("Instantiating metrics ...")
-    metrics = MetricCollection({
-        name: instantiate(metric) for name, metric in cfg.metrics.items()
-    })
+        # Instantiate metrics to track during training
+        logger.info("Instantiating metrics ...")
+        metrics = MetricCollection({
+            name: instantiate(metric) for name, metric in cfg.metrics.items()
+        })
 
-    # Instantiate trainer and start training
-    # NOTE: Training is automatically resumed if a checkpoint is provided.
-    logger.info("Setting up trainer ...")
-    trainer = ClassificationTrainer(
-        model,
-        optimizer,
-        criterion,
-        train_loader,
-        val_loader,
-        metrics,
-        device,
-        cfg
-    )
-    trainer.train()
+        # Instantiate trainer and start training
+        # NOTE: Training is automatically resumed if a checkpoint is provided.
+        logger.info("Setting up trainer ...")
+        trainer = ClassificationTrainer(
+            model,
+            optimizer,
+            criterion,
+            train_loader,
+            val_loader,
+            metrics,
+            device,
+            cfg
+        )
+        trainer.train()
+    elif cfg.training.num_folds > 1:
+        pass  # TODO: Implement k-fold cross-validation
+    else:
+        raise ValueError(
+            f"'cfg.training.num_folds' should be either None or an integer greater than 1, "
+            f"but got {cfg.training.num_folds}."
+        )
 
 
 if __name__ == "__main__":

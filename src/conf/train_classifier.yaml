@@ -20,12 +20,13 @@ seeds:
   shuffle: ???  # controls shuffling of the training set
   split: 42  # controls random splitting of the dataset into training and validation sets
 dataloader:
-  val_split: 0.15  # fraction of the training set to use as validation set
+  val_split: 0.20  # fraction of the dataset to use as validation set
   batch_size: ???
   num_workers: ???
 training:
   num_epochs: 100
   resume_from: null  # checkpoint to resume training from, null to start training from scratch
+  num_folds: null  # number of folds for cross-validation, null to disable cross-validation
 metrics:  # pass empty dict ``{}`` to disable tracking of additional metrics
   Accuracy@1:
     _target_: torchmetrics.classification.MulticlassAccuracy

@@ -1,6 +1,7 @@
 """A base dataloader class for PyTorch datasets."""
 
 
+import copy
 from typing import Any, Callable, List, Optional, Tuple, TypeVar, Union
 
 import numpy as np
@@ -13,34 +14,39 @@ T = TypeVar('T')
 _collate_fn_t = Callable[[List[T]], Any]
 
 
-class BaseLoader(torch.utils.data.DataLoader):
+class BaseLoader:
     """A base dataloader for PyTorch datasets.
 
     This class provides a base dataloader for PyTorch datasets that
     supports splitting the dataset into training and validation sets.
     This is done by constructing two dataloaders on top of the same
     dataset, but equipped with two samplers that sample disjoint
-    subsets of the dataset.  The main dataloader (for training or
-    testing) corresponds to the BaseLoader instance itself, while the
-    validation dataloader (providing validation samples during the
-    training process) can be obtained by calling the ``get_val_loader``
-    method of that instance.
+    subsets of the dataset.  These two dataloaders can be accessed
+    via the ``get_main_loader`` and the ``get_val_loader`` methods.
 
     Attributes:
+        dataset: The dataset to load samples from.
         main_sampler: The main sampler used to sample data from the
           dataset.
+        main_transform: The transformation to apply to the samples
+          provided by the main loader.
         shared_kwargs: Keyword arguments shared between the main
           dataloader and the validation dataloader.
         val_sampler: The sampler used to sample validation data from
           the dataset.
+        val_transform: The transformation to apply to the samples
+          provided by the validation loader.
 
     Methods:
-        get_val_loader: Construct a dataloader for validation purposes.
+        get_main_loader: Construct the main dataloader.
+        get_val_loader: Construct the validation dataloader.
     """
 
     def __init__(
             self,
             dataset: torch.utils.data.Dataset,
+            main_transform: Optional[Callable] = None,
+            val_transform: Optional[Callable] = None,
             val_split: Optional[float] = None,
             batch_size: int = 1,
             shuffle: bool = False,
@@ -55,6 +61,11 @@ class BaseLoader(torch.utils.data.DataLoader):
 
         Args:
             dataset: The dataset to load samples from.
+            main_transform: The transformation to apply to the samples
+              provided by the main loader.
+            val_transform: The transformation to apply to the samples
+              provided by the validation loader.  Has no effect if
+              ``val_split`` is None.
             val_split: The proportion of the dataset to use for
               validation.
             batch_size: The number of samples to load per batch.
@@ -94,6 +105,8 @@ class BaseLoader(torch.utils.data.DataLoader):
                     f"but got {val_split}."
                 )
 
+        self.dataset = dataset
+
         self.main_sampler, self.val_sampler = self._get_samplers(
             dataset.targets,
             val_split,
@@ -102,8 +115,10 @@ class BaseLoader(torch.utils.data.DataLoader):
             shuffle_seed
         )
 
+        self.main_transform = main_transform
+        self.val_transform = val_transform
+
         self.shared_kwargs = {
-            "dataset": dataset,
             "batch_size": batch_size,
             "num_workers": num_workers,
             "collate_fn": collate_fn,
@@ -111,18 +126,27 @@ class BaseLoader(torch.utils.data.DataLoader):
             "drop_last": drop_last
         }
 
-        super().__init__(
+    def get_main_loader(self) -> torch.utils.data.DataLoader:
+        """Construct the main dataloader."""
+
+        main_set = copy.deepcopy(self.dataset)
+        main_set.transform = self.main_transform
+        return torch.utils.data.DataLoader(
+            dataset=main_set,
             sampler=self.main_sampler,
             **self.shared_kwargs
         )
 
     def get_val_loader(self) -> Optional[torch.utils.data.DataLoader]:
-        """Construct a dataloader providing validation samples."""
+        """Construct the validation dataloader."""
 
         if self.val_sampler is None:
             return None
 
+        val_set = copy.deepcopy(self.dataset)
+        val_set.transform = self.val_transform
         return torch.utils.data.DataLoader(
+            dataset=val_set,
             sampler=self.val_sampler,
             **self.shared_kwargs
         )
