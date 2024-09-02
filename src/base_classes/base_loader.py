@@ -111,7 +111,10 @@ class BaseLoader(torch.utils.data.DataLoader):
             "drop_last": drop_last
         }
 
-        super().__init__(sampler=self.main_sampler, **self.shared_kwargs)
+        super().__init__(
+            sampler=self.main_sampler,
+            **self.shared_kwargs
+        )
 
     def get_val_loader(self) -> Optional[torch.utils.data.DataLoader]:
         """Construct a dataloader providing validation samples."""
