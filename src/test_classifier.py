@@ -12,6 +12,8 @@ Typical usage example:
 """
 
 
+from typing import Literal
+
 import hydra
 import torch
 from hydra.core.config_store import ConfigStore
@@ -68,14 +70,15 @@ def main(cfg: TestClassifierConf) -> None:
         is_training=False
     )
     dataset = instantiate(
-        cfg.dataset.test_set if cfg.dataloader.which_split == "Test" else cfg.dataset.train_set,
-        transform=transform
+        cfg.dataset.test_set if cfg.dataloader.which_split == "Test" else cfg.dataset.train_set
     )
     val_split = (
         cfg.dataloader.val_split if cfg.dataloader.which_split in ["Train", "Val"] else None
     )
     test_loader = BaseLoader(
         dataset=dataset,
+        main_transform=transform,
+        val_transform=transform,
         val_split=val_split,
         batch_size=cfg.dataloader.batch_size,
         shuffle=False,
@@ -83,8 +86,8 @@ def main(cfg: TestClassifierConf) -> None:
         pin_memory=True,
         split_seed=cfg.seeds.split
     )
-    if cfg.dataloader.which_split == "Val":
-        test_loader = test_loader.get_val_loader()
+    mode: Literal["Main", "Val"] = "Val" if cfg.dataloader.which_split == "Val" else "Main"
+    test_loader = test_loader.get_dataloader(mode=mode)
 
     # Instantiate criterion
     criterion = instantiate(cfg.criterion)
