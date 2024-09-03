@@ -8,7 +8,7 @@ defaults:
 paths:
   checkpoints: ${experiment.dir}/checkpoints
   data: ../data
-  tensorboard: ${experiment.dir}/logs
+  tensorboard: ${experiment.dir}/tensorboard
 hydra:
   run:
     dir: ${experiment.dir}/logs

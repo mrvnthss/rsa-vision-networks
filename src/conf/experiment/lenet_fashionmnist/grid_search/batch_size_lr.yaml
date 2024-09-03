@@ -7,7 +7,7 @@ experiment:
   sub_dir: b=${dataloader.batch_size},lr=${optimizer.lr}
 paths:
   checkpoints: ${experiment.dir}/${experiment.sub_dir}/checkpoints
-  tensorboard: ${experiment.dir}/${experiment.sub_dir}/logs
+  tensorboard: ${experiment.dir}/${experiment.sub_dir}/tensorboard
 hydra:
   mode: MULTIRUN
   sweep:
