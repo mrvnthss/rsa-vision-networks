@@ -83,8 +83,8 @@ def main(cfg: TrainClassifierConf) -> None:
             split_seed=cfg.seeds.split,
             shuffle_seed=cfg.seeds.shuffle
         )
-        train_loader = base_loader.get_main_loader()
-        val_loader = base_loader.get_val_loader()
+        train_loader = base_loader.get_dataloader(mode="Main")
+        val_loader = base_loader.get_dataloader(mode="Val")
 
         # Instantiate model, criterion, and optimizer
         logger.info("Instantiating model, setting up criterion and optimizer ...")

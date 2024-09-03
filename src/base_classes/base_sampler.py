@@ -20,17 +20,18 @@ class BaseSampler(Sampler):
         class_frequencies: A list of class frequencies, where each
           frequency is repeated for the number of samples in that class,
           used for sampling.
-        epoch_idx: The current epoch index, starting from 1.  A value of
-          -1 indicates that the epoch index has not been set yet.  Used
-          to implement deterministic shuffling if ``shuffle`` is True.
+        epoch_idx: The epoch index, starting from 1.  A value of -1
+          indicates that the epoch index has not been set yet.  Used to
+          implement reproducible shuffling if ``shuffle`` is True.
         sample_indices_by_class: A dictionary mapping class indices to
           lists of indices pointing to samples of that class.
         sample_indices_unpacked: All sample indices of the
           ``sample_indices_by_class`` dictionary flattened into a NumPy
           array.
-        seed: The random seed used for deterministic shuffling.  Has no
-          effect if ``shuffle`` is False.
-        shuffle: Whether to shuffle the data before sampling.
+        seed: The random seed that controls the shuffling behavior
+          across epochs.  Has no effect if ``shuffle`` is False.
+        shuffle: Whether to shuffle the data differently in every
+          epoch.
         total_samples: The total number of samples in the dataset.
 
     Methods:
@@ -49,9 +50,10 @@ class BaseSampler(Sampler):
         Args:
             sample_indices_by_class: A dictionary mapping class indices
               to lists of indices pointing to samples of that class.
-            shuffle: Whether to shuffle the data before sampling.
-            seed: The random seed used for deterministic shuffling.  Has
-              no effect if ``shuffle`` is False.
+            shuffle: Whether to shuffle the data differently in every
+              epoch.
+            seed: The random seed used to control the shuffling behavior
+              across epochs.  Has no effect if ``shuffle`` is False.
         """
 
         super().__init__()
@@ -114,10 +116,10 @@ class BaseSampler(Sampler):
             self,
             epoch_idx: int
     ) -> None:
-        """Set the current epoch index used for deterministic shuffling.
+        """Set the epoch index used for reproducible shuffling.
 
         Args:
-            epoch_idx: The current epoch index, starting from 1.
+            epoch_idx: The epoch index, starting from 1.
         """
 
         self.epoch_idx = epoch_idx

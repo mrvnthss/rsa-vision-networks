@@ -2,7 +2,7 @@
 
 
 import copy
-from typing import Any, Callable, List, Optional, Tuple, TypeVar, Union
+from typing import Any, Callable, List, Literal, Optional, Tuple, TypeVar, Union
 
 import numpy as np
 import torch
@@ -22,7 +22,7 @@ class BaseLoader:
     This is done by constructing two dataloaders on top of the same
     dataset, but equipped with two samplers that sample disjoint
     subsets of the dataset.  These two dataloaders can be accessed
-    via the ``get_main_loader`` and the ``get_val_loader`` methods.
+    via the ``get_dataloader`` method.
 
     Attributes:
         dataset: The dataset to load samples from.
@@ -38,8 +38,8 @@ class BaseLoader:
           provided by the validation loader.
 
     Methods:
-        get_main_loader(): Construct the main dataloader.
-        get_val_loader(): Construct the validation dataloader.
+        get_dataloader(mode): Construct the dataloader for a particular
+          mode.
     """
 
     def __init__(
@@ -66,12 +66,12 @@ class BaseLoader:
             val_transform: The transformation to apply to the samples
               provided by the validation loader.  Has no effect if
               ``val_split`` is None.
-            val_split: The proportion of the dataset to use for
-              validation.
+            val_split: The proportion of the dataset to use as
+              validation samples.
             batch_size: The number of samples to load per batch.
-            shuffle: Whether to enable shuffling for the main sampler.
-              See also the ``shuffle`` argument of the BaseSampler
-              class.
+            shuffle: Whether the main sampler ought to shuffle the data
+              differently in every epoch.  See also the ``shuffle``
+              argument of the BaseSampler class.
             num_workers: The number of subprocesses to use for data
               loading.
             collate_fn: The function used to merge a list of samples
@@ -81,11 +81,11 @@ class BaseLoader:
             drop_last: Whether to drop the last incomplete batch in case
               the dataset size is not divisible by the batch size.
             split_seed: The random seed that controls the random split
-              of the dataset into main samples and samples used
-              for validation.  Has no effect if ``val_split`` is None.
-            shuffle_seed: The random seed that controls deterministic
-              shuffling of the main sampler.  See also the ``seed``
-              argument of the BaseSampler class.
+              of the dataset into main samples and validation samples.
+              Has no effect if ``val_split`` is None.
+            shuffle_seed: The random seed that controls the shuffling
+              behavior of the main sampler across epochs.  See also the
+              ``seed`` argument of the BaseSampler class.
 
         Raises:
             ValueError: If the dataset does not have a ``targets``
@@ -125,28 +125,36 @@ class BaseLoader:
             "drop_last": drop_last
         }
 
-    def get_main_loader(self) -> torch.utils.data.DataLoader:
-        """Construct the main dataloader."""
+    def get_dataloader(
+            self,
+            mode: Literal["Main", "Val"]
+    ) -> Optional[torch.utils.data.DataLoader]:
+        """Construct the dataloader for a particular mode.
 
-        main_set = copy.deepcopy(self.dataset)
-        main_set.transform = self.main_transform
-        return torch.utils.data.DataLoader(
-            dataset=main_set,
-            sampler=self.main_sampler,
-            **self.shared_kwargs
-        )
+        Args:
+            mode: Whether to construct the main (training/testing) or
+              validation dataloader.
 
-    def get_val_loader(self) -> Optional[torch.utils.data.DataLoader]:
-        """Construct the validation dataloader."""
+        Returns:
+            The dataloader for the specified mode.
 
-        if self.val_sampler is None:
+        Raises:
+            ValueError: If ``mode`` is neither "Main" nor "Val".
+        """
+
+        if mode not in ["Main", "Val"]:
+            raise ValueError(f"'mode' should be either 'Main' or 'Val', but got {mode}.")
+
+        if mode == "Val" and self.val_sampler is None:
             return None
 
-        val_set = copy.deepcopy(self.dataset)
-        val_set.transform = self.val_transform
+        dataset = copy.deepcopy(self.dataset)
+        transform, sampler = (self.main_transform, self.main_sampler) if mode == "Main" \
+            else (self.val_transform, self.val_sampler)
+        dataset.transform = transform
         return torch.utils.data.DataLoader(
-            dataset=val_set,
-            sampler=self.val_sampler,
+            dataset=dataset,
+            sampler=sampler,
             **self.shared_kwargs
         )
 
@@ -163,17 +171,17 @@ class BaseLoader:
         Args:
             targets: A list or tensor containing the class index for
               each image in the dataset.
-            val_split: The proportion of the dataset to use for
-              validation.
+            val_split: The proportion of the dataset to use as
+              validation samples.
             split_seed: The random seed that controls the random split
-              of the dataset indices into main indices and indices used
-              for validation.  Has no effect if ``val_split`` is None.
-            shuffle: Whether to enable shuffling for the main sampler.
-              See also the ``shuffle`` argument of the BaseSampler
-              class.
-            shuffle_seed: The random seed that controls deterministic
-              shuffling of the main sampler.  See also the ``seed``
+              of the dataset into main samples and validation samples.
+              Has no effect if ``val_split`` is None.
+            shuffle: Whether the main sampler ought to shuffle the data
+              differently in every epoch.  See also the ``shuffle``
               argument of the BaseSampler class.
+            shuffle_seed: The random seed that controls the shuffling
+              behavior of the main sampler across epochs.  See also the
+              ``seed`` argument of the BaseSampler class.
 
         Returns:
             A tuple containing the samplers for the main and validation
