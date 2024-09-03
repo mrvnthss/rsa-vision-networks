@@ -11,6 +11,7 @@ Typical usage example:
 
 
 import logging
+from pathlib import Path
 
 import hydra
 import torch
@@ -20,6 +21,7 @@ from torchmetrics import MetricCollection
 
 from src.base_classes.base_loader import BaseLoader
 from src.config import TrainClassifierConf
+from src.dataloaders.stratified_k_fold_loader import StratifiedKFoldLoader
 from src.training.classification_trainer import ClassificationTrainer
 from src.utils.classification_presets import ClassificationPresets
 
@@ -65,8 +67,23 @@ def main(cfg: TrainClassifierConf) -> None:
         resize_size=cfg.dataset.transform_params.resize_size,
         is_training=False
     )
-    # NOTE: Transforms are handled by the ``BaseLoader`` class, see below.
     dataset = instantiate(cfg.dataset.train_set)
+
+    # Instantiate model, criterion, and optimizer
+    logger.info("Instantiating model, setting up criterion and optimizer ...")
+    model = instantiate(cfg.model.architecture).to(device)
+    criterion = instantiate(cfg.criterion)
+    optimizer = instantiate(
+        {k: cfg.optimizer[k] for k in cfg.optimizer if k not in ["name", "params"]},
+        params=model.parameters()
+    )
+    cfg.optimizer.params = optimizer.state_dict()["param_groups"]
+
+    # Instantiate metrics to track during training
+    logger.info("Instantiating metrics ...")
+    metrics = MetricCollection({
+        name: instantiate(metric) for name, metric in cfg.metrics.items()
+    })
 
     if cfg.training.num_folds is None:
         # Set up dataloaders
@@ -86,38 +103,97 @@ def main(cfg: TrainClassifierConf) -> None:
         train_loader = base_loader.get_dataloader(mode="Main")
         val_loader = base_loader.get_dataloader(mode="Val")
 
-        # Instantiate model, criterion, and optimizer
-        logger.info("Instantiating model, setting up criterion and optimizer ...")
-        model = instantiate(cfg.model.architecture).to(device)
-        criterion = instantiate(cfg.criterion)
-        optimizer = instantiate(
-            {k: cfg.optimizer[k] for k in cfg.optimizer if k not in ["name", "params"]},
-            params=model.parameters()
-        )
-        cfg.optimizer.params = optimizer.state_dict()["param_groups"]
-
-        # Instantiate metrics to track during training
-        logger.info("Instantiating metrics ...")
-        metrics = MetricCollection({
-            name: instantiate(metric) for name, metric in cfg.metrics.items()
-        })
-
         # Instantiate trainer and start training
         # NOTE: Training is automatically resumed if a checkpoint is provided.
         logger.info("Setting up trainer ...")
         trainer = ClassificationTrainer(
-            model,
-            optimizer,
-            criterion,
-            train_loader,
-            val_loader,
-            metrics,
-            device,
-            cfg
+            model=model,
+            optimizer=optimizer,
+            criterion=criterion,
+            train_loader=train_loader,
+            val_loader=val_loader,
+            metrics=metrics,
+            device=device,
+            cfg=cfg
         )
         trainer.train()
     elif cfg.training.num_folds > 1:
-        pass  # TODO: Implement k-fold cross-validation
+        # Set up dataloader for stratified k-fold cross-validation
+        logger.info(
+            "Preparing folds for stratified %s-fold cross-validation ...",
+            cfg.training.num_folds
+        )
+        stratified_k_fold_loader = StratifiedKFoldLoader(
+            dataset=dataset,
+            train_transform=train_transform,
+            val_transform=val_transform,
+            num_folds=cfg.training.num_folds,
+            batch_size=cfg.dataloader.batch_size,
+            shuffle=True,
+            num_workers=cfg.dataloader.num_workers,
+            pin_memory=True,
+            fold_seed=cfg.seeds.split,
+            shuffle_seed=cfg.seeds.shuffle
+        )
+
+        # Store model and optimizer states to reset them for each fold
+        init_model_state_dict_path = Path(cfg.experiment.dir) / "init_model_state_dict.pt"
+        init_optimizer_state_dict_path = Path(cfg.experiment.dir) / "init_optimizer_state_dict.pt"
+        torch.save(model.state_dict(), init_model_state_dict_path)
+        torch.save(optimizer.state_dict(), init_optimizer_state_dict_path)
+
+        # Iterate over individual folds
+        for fold_idx in range(cfg.training.num_folds):
+            logger.info(
+                "CROSS-VALIDATION RUN %0*d/%d",
+                len(str(cfg.training.num_folds)), fold_idx + 1, cfg.training.num_folds
+            )
+
+            # Reset random seeds and model and optimizer states
+            if fold_idx > 0:
+                # Reset random seeds
+                torch.manual_seed(cfg.seeds.torch)
+                torch.cuda.manual_seed_all(cfg.seeds.torch)
+
+                # Reset model and optimizer states
+                logger.info("Resetting model and optimizer states ...")
+                model.load_state_dict(
+                    torch.load(init_model_state_dict_path, weights_only=True)
+                )
+                optimizer.load_state_dict(
+                    torch.load(init_optimizer_state_dict_path, weights_only=True)
+                )
+
+            # Set up dataloaders
+            logger.info("Preparing dataloaders ...")
+            train_loader = stratified_k_fold_loader.get_dataloader(
+                fold_idx=fold_idx,
+                mode="Train"
+            )
+            val_loader = stratified_k_fold_loader.get_dataloader(
+                fold_idx=fold_idx,
+                mode="Val"
+            )
+
+            # Instantiate trainer and start training
+            # NOTE: Training is automatically resumed if a checkpoint is provided.
+            logger.info("Setting up trainer ...")
+            trainer = ClassificationTrainer(
+                model=model,
+                optimizer=optimizer,
+                criterion=criterion,
+                train_loader=train_loader,
+                val_loader=val_loader,
+                metrics=metrics,
+                device=device,
+                cfg=cfg,
+                run_id=fold_idx + 1
+            )
+            trainer.train()
+
+        # Remove initial model and optimizer state dicts after last fold
+        init_model_state_dict_path.unlink(missing_ok=True)
+        init_optimizer_state_dict_path.unlink(missing_ok=True)
     else:
         raise ValueError(
             f"'cfg.training.num_folds' should be either None or an integer greater than 1, "

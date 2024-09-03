@@ -58,7 +58,8 @@ class CheckpointManager:
 
     def __init__(
             self,
-            cfg: DictConfig
+            cfg: DictConfig,
+            run_id: Optional[int] = None
     ) -> None:
         """Initialize the CheckpointManager instance.
 
@@ -77,6 +78,9 @@ class CheckpointManager:
 
         Args:
             cfg: The training configuration.
+            run_id: Optional run ID to distinguish multiple runs using
+              the same configuration.  Used to save checkpoints in
+              separate directories.
 
         Raises:
             ValueError: If ``cfg.checkpoints.save_frequency`` is neither
@@ -102,6 +106,8 @@ class CheckpointManager:
             self.delete_previous = False
         else:
             self.checkpoint_dir = Path(cfg.paths.checkpoints)
+            if run_id is not None:
+                self.checkpoint_dir = self.checkpoint_dir / f"run{run_id}"
             self.checkpoint_dir.mkdir(parents=True, exist_ok=True)
 
             if "save_frequency" not in cfg.checkpoints or cfg.checkpoints.save_frequency is None:

@@ -2,7 +2,7 @@
 
 
 from collections import OrderedDict
-from typing import Dict
+from typing import Dict, Optional
 
 import torch
 from omegaconf import DictConfig
@@ -63,7 +63,8 @@ class ClassificationTrainer(BaseTrainer):
             val_loader: torch.utils.data.DataLoader,
             metrics: MetricCollection,
             device: torch.device,
-            cfg: DictConfig
+            cfg: DictConfig,
+            run_id: Optional[int] = None
     ) -> None:
         """Initialize the ClassificationTrainer instance.
 
@@ -77,6 +78,9 @@ class ClassificationTrainer(BaseTrainer):
               besides loss.
             device: The device to train on.
             cfg: The training configuration.
+            run_id: Optional run ID to distinguish multiple runs using
+              the same configuration.  Used to save checkpoints and
+              event files in separate directories.
         """
 
         super().__init__(
@@ -86,7 +90,8 @@ class ClassificationTrainer(BaseTrainer):
             val_loader=val_loader,
             metrics=metrics,
             device=device,
-            cfg=cfg
+            cfg=cfg,
+            run_id=run_id
         )
         self.criterion = criterion
 

@@ -58,7 +58,7 @@ class ExperimentTracker:
               ``updates_per_epoch['Val']`` is not None.
         """
 
-        # Determine the number of updates per epoch during training and validation
+        # Store the number of updates per epoch during training and validation
         self.updates_per_epoch = {}
         mode: Literal["Train", "Val"]
         for mode in ["Train", "Val"]:

@@ -4,7 +4,8 @@
 import logging
 import time
 from abc import ABC, abstractmethod
-from typing import Dict
+from pathlib import Path
+from typing import Dict, Optional
 
 import torch
 from omegaconf import DictConfig
@@ -68,7 +69,8 @@ class BaseTrainer(ABC):
             val_loader: torch.utils.data.DataLoader,
             metrics: MetricCollection,
             device: torch.device,
-            cfg: DictConfig
+            cfg: DictConfig,
+            run_id: Optional[int] = None
     ) -> None:
         """Initialize the BaseTrainer instance.
 
@@ -81,6 +83,9 @@ class BaseTrainer(ABC):
               besides loss.
             device: The device to train on.
             cfg: The training configuration.
+            run_id: Optional run ID to distinguish multiple runs using
+              the same configuration.  Used to save checkpoints and
+              event files in separate directories.
         """
 
         self.model = model
@@ -99,7 +104,10 @@ class BaseTrainer(ABC):
         self.metric_tracker.report_status()
 
         # CheckpointManager
-        self.checkpoint_manager = CheckpointManager(cfg)
+        self.checkpoint_manager = CheckpointManager(
+            cfg=cfg,
+            run_id=run_id
+        )
         self.checkpoint_manager.report_status()
 
         # PerformanceTracker
@@ -120,8 +128,11 @@ class BaseTrainer(ABC):
         self.performance_tracker.report_status()
 
         # ExperimentTracker
+        log_dir = cfg.paths.tensorboard
+        if run_id is not None:
+            log_dir = str(Path(log_dir) / f"run{run_id}")
         self.experiment_tracker = ExperimentTracker(
-            log_dir=cfg.paths.tensorboard,
+            log_dir=log_dir,
             updates_per_epoch=cfg.tensorboard.updates_per_epoch,
             batch_size=cfg.dataloader.batch_size,
             num_train_samples=self._get_num_samples("Train"),
