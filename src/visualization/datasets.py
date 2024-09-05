@@ -3,8 +3,8 @@
 Functions:
     * create_sprite(images, n_rows, n_cols): Combine individual images
         into a sprite.
-    * get_samples(data_dir, num_samples, ...): Grab a subset of samples
-        from each class in the dataset.
+    * get_samples(data_dir, num_samples_per_class, ...): Grab a subset
+        of samples from each class in the dataset.
 """
 
 
@@ -61,7 +61,7 @@ def create_sprite(
 
 def get_samples(
         data_dir: str,
-        num_samples: int,
+        num_samples_per_class: int,
         interleave_classes: bool = False,
         train: bool = True,
         random_seed: int = 42
@@ -71,7 +71,8 @@ def get_samples(
     Args:
         data_dir: The path to the directory containing the processed
           dataset.
-        num_samples: The number of samples to select per class.
+        num_samples_per_class: The number of samples to select per
+          class.
         interleave_classes: Whether to return images in blocks by class
           (False) or interleaved (True).
         train: Whether to load images from the training split (True) or
@@ -94,7 +95,7 @@ def get_samples(
     for class_dir in class_dirs:
         class_name = class_dir.name
         img_paths = list(class_dir.iterdir())
-        selected_indices = rng.choice(len(img_paths), num_samples, replace=False)
+        selected_indices = rng.choice(len(img_paths), num_samples_per_class, replace=False)
         samples[class_name] = np.array([
             np.array(Image.open(img_paths[idx])) for idx in selected_indices
         ])
@@ -107,17 +108,17 @@ def get_samples(
         height, width, channels = img.shape
 
     samples_np = np.squeeze(
-        np.empty((num_samples * len(samples), height, width, channels), dtype=np.uint8)
+        np.empty((num_samples_per_class * len(samples), height, width, channels), dtype=np.uint8)
     )
 
     # Combine images from dictionary of lists into NumPy array
     if interleave_classes:
-        for img_idx in range(num_samples):
+        for img_idx in range(num_samples_per_class):
             for class_idx, class_name in enumerate(samples):
                 samples_np[img_idx * len(samples) + class_idx] = samples[class_name][img_idx]
     else:
         for class_idx, class_name in enumerate(samples):
-            for img_idx in range(num_samples):
-                samples_np[class_idx * num_samples + img_idx] = samples[class_name][img_idx]
+            for img_idx in range(num_samples_per_class):
+                samples_np[class_idx * num_samples_per_class + img_idx] = samples[class_name][img_idx]
 
     return samples_np
