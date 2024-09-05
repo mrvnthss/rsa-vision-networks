@@ -1,8 +1,8 @@
 """Utility functions related to color.
 
 Functions:
-    * get_tinted_color(base_color, tint=0): Get a tinted version of a
-        base color.
+    * get_color(base_color, tint=0, alpha=1): Obtain a modified version
+        (tint & alpha) of a base color.
 """
 
 
@@ -13,23 +13,25 @@ import numpy as np
 from src.utils.constants import COLORS
 
 
-def get_tinted_color(
+def get_color(
         base_color: str,
-        tint: Optional[float] = 0
+        tint: Optional[float] = 0,
+        alpha: Optional[float] = 1
 ) -> np.ndarray:
-    """Get a tinted version of a base color.
+    """Obtain a modified version (tint & alpha) of a base color.
 
     Args:
         base_color: The base color from the ``COLORS`` dictionary.
         tint: The relative amount of tint to add.
+        alpha: The alpha value of the color for transparency.
 
     Returns:
-        The tinted version of the chosen base color.
+        The modified version of the chosen base color.
 
     Raises:
         ValueError: If the ``base_color`` is not one of the keys of the
-          ``COLORS`` dictionary or if the ``tint`` is outside the [0, 1]
-          range.
+          ``COLORS`` dictionary or if either the ``tint`` or the
+          ``alpha`` is outside the [0, 1] range.
     """
 
     if base_color not in COLORS:
@@ -43,6 +45,15 @@ def get_tinted_color(
             f"'tint' should be between 0 and 1, but got {tint}."
         )
 
+    if not 0 <= alpha <= 1:
+        raise ValueError(
+            f"'alpha' should be between 0 and 1, but got {alpha}."
+        )
+
     base_color = COLORS[base_color]
-    tinted_color = base_color + (1 - base_color) * tint
-    return tinted_color
+    modified_color = base_color + (1 - base_color) * tint
+
+    if alpha < 1:
+        modified_color = np.append(modified_color, alpha)
+
+    return modified_color
