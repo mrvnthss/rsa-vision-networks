@@ -1,0 +1,42 @@
+# @package _global_
+
+# Multi-run configuration
+experiment:
+  name: lenet_fashionmnist/grid_search/overfitting
+  dir:  ../out/${experiment.name}/${now:%Y-%m-%d_%H-%M-%S}
+  sub_dir: b=${dataloader.batch_size},wd=${optimizer.weight_decay}
+paths:
+  checkpoints: ${experiment.dir}/${experiment.sub_dir}/checkpoints
+  tensorboard: ${experiment.dir}/${experiment.sub_dir}/tensorboard
+hydra:
+  mode: MULTIRUN
+  sweep:
+    dir: ${experiment.dir}
+    subdir: ${experiment.sub_dir}/logs
+  sweeper:
+    params:
+      # Grid search parameters
+      dataloader.batch_size: 64, 128
+      optimizer.weight_decay: 1e-4, 1e-3
+
+# Fixed training parameters
+seeds:
+  torch: 89
+  shuffle: 858
+dataset:
+  transform_params:
+    crop_scale:
+      lower: 1.0
+      upper: 1.0
+    resize_size: ${model.input_size}  # matches the input size of the model
+    flip_prob: 0.0
+dataloader:
+  num_workers: 0
+training:
+  num_epochs: 30
+  num_folds: 5  # 5-fold cross-validation
+optimizer:
+  lr: 0.01
+  momentum: 0.9
+performance:
+  patience: null  # no early stopping
