@@ -172,6 +172,7 @@ class TestClassifierConf(DictConfig):
     seeds: SeedsConf = MISSING
     model_checkpoint: str = MISSING
     dataloader: DataloaderConf = MISSING
+    metrics: Dict[str, MetricConf] = MISSING
 
 
 @dataclass

@@ -33,7 +33,7 @@ import pandas as pd
 import torch
 from tbparse import SummaryReader
 from torch import nn
-from torchmetrics.classification import MulticlassAccuracy
+from torchmetrics import MetricCollection
 from tqdm import tqdm
 
 
@@ -41,6 +41,7 @@ def evaluate_classifier(
         model: nn.Module,
         test_loader: torch.utils.data.DataLoader,
         criterion: nn.Module,
+        metrics: MetricCollection,
         device: torch.device
 ) -> Dict[str, float]:
     """Evaluate a classification model.
@@ -49,28 +50,17 @@ def evaluate_classifier(
         model: The classification model to evaluate.
         test_loader: The dataloader providing test samples.
         criterion: The criterion to use for evaluation.
+        metrics: The metrics to evaluate the model with.
         device: The device to perform evaluation on.
 
     Returns:
-        The classification accuracy (top-1 and top-5) and the loss
-        evaluated on the test set.
+        The loss along with the computed metrics, evaluated on the test
+        set.
     """
 
     model.eval()
-
-    acc_1 = MulticlassAccuracy(
-        num_classes=len(test_loader.dataset.classes),
-        top_k=1,
-        average="micro",
-        multidim_average="global"
-    ).to(device)
-
-    acc_5 = MulticlassAccuracy(
-        num_classes=len(test_loader.dataset.classes),
-        top_k=5,
-        average="micro",
-        multidim_average="global"
-    ).to(device)
+    metrics.reset()
+    metrics.to(device)
 
     running_loss = 0.
     running_samples = 0
@@ -88,12 +78,9 @@ def evaluate_classifier(
         for features, targets in pbar:
             features, targets = features.to(device), targets.to(device)
 
-            # Make predictions
+            # Make predictions and update metrics
             predictions = model(features)
-
-            # Track multiclass accuracy
-            acc_1.update(predictions, targets)
-            acc_5.update(predictions, targets)
+            metrics.update(predictions, targets)
 
             # Compute loss and accumulate
             loss = criterion(predictions, targets)
@@ -101,10 +88,10 @@ def evaluate_classifier(
             running_loss += loss.item() * samples
             running_samples += samples
 
+    metric_values = metrics.compute()
     results = {
-        "loss": running_loss / running_samples,
-        "acc@1": acc_1.compute().item(),
-        "acc@5": acc_5.compute().item()
+        "Loss": running_loss / running_samples,
+        **metric_values
     }
 
     return results

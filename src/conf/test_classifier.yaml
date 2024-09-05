@@ -18,6 +18,19 @@ dataloader:
   val_split: 0.20  # fraction of the dataset to use as validation set
   batch_size: 32
   num_workers: 0
+metrics:
+  Accuracy@1:
+    _target_: torchmetrics.classification.MulticlassAccuracy
+    num_classes: ${dataset.num_classes}
+    top_k: 1
+    average: micro
+    multidim_average: global
+  Accuracy@5:
+    _target_: torchmetrics.classification.MulticlassAccuracy
+    num_classes: ${dataset.num_classes}
+    top_k: 5
+    average: micro
+    multidim_average: global
 # NOTE: The following "hydra" settings disable logging, as this is irrelevant for the task at hand.
 #       Do not change these settings.
 hydra:

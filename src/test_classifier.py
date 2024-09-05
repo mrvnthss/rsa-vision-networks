@@ -18,6 +18,7 @@ import hydra
 import torch
 from hydra.core.config_store import ConfigStore
 from hydra.utils import instantiate
+from torchmetrics import MetricCollection
 
 from src.base_classes.base_loader import BaseLoader
 from src.config import TestClassifierConf
@@ -92,11 +93,17 @@ def main(cfg: TestClassifierConf) -> None:
     # Instantiate criterion
     criterion = instantiate(cfg.criterion)
 
+    # Instantiate metrics
+    metrics = MetricCollection({
+        name: instantiate(metric) for name, metric in cfg.metrics.items()
+    })
+
     # Evaluate model performance
     results = evaluate_classifier(
         model=model,
         test_loader=test_loader,
         criterion=criterion,
+        metrics=metrics,
         device=device
     )
 
@@ -108,6 +115,9 @@ def main(cfg: TestClassifierConf) -> None:
     }[cfg.dataloader.which_split]
     output = [f"Results on {split_str} set:"]
     for metric_name, metric_value in results.items():
+        if isinstance(metric_value, torch.Tensor):
+            # NOTE: Here, we assume that all metrics return scalar values!
+            metric_value = metric_value.item()
         output.append(f"{metric_name}: {metric_value:.3f}")
     print("\n  ".join(output))
 
