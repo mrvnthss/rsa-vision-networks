@@ -8,8 +8,6 @@ Functions:
 """
 
 
-from typing import Optional
-
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -18,8 +16,8 @@ from src.utils.constants import COLORS
 
 def get_color(
         base_color: str,
-        tint: Optional[float] = 0,
-        alpha: Optional[float] = 1
+        tint: float = 0,
+        alpha: float = 1
 ) -> np.ndarray:
     """Obtain a modified version (tint & alpha) of a base color.
 
@@ -63,8 +61,8 @@ def get_color(
 
 
 def visualize_colors(
-        tint: Optional[float] = 0,
-        alpha: Optional[float] = 1
+        tint: float = 0,
+        alpha: float = 1
 ) -> None:
     """Visualize all (modified) colors next to each other.
 
