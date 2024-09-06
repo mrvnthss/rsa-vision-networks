@@ -85,6 +85,7 @@ def main(cfg: TrainClassifierConf) -> None:
         name: instantiate(metric) for name, metric in cfg.metrics.items()
     })
 
+    # SINGLE TRAINING RUN
     if cfg.training.num_folds is None:
         # Set up dataloaders
         logger.info("Preparing dataloaders ...")
@@ -117,6 +118,7 @@ def main(cfg: TrainClassifierConf) -> None:
             cfg=cfg
         )
         trainer.train()
+    # STRATIFIED K-FOLD CROSS-VALIDATION
     elif cfg.training.num_folds > 1:
         # Set up dataloader for stratified k-fold cross-validation
         logger.info(
