@@ -119,6 +119,8 @@ def get_samples(
     else:
         for class_idx, class_name in enumerate(samples):
             for img_idx in range(num_samples_per_class):
-                samples_np[class_idx * num_samples_per_class + img_idx] = samples[class_name][img_idx]
+                samples_np[
+                    class_idx * num_samples_per_class + img_idx
+                    ] = samples[class_name][img_idx]
 
     return samples_np
