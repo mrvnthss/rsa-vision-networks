@@ -39,4 +39,4 @@ dataloader:
 optimizer:
   lr: 0.01  # based on 'batch_size_lr.yaml' grid search
 performance:
-  patience: 5
+  patience: 20
