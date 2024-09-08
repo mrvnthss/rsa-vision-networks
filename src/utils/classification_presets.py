@@ -27,6 +27,7 @@ class ClassificationPresets:
             std: Sequence[float],
             crop_size: Union[int, Sequence[int]],
             crop_scale: Tuple[float, float] = (0.08, 1.0),
+            crop_ratio: Tuple[float, float] = (3/4, 4/3),
             flip_prob: float = 0.5,
             resize_size: Optional[Union[int, Sequence[int]]] = None,
             is_training: bool = True,
@@ -42,6 +43,8 @@ class ClassificationPresets:
             crop_scale: The lower and upper bounds for the random area
               of the crop, before resizing.  The scale is defined with
               respect to the area of the original image.
+            crop_ratio: The lower and upper bounds for the random aspect
+              ratio of the crop, before resizing.
             flip_prob: The probability of flipping images horizontally.
             resize_size: The desired output size when resizing prior to
               performing a center crop.  Only used when ``is_training``
@@ -59,6 +62,7 @@ class ClassificationPresets:
                 T.RandomResizedCrop(
                     size=crop_size,
                     scale=crop_scale,
+                    ratio=crop_ratio,
                     interpolation=interpolation,
                     antialias=True
                 ))

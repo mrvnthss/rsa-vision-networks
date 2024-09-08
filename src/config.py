@@ -20,6 +20,7 @@ class TransformConf:
     std: List[float] = MISSING
     crop_size: int = MISSING
     crop_scale: Dict[Literal["lower", "upper"], float] = MISSING
+    crop_ratio: Dict[Literal["lower", "upper"], float] = MISSING
     resize_size: int = MISSING
     flip_prob: float = MISSING
 

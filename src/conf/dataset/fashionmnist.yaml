@@ -9,6 +9,9 @@ transform_params:
   crop_scale:
     lower: ???
     upper: ???
+  crop_ratio:
+    lower: ???
+    upper: ???
   resize_size: ???
   flip_prob: 0.5
 train_set:

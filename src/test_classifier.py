@@ -63,6 +63,9 @@ def main(cfg: TestClassifierConf) -> None:
     )
 
     # Initialize dataloader providing test samples
+    # NOTE: The ``resize_size`` defines the size to which to resize the image to before performing
+    #       the center crop.  The ``crop_size`` defines the size of the center crop and should thus
+    #       match the input size expected by the network.
     transform = ClassificationPresets(
         mean=cfg.dataset.transform_params.mean,
         std=cfg.dataset.transform_params.std,

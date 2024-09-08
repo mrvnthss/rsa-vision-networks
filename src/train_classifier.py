@@ -57,6 +57,10 @@ def main(cfg: TrainClassifierConf) -> None:
             cfg.dataset.transform_params.crop_scale["lower"],
             cfg.dataset.transform_params.crop_scale["upper"]
         ),
+        crop_ratio=(
+            cfg.dataset.transform_params.crop_ratio["lower"],
+            cfg.dataset.transform_params.crop_ratio["upper"]
+        ),
         flip_prob=cfg.dataset.transform_params.flip_prob,
         is_training=True
     )
