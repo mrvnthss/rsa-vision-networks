@@ -3,8 +3,8 @@
 Functions:
     * create_sprite(images, n_rows, n_cols): Combine individual images
         into a sprite.
-    * get_samples(data_dir, num_samples_per_class, ...): Grab a subset
-        of samples from each class in the dataset.
+    * get_samples_per_class(data_dir, num_samples_per_class, ...): Grab
+        a subset of samples from each class in the dataset.
 """
 
 
@@ -59,7 +59,7 @@ def create_sprite(
     return sprite
 
 
-def get_samples(
+def get_samples_per_class(
         data_dir: str,
         num_samples_per_class: int,
         interleave_classes: bool = False,
