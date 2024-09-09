@@ -3,8 +3,8 @@
 Functions:
     * create_sprite(images, n_rows, n_cols): Combine individual images
         into a sprite.
-    * get_samples_per_class(data_dir, num_samples_per_class, ...): Grab
-        a subset of samples from each class in the dataset.
+    * load_class_samples(data_dir, num_samples_per_class, ...): Load a
+        fixed number of samples from each class in the dataset.
     * visualize_crop(img, crop_scale, ...): Visualize a random crop of
         an image.
 """
@@ -12,7 +12,7 @@ Functions:
 
 __all__ = [
     "create_sprite",
-    "get_samples_per_class",
+    "load_class_samples",
     "visualize_crop"
 ]
 
@@ -70,20 +70,19 @@ def create_sprite(
     return sprite
 
 
-def get_samples_per_class(
+def load_class_samples(
         data_dir: str,
         num_samples_per_class: int,
         interleave_classes: bool = False,
         train: bool = True,
         random_seed: int = 42
 ) -> np.ndarray:
-    """Grab a subset of samples from each class in the dataset.
+    """Load a fixed number of samples from each class in the dataset.
 
     Args:
         data_dir: The path to the directory containing the processed
           dataset.
-        num_samples_per_class: The number of samples to select per
-          class.
+        num_samples_per_class: The number of samples to load per class.
         interleave_classes: Whether to return images in blocks by class
           (False) or interleaved (True).
         train: Whether to load images from the training split (True) or
@@ -99,7 +98,7 @@ def get_samples_per_class(
     # Use seeded rng for reproducibility
     rng = np.random.default_rng(random_seed)
 
-    # Collect samples from each class
+    # Load samples from each class
     data_dir = Path(data_dir) / ("train" if train else "test")
     samples = {}
     for class_dir in data_dir.iterdir():
@@ -113,7 +112,7 @@ def get_samples_per_class(
         ])
 
     # Determine dimension and shape of output array
-    img = samples[next(iter(samples))][0]
+    img = samples[next(iter(samples))][0]  # first image of first class
     if img.ndim == 2:
         height, width, channels = (*img.shape, 1)
     else:
