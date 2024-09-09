@@ -1,0 +1,44 @@
+# @package _global_
+
+# Multi-run configuration
+experiment:
+  name: lenet_fashionmnist/data_augmentation/random_cropping
+  dir:  ../out/${experiment.name}/${now:%Y-%m-%d_%H-%M-%S}
+  sub_dir: crop_lower=${dataset.transform_params.crop_scale.lower},b=${dataloader.batch_size},momentum=${optimizer.momentum}
+paths:
+  checkpoints: ${experiment.dir}/${experiment.sub_dir}/checkpoints
+  tensorboard: ${experiment.dir}/${experiment.sub_dir}/tensorboard
+hydra:
+  mode: MULTIRUN
+  sweep:
+    dir: ${experiment.dir}
+    subdir: ${experiment.sub_dir}/logs
+  sweeper:
+    params:
+      # Grid search parameters
+      dataset.transform_params.crop_scale.lower: 0.4, 0.6, 0.8, 1.0
+      dataloader.batch_size: 64, 128  # based on 'batch_size_lr.yaml' grid search
+      optimizer.momentum: 0.8, 0.85  # based on 'momentum_wd.yaml' grid search
+
+# Fixed training parameters
+seeds:
+  torch: 89
+  shuffle: 858
+dataset:
+  transform_params:
+    crop_scale:
+      upper: 1.0
+    crop_ratio:
+      lower: 1.0
+      upper: 1.0
+    resize_size: ${model.input_size}  # matches the input size of the model
+    flip_prob: 0.5  # based on 'horizontal_flipping.yaml' experiment
+dataloader:
+  num_workers: 0
+training:
+  num_epochs: 200  # increased from previous experiments
+optimizer:
+  lr: 0.01  # based on 'batch_size_lr.yaml' grid search
+  weight_decay: 1e-3  # based on 'momentum_wd.yaml' grid search & 'horizontal_flipping.yaml' experiment
+performance:
+  patience: 20

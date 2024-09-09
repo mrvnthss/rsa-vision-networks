@@ -1,0 +1,42 @@
+# @package _global_
+
+# Multi-run configuration
+experiment:
+  name: lenet_fashionmnist/data_augmentation/horizontal_flipping
+  dir:  ../out/${experiment.name}/${now:%Y-%m-%d_%H-%M-%S}
+  sub_dir: flip_p=${dataset.transform_params.flip_prob},b=${dataloader.batch_size},momentum=${optimizer.momentum},wd=${optimizer.weight_decay}
+paths:
+  checkpoints: ${experiment.dir}/${experiment.sub_dir}/checkpoints
+  tensorboard: ${experiment.dir}/${experiment.sub_dir}/tensorboard
+hydra:
+  mode: MULTIRUN
+  sweep:
+    dir: ${experiment.dir}
+    subdir: ${experiment.sub_dir}/logs
+  sweeper:
+    params:
+      # Grid search parameters
+      dataset.transform_params.flip_prob: 0.0, 0.5
+      dataloader.batch_size: 64, 128  # based on 'batch_size_lr.yaml' grid search
+      optimizer.momentum: 0.8, 0.85  # based on 'momentum_wd.yaml' grid search
+      optimizer.weight_decay: 0.001, 1e-4  # based on 'momentum_wd.yaml' grid search
+
+# Fixed training parameters
+seeds:
+  torch: 89
+  shuffle: 858
+dataset:
+  transform_params:
+    crop_scale:
+      lower: 1.0
+      upper: 1.0
+    crop_ratio:
+      lower: 1.0
+      upper: 1.0
+    resize_size: ${model.input_size}  # matches the input size of the model
+dataloader:
+  num_workers: 0
+optimizer:
+  lr: 0.01  # based on 'batch_size_lr.yaml' grid search
+performance:
+  patience: 20
