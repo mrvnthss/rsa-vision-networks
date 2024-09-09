@@ -1,8 +1,8 @@
 """Utility functions for visualizing datasets.
 
 Functions:
-    * create_sprite(images, n_rows, n_cols): Combine individual images
-        into a sprite.
+    * create_sprite(images, n_rows, n_cols, by_row=True): Combine
+        individual images into a sprite.
     * load_class_samples(data_dir, num_samples_per_class, ...): Load a
         fixed number of samples from each class in the dataset.
     * visualize_crop(img, crop_scale, ...): Visualize a random crop of
@@ -28,7 +28,8 @@ from torchvision.transforms.v2 import Pad, RandomResizedCrop
 def create_sprite(
         images: np.ndarray,
         n_rows: int,
-        n_cols: int
+        n_cols: int,
+        by_row: bool = True
 ) -> np.ndarray:
     """Combine individual images into a sprite.
 
@@ -46,6 +47,7 @@ def create_sprite(
         images: The individual images to combine into a sprite.
         n_rows: The number of rows in the sprite.
         n_cols: The number of columns in the sprite.
+        by_row: Whether to create the sprite by row or by column.
 
     Returns:
         The sprite made up of the individual images.
@@ -60,12 +62,12 @@ def create_sprite(
         np.zeros((height * n_rows, width * n_cols, channels), dtype=np.uint8)
     )
 
-    for row in range(n_rows):
-        for col in range(n_cols):
-            next_img_idx = row * n_cols + col
-            if next_img_idx < num_images:
-                next_img = images[next_img_idx]
-                sprite[row * height:(row + 1) * height, col * width:(col + 1) * width] = next_img
+    for idx in range(n_rows * n_cols):
+        if idx >= num_images:
+            break
+        row, col = (idx // n_cols, idx % n_cols) if by_row else (idx % n_rows, idx // n_rows)
+        next_img = images[idx]
+        sprite[row * height:(row + 1) * height, col * width:(col + 1) * width] = next_img
 
     return sprite
 
