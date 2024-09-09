@@ -38,14 +38,18 @@ class ClassificationPresets:
         Args:
             mean: The mean values for normalization.
             std: The standard deviation values for normalization.
-            crop_size: The desired output size of the crop.  This should
-              match the expected input size of the model.
-            crop_scale: The lower and upper bounds for the random area
-              of the crop, before resizing.  The scale is defined with
-              respect to the area of the original image.
-            crop_ratio: The lower and upper bounds for the random aspect
-              ratio of the crop, before resizing.
+            crop_size: The desired output size of the random/center
+              crop.  This should match the expected input size of the
+              model.
+            crop_scale: The lower and upper bounds for the area of the
+              random crop, before resizing.  The scale is defined with
+              respect to the area of the original image.  Has no effect
+              when ``is_training`` is False.
+            crop_ratio: The lower and upper bounds for the aspect ratio
+              of the random crop, before resizing.  Has no effect when
+              ``is_training`` is False.
             flip_prob: The probability of flipping images horizontally.
+              Has no effect when ``is_training`` is False.
             resize_size: The desired output size when resizing prior to
               performing a center crop.  Only used when ``is_training``
               is False.
