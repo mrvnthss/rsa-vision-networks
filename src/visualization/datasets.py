@@ -141,8 +141,8 @@ def load_class_samples(
 
 def visualize_crop(
         img: Image.Image,
-        crop_scale: Tuple[float, float],
-        crop_ratio: Tuple[float, float],
+        crop_scale: float,
+        crop_ratio: float,
         frame_width: int = 1,
         frame_color: Tuple[int] = (255, 0, 0),
         seed: int = 42
@@ -151,11 +151,9 @@ def visualize_crop(
 
     Args:
         img: The image to crop.
-        crop_scale: The lower and upper bounds for the random area
-          of the crop, before resizing.  The scale is defined with
-          respect to the area of the original image.
-        crop_ratio: The lower and upper bounds for the random aspect
-          ratio of the crop, before resizing.
+        crop_scale: The relative size of the crop area with respect to
+          the area of the original image, before resizing.
+        crop_ratio: The aspect ratio of the crop, before resizing.
         frame_width: The width of the frame that's used to highlight the
           cropped area in the original image.
         frame_color: The color of the frame that's used to highlight the
@@ -175,16 +173,17 @@ def visualize_crop(
     # Create transform
     random_resized_crop = RandomResizedCrop(
         size=img.size,
-        scale=crop_scale,
-        ratio=crop_ratio
+        # size=int(np.round((crop_scale * img.size[0]**2)**0.5)),
+        scale=2*(crop_scale, ),
+        ratio=2*(crop_ratio, )
     )
 
     # Get crop parameters (for visualization purposes)
     torch.manual_seed(seed)
     row, col, height, width = random_resized_crop.get_params(
         img,
-        scale=crop_scale,
-        ratio=crop_ratio
+        scale=2*(crop_scale, ),
+        ratio=2*(crop_ratio, )
     )
 
     # Highlight region to be cropped in original image
@@ -193,10 +192,15 @@ def visualize_crop(
     #       or ends at an edge of the image.
     cropped_img = img.copy()
     img = Pad(padding=frame_width)(img)
-    crop_box = np.array([col - 1, row - 1, col + height, row + width]) + frame_width
+    crop_box = [
+        col,
+        row,
+        col + height + 2 * frame_width - 1,
+        row + width + 2 * frame_width - 1
+    ]
     draw = ImageDraw.Draw(img)
     draw.rectangle(
-        crop_box.tolist(),
+        crop_box,
         outline=frame_color,
         width=frame_width
     )
