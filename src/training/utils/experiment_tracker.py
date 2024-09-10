@@ -3,8 +3,7 @@
 
 import logging
 import math
-from typing import Dict, List, Optional
-from typing_extensions import Literal
+from typing import Dict, List, Literal, Optional
 
 import torch
 from torch.utils.tensorboard import SummaryWriter

@@ -10,11 +10,11 @@ Functions:
 import math
 import warnings
 from pathlib import Path
+from typing import Union
 
 import pandas as pd
 from PIL import Image
 from matplotlib.figure import Figure
-from typing_extensions import Union
 
 
 def save_figure(

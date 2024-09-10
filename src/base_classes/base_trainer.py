@@ -5,14 +5,13 @@ import logging
 import time
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import Dict, Optional
+from typing import Dict, Literal, Optional
 
 import torch
 from omegaconf import DictConfig
 from torch import nn
 from torchmetrics import MetricCollection
 from tqdm import tqdm
-from typing_extensions import Literal
 
 from src.base_classes.base_sampler import BaseSampler
 from src.training.utils.checkpoint_manager import CheckpointManager

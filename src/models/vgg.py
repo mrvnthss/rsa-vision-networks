@@ -1,11 +1,12 @@
 """VGG architecture by Simonyan and Zisserman (2015)."""
 
 
+from typing import Literal
+
 import torch
 from einops.layers.torch import Rearrange
 from torch import nn
 from torchvision import models
-from typing_extensions import Literal
 
 
 # VGG configurations as described in Simonyan and Zisserman (2015)

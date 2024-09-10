@@ -3,10 +3,9 @@
 
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Tuple, Union
+from typing import Any, Callable, Dict, List, Literal, Optional, Union
 
 from omegaconf import DictConfig, MISSING
-from typing_extensions import Literal
 
 
 @dataclass

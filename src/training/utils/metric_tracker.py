@@ -2,11 +2,10 @@
 
 
 import logging
-from typing import Dict
+from typing import Dict, Literal
 
 import torch
 from torchmetrics import MetricCollection
-from typing_extensions import Literal
 
 
 class MetricTracker:

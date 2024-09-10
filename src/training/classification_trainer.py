@@ -2,13 +2,13 @@
 
 
 from collections import OrderedDict
-from typing import Dict, Optional
+from typing import Dict, Literal, Optional
 
 import torch
 from omegaconf import DictConfig
 from torch import nn
 from torchmetrics import MetricCollection
-from typing_extensions import Literal, override
+from typing_extensions import override
 
 from src.base_classes.base_trainer import BaseTrainer
 
