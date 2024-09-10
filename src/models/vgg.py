@@ -71,10 +71,10 @@ class VGG(nn.Module):
 
         self.classifier = nn.Sequential(
             nn.Linear(512 * 7 * 7, 4096),
-            nn.ReLU(inplace=True),
+            nn.ReLU(),
             nn.Dropout(p=0.5),
             nn.Linear(4096, 4096),
-            nn.ReLU(inplace=True),
+            nn.ReLU(),
             nn.Dropout(p=0.5),
             nn.Linear(4096, num_classes),
         )
@@ -120,7 +120,7 @@ class VGG(nn.Module):
                 layers += [nn.MaxPool2d(2, 2)]
             else:
                 conv2d = nn.Conv2d(in_channels, v, kernel_size=3, padding=1)
-                layers += [conv2d, nn.ReLU(inplace=True)]
+                layers += [conv2d, nn.ReLU()]
                 in_channels = v
         self.features = nn.Sequential(
             *layers,

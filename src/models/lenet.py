@@ -57,15 +57,15 @@ class LeNet(nn.Module):
         self.net = nn.Sequential(
             nn.Conv2d(1, 6, 5),                                  # C1
             nn.MaxPool2d(2),                                     # S2
-            nn.ReLU(inplace=True),
+            nn.ReLU(),
             nn.Conv2d(6, 16, 5),                                 # C3
             nn.MaxPool2d(2),                                     # S4
-            nn.ReLU(inplace=True),
+            nn.ReLU(),
             nn.Conv2d(16, 120, 5),                               # C5 (equiv. to full connection)
             nn.ReLU(inplace=True),
             Rearrange("b c h w -> b (c h w)", c=120, h=1, w=1),
             nn.Linear(120, 84),                                  # F6
-            nn.ReLU(inplace=True),
+            nn.ReLU(),
             nn.Linear(84, num_classes)                           # Output
         )
 
