@@ -18,11 +18,6 @@ Passes *DictConfig* ``cfg`` to the [``CheckpointManager``](#checkpointmanager) c
 * training.resume_from
 
 
-### ``ClassificationTrainer``
-
-Passes *DictConfig* ``cfg`` to the [``BaseTrainer``](#basetrainer) class.
-
-
 ### ``CheckpointManager``
 
 * checkpoints.delete_previous
@@ -34,6 +29,11 @@ Passes *DictConfig* ``cfg`` to the [``BaseTrainer``](#basetrainer) class.
 * paths.checkpoints
 * performance.dataset
 * performance.metric
+
+
+### ``ClassificationTrainer``
+
+Passes *DictConfig* ``cfg`` to the [``BaseTrainer``](#basetrainer) class.
 
 
 ### ``RepresentationalSimilarityTrainer``
