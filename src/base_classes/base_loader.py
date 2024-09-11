@@ -2,6 +2,7 @@
 
 
 import copy
+import random
 from typing import Any, Callable, List, Literal, Optional, Tuple, TypeVar, Union
 
 import numpy as np
@@ -117,12 +118,23 @@ class BaseLoader:
             shuffle_seed
         )
 
+        # https://pytorch.org/docs/stable/notes/randomness.html#dataloader
+        def seed_worker(worker_id: int) -> None:
+            worker_seed = torch.initial_seed() % 2 ** 32
+            np.random.seed(worker_seed)
+            random.seed(worker_seed)
+
+        g = torch.Generator()
+        g.manual_seed(0)
+
         self.shared_kwargs = {
             "batch_size": batch_size,
             "num_workers": num_workers,
             "collate_fn": collate_fn,
             "pin_memory": pin_memory,
-            "drop_last": drop_last
+            "drop_last": drop_last,
+            "worker_init_fn": seed_worker,
+            "generator": g
         }
 
     def get_dataloader(

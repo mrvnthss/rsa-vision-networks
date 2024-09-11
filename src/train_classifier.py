@@ -11,9 +11,11 @@ Typical usage example:
 
 
 import logging
+import random
 from pathlib import Path
 
 import hydra
+import numpy as np
 import torch
 from hydra.core.config_store import ConfigStore
 from hydra.utils import instantiate
@@ -35,9 +37,15 @@ cs.store(name="train_classifier_conf", node=TrainClassifierConf)
 def main(cfg: TrainClassifierConf) -> None:
     """Train a model for image classification in PyTorch."""
 
-    # Set random seeds for reproducibility
+    # Reproducibility
+    random.seed(cfg.seeds.torch)
+    np.random.seed(cfg.seeds.torch)
+
     torch.manual_seed(cfg.seeds.torch)
     torch.cuda.manual_seed_all(cfg.seeds.torch)
+
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = False
 
     # Set target device
     device = torch.device(
