@@ -66,13 +66,13 @@ class CheckpointManager:
         Note:
             The CheckpointManager instance makes use of the following
             entries of the training configuration ``cfg``:
-              * paths.checkpoints
-              * checkpoints.save_frequency
-              * checkpoints.save_best_model
               * checkpoints.delete_previous
+              * checkpoints.save_best_model
+              * checkpoints.save_frequency
               * model.name
               * optimizer.name
               * optimizer.params
+              * paths.checkpoints
               * performance.dataset
               * performance.metric
 

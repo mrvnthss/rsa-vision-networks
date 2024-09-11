@@ -1,7 +1,6 @@
 """A class to train a network for image classification in PyTorch."""
 
 
-from collections import OrderedDict
 from typing import Dict, Literal, Optional
 
 import torch
@@ -68,6 +67,11 @@ class ClassificationTrainer(BaseTrainer):
             run_id: Optional[int] = None
     ) -> None:
         """Initialize the ClassificationTrainer instance.
+
+        Note:
+            The ClassificationTrainer instance passes the training
+            configuration ``cfg`` to the BaseTrainer class during
+            initialization.
 
         Args:
             model: The model to be trained.

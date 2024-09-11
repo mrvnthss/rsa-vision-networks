@@ -70,6 +70,23 @@ class BaseTrainer(ABC):
     ) -> None:
         """Initialize the BaseTrainer instance.
 
+        Note:
+            The BaseTrainer instance passes the training configuration
+            ``cfg`` to the CheckpointManager class during
+            initialization.  Additionally, it makes direct use of the
+            following entries of the configuration ``cfg``:
+              * checkpoints.save_best_model
+              * dataloader.batch_size
+              * paths.tensorboard
+              * performance.dataset
+              * performance.higher_is_better
+              * performance.keep_previous_best_score
+              * performance.metric
+              * performance.patience
+              * tensorboard.updates_per_epoch
+              * training.num_epochs
+              * training.resume_from
+
         Args:
             model: The model to be trained.
             optimizer: The optimizer used during training.
