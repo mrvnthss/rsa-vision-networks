@@ -85,7 +85,7 @@ def main(cfg: TrainClassifierConf) -> None:
 
     # Instantiate metrics to track during training
     logger.info("Instantiating metrics ...")
-    metrics = MetricCollection({
+    prediction_metrics = MetricCollection({
         name: instantiate(metric) for name, metric in cfg.metrics.items()
     })
 
@@ -117,7 +117,7 @@ def main(cfg: TrainClassifierConf) -> None:
             criterion=criterion,
             train_loader=train_loader,
             val_loader=val_loader,
-            metrics=metrics,
+            prediction_metrics=prediction_metrics,
             device=device,
             cfg=cfg
         )
@@ -190,7 +190,7 @@ def main(cfg: TrainClassifierConf) -> None:
                 criterion=criterion,
                 train_loader=train_loader,
                 val_loader=val_loader,
-                metrics=metrics,
+                prediction_metrics=prediction_metrics,
                 device=device,
                 cfg=cfg,
                 run_id=fold_idx + 1

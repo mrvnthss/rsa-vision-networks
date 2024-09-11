@@ -10,13 +10,11 @@ from typing import Dict, Literal, Optional
 import torch
 from omegaconf import DictConfig
 from torch import nn
-from torchmetrics import MetricCollection
 from tqdm import tqdm
 
 from src.base_classes.base_sampler import BaseSampler
 from src.training.utils.checkpoint_manager import CheckpointManager
 from src.training.utils.experiment_tracker import ExperimentTracker
-from src.training.utils.metric_tracker import MetricTracker
 from src.training.utils.performance_tracker import PerformanceTracker
 
 
@@ -32,8 +30,6 @@ class BaseTrainer(ABC):
           results to TensorBoard.
         final_epoch_idx: The index of the final epoch.
         logger: The logger instance to record logs.
-        metric_tracker: The MetricTracker instance to track performance
-          metrics during training.
         model: The model to be trained.
         optimizer: The optimizer used during training.
         performance_tracker: The PerformanceTracker instance to monitor
@@ -68,7 +64,6 @@ class BaseTrainer(ABC):
             optimizer: torch.optim.Optimizer,
             train_loader: torch.utils.data.DataLoader,
             val_loader: torch.utils.data.DataLoader,
-            metrics: MetricCollection,
             device: torch.device,
             cfg: DictConfig,
             run_id: Optional[int] = None
@@ -80,8 +75,6 @@ class BaseTrainer(ABC):
             optimizer: The optimizer used during training.
             train_loader: The dataloader providing training samples.
             val_loader: The dataloader providing validation samples.
-            metrics: The additional metrics to track during training
-              besides loss.
             device: The device to train on.
             cfg: The training configuration.
             run_id: Optional run ID to distinguish multiple runs using
@@ -96,13 +89,6 @@ class BaseTrainer(ABC):
         self.device = device
 
         self.logger = logging.getLogger(__name__)
-
-        # MetricTracker
-        self.metric_tracker = MetricTracker(
-            metrics=metrics,
-            device=self.device
-        )
-        self.metric_tracker.report_status()
 
         # CheckpointManager
         self.checkpoint_manager = CheckpointManager(

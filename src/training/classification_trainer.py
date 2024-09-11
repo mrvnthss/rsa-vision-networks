@@ -11,6 +11,7 @@ from torchmetrics import MetricCollection
 from typing_extensions import override
 
 from src.base_classes.base_trainer import BaseTrainer
+from src.training.utils.metric_tracker import MetricTracker
 
 
 class ClassificationTrainer(BaseTrainer):
@@ -61,7 +62,7 @@ class ClassificationTrainer(BaseTrainer):
             criterion: nn.Module,
             train_loader: torch.utils.data.DataLoader,
             val_loader: torch.utils.data.DataLoader,
-            metrics: MetricCollection,
+            prediction_metrics: MetricCollection,
             device: torch.device,
             cfg: DictConfig,
             run_id: Optional[int] = None
@@ -74,8 +75,9 @@ class ClassificationTrainer(BaseTrainer):
             criterion: The criterion used for optimization.
             train_loader: The dataloader providing training samples.
             val_loader: The dataloader providing validation samples.
-            metrics: The additional metrics to track during training
-              besides loss.
+            prediction_metrics: The metrics to track during training
+              that are computed from the model predictions and target
+              values.
             device: The device to train on.
             cfg: The training configuration.
             run_id: Optional run ID to distinguish multiple runs using
@@ -83,17 +85,25 @@ class ClassificationTrainer(BaseTrainer):
               event files in separate directories.
         """
 
+        # MetricTracker
+        self.metric_tracker = MetricTracker(
+            mean_metrics=["Loss"],
+            prediction_metrics=prediction_metrics,
+            device=device
+        )
+        self.metric_tracker.report_status()
+
+        self.criterion = criterion
+
         super().__init__(
             model=model,
             optimizer=optimizer,
             train_loader=train_loader,
             val_loader=val_loader,
-            metrics=metrics,
             device=device,
             cfg=cfg,
             run_id=run_id
         )
-        self.criterion = criterion
 
     @override
     def _run_epoch(
@@ -133,15 +143,24 @@ class ClassificationTrainer(BaseTrainer):
                 self.record_timestamp("processing")
 
                 # Update MetricTracker
-                self.metric_tracker.update(predictions, targets, loss)
+                self.metric_tracker.update(
+                    mean_values={"Loss": loss.item()},
+                    predictions=predictions,
+                    targets=targets
+                )
 
                 # Update progress bar
-                metric_values = self.metric_tracker.compute("partial")
-                ordered_metrics = OrderedDict()
-                for metric, value in metric_values.items():
-                    ordered_metrics[metric] = value
-                ordered_metrics["ComputeEfficiency"] = self.eval_compute_efficiency()
-                wrapped_loader.set_postfix(ordered_metrics)
+                mean_metrics_partial = self.metric_tracker.compute_mean_metrics("partial")
+                prediction_metrics_partial = self.metric_tracker.compute_prediction_metrics(
+                    "partial"
+                )
+                all_metrics = {
+                    **mean_metrics_partial,
+                    **prediction_metrics_partial,
+                    "ComputeEfficiency": self.eval_compute_efficiency()
+                }
+                wrapped_loader.set_postfix(all_metrics)
+                all_metrics.pop("ComputeEfficiency")
 
                 # Log to TensorBoard
                 if self.experiment_tracker.is_tracking:
@@ -149,7 +168,7 @@ class ClassificationTrainer(BaseTrainer):
                     if batch_idx + 1 in self.experiment_tracker.log_indices[mode]:
                         # Log metrics to TensorBoard
                         self.experiment_tracker.log_scalars(
-                            scalars=metric_values,
+                            scalars=all_metrics,
                             step=self.get_global_step(
                                 is_training=is_training,
                                 batch_idx=batch_idx,
@@ -168,4 +187,7 @@ class ClassificationTrainer(BaseTrainer):
         wrapped_loader.close()
         self.experiment_tracker.flush()
 
-        return self.metric_tracker.compute("total")
+        mean_metrics_total = self.metric_tracker.compute_mean_metrics("total")
+        prediction_metrics_total = self.metric_tracker.compute_prediction_metrics("total")
+
+        return {**mean_metrics_total, **prediction_metrics_total}
