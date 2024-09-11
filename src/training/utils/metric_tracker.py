@@ -6,6 +6,7 @@ from typing import Dict, Literal
 
 import torch
 from torchmetrics import MetricCollection
+from torchmetrics.aggregation import MeanMetric
 
 
 class MetricTracker:
@@ -18,36 +19,32 @@ class MetricTracker:
     well as to report the total results at the end of an epoch.
 
     Note:
-        The current implementation only supports metrics that accept as
-        inputs the model predictions and target values, and return a
-        tensor consisting of a single element (so that the ``item``
-        method can be called on the tensor to return a scalar value).
-        A metric that can be tracked, for example, is ``BinaryAccuracy``
-        with the ``multidim_average`` parameter set to "global".  In
-        contrast, a metric that cannot be tracked by this class is
+        This implementation assumes that all metrics in the ``metrics``
+        MetricCollection being passed to initialize an instance of this
+        class accept two tensors 'predictions' and 'targets' as inputs,
+        and return a tensor consisting of a single element (so that the
+        ``item`` method can be called on the tensor to return a scalar
+        value).  A metric that can be tracked, for example, is
+        ``BinaryAccuracy`` with the ``multidim_average`` parameter set
+        to "global".  In contrast, a metric that cannot be tracked is
         ``BinaryConfusionMatrix``, as it returns a 2x2 matrix.  When the
         ``compute`` method of this class is called for the first time,
         it will check the output of the metrics to ensure that they
-        return a scalar value.  If a metric does not return a scalar
-        value, a warning will be logged, and the metric will no longer
+        return a scalar value.  If any metric does not return a scalar
+        value, a warning will be logged, and that metric will no longer
         be tracked.
 
     Attributes:
         device: The device to perform metric computations on.
         logger: The logger instance to record logs.
-        partial_loss: The accumulated loss computed over the current
-          segment (i.e., since metrics were last logged to TensorBoard).
+        partial_loss: The average loss computed over the current segment
+          (i.e., since metrics were last logged to TensorBoard).
         partial_metrics: The same metrics as ``total_metrics``, but
           reset at specified intervals within an epoch.
-        partial_samples: The number of samples processed during the
-          current segment (i.e., since metrics were last logged to
-          TensorBoard).
-        total_loss: The accumulated loss computed over the entire
-          duration of an epoch.
+        total_loss: The average loss computed over the entire duration
+          of an epoch.
         total_metrics: The metrics computed over the entire duration of
           an epoch.
-        total_samples: The number of samples processed during the
-          current epoch.
 
     Methods:
         compute(level): Compute the metric values given the current
@@ -78,12 +75,10 @@ class MetricTracker:
         self.partial_metrics = metrics.to(device)
         self.total_metrics = metrics.clone().to(device)
 
-        self.device = device
+        self.partial_loss = MeanMetric().to(device)
+        self.total_loss = MeanMetric().to(device)
 
-        self.partial_samples = 0
-        self.total_samples = 0
-        self.partial_loss = 0.
-        self.total_loss = 0.
+        self.device = device
 
         self._metric_outputs_checked = False
 
@@ -115,10 +110,10 @@ class MetricTracker:
         # Compute metric values and average loss
         if level == "partial":
             metric_values = self.partial_metrics.compute()
-            avg_loss = self.partial_loss / self.partial_samples
+            avg_loss = self.partial_loss.compute().item()
         elif level == "total":
             metric_values = self.total_metrics.compute()
-            avg_loss = self.total_loss / self.total_samples
+            avg_loss = self.total_loss.compute().item()
         else:
             raise ValueError(
                 f"'level' should be either 'partial' or 'total', but got {level}."
@@ -197,12 +192,10 @@ class MetricTracker:
 
         if partial:
             self.partial_metrics.reset()
-            self.partial_loss = 0.
-            self.partial_samples = 0
+            self.partial_loss.reset()
         if total:
             self.total_metrics.reset()
-            self.total_loss = 0.
-            self.total_samples = 0
+            self.total_loss.reset()
 
     def update(
             self,
@@ -218,13 +211,11 @@ class MetricTracker:
             loss: The loss value.
         """
 
-        num_samples = targets.size(dim=0)
+        num_samples = len(targets)
         loss_value = loss.item()
 
         self.partial_metrics.update(predictions, targets)
-        self.partial_loss += loss_value * num_samples
-        self.partial_samples += num_samples
+        self.partial_loss.update(loss_value, num_samples)
 
         self.total_metrics.update(predictions, targets)
-        self.total_loss += loss_value * num_samples
-        self.total_samples += num_samples
+        self.total_loss.update(loss_value, num_samples)
