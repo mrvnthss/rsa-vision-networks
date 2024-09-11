@@ -145,20 +145,16 @@ class ClassificationTrainer(BaseTrainer):
 
                 # Log to TensorBoard
                 if self.experiment_tracker.is_tracking:
-                    # NOTE: The ``batch_idx`` in this for-loop starts from 0 while the
-                    #       ``log_indices`` of the ExperimentTracker instance start from 1.
+                    # NOTE: The ``log_indices`` of the ExperimentTracker instance start from 1.
                     if batch_idx + 1 in self.experiment_tracker.log_indices[mode]:
-                        # Compute global step in number of samples, starting from 1
-                        total_samples = len(dataloader.sampler) if hasattr(dataloader, "sampler") \
-                            else len(dataloader.dataset)
-                        step = ((self.epoch_idx - 1) * total_samples  # Completed epochs
-                                + batch_idx * dataloader.batch_size   # Full mini-batches
-                                + len(targets))                       # Last (partial) mini-batch
-
                         # Log metrics to TensorBoard
                         self.experiment_tracker.log_scalars(
                             scalars=metric_values,
-                            step=step,
+                            step=self.get_global_step(
+                                is_training=is_training,
+                                batch_idx=batch_idx,
+                                batch_size=len(targets)
+                            ),
                             mode=mode
                         )
 

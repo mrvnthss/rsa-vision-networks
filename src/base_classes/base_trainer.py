@@ -52,6 +52,8 @@ class BaseTrainer(ABC):
           an individual mini-batch.
         eval_epoch(): Evaluate the model on the validation set for a
           single epoch.
+        get_global_step(is_training, batch_idx, batch_size): Get the
+          global step (in # samples) in the training process.
         get_pbar(dataloader, mode): Wrap the provided dataloader with a
           progress bar.
         record_timestamp(stage): Record timestamp to monitor compute
@@ -181,6 +183,37 @@ class BaseTrainer(ABC):
         """
 
         return self._run_epoch(is_training=False)
+
+    def get_global_step(
+            self,
+            is_training: bool,
+            batch_idx: int,
+            batch_size: int
+    ) -> int:
+        """Get the global step (in # samples) in the training process.
+
+        Args:
+            is_training: Whether the model is being trained or
+              evaluated.
+            batch_idx: The index of the current mini-batch.
+            batch_size: The size of the current mini-batch.  This may be
+              smaller than the batch size specified in the dataloader if
+              the number of samples is not divisible by the batch size.
+
+        Returns:
+            The global step (in number of samples processed) in the
+            training process.
+        """
+
+        dataloader = self.train_loader if is_training else self.val_loader
+        total_samples = len(dataloader.sampler) if hasattr(dataloader, "sampler") \
+            else len(dataloader.dataset)
+
+        step = ((self.epoch_idx - 1) * total_samples  # Completed epochs
+                + batch_idx * dataloader.batch_size   # Full mini-batches
+                + batch_size)                         # Current (partial) mini-batch
+
+        return step
 
     def get_pbar(
             self,
