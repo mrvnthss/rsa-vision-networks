@@ -45,10 +45,12 @@ class ImageNet(ImageFolder):
           the raw data archives.
         split: The dataset split to load, either "train" or "test".
         split_dir: The directory containing the dataset split.
-        target_transform: A transform to modify targets (labels).
+        target_transform: A function/transform that takes in the target
+          and transforms it.
         targets: A list containing the class index for each image in the
           dataset.
-        transform: A transform to modify features (images).
+        transform: A function/transform that takes in a PIL image and
+          returns a transformed version.
         wnids: The WordNet IDs of the dataset classes.
         wnid_to_idx: A dictionary mapping WordNet IDs to class indices.
     """
@@ -75,8 +77,10 @@ class ImageNet(ImageFolder):
               datasets.
             train: Whether to load the training split (True) or the test
               split (False).
-            transform: A transform to modify features (images).
-            target_transform: A transform to modify targets (labels).
+            transform: A function/transform that takes in a PIL image
+              and returns a transformed version.
+            target_transform: A function/transform that takes in the
+              target and transforms it.
         """
 
         self.data_dir = data_dir

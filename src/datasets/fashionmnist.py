@@ -38,10 +38,12 @@ class FashionMNIST(ImageFolder):
         resources: The names and MD5 hashes of the dataset archives.
         split: The dataset split to load, either "train" or "test".
         split_dir: The directory containing the dataset split.
-        target_transform: A transform to modify targets (labels).
+        target_transform: A function/transform that takes in the target
+          and transforms it.
         targets: A list containing the class index for each image in the
           dataset.
-        transform: A transform to modify features (images).
+        transform: A function/transform that takes in a PIL image and
+          returns a transformed version.
     """
 
     mirror = "http://fashion-mnist.s3-website.eu-central-1.amazonaws.com/"
@@ -95,8 +97,10 @@ class FashionMNIST(ImageFolder):
               split (False).
             load_into_memory: Whether to load the entire dataset into
               memory.
-            transform: A transform to modify features (images).
-            target_transform: A transform to modify targets (labels).
+            transform: A function/transform that takes in a PIL image
+              and returns a transformed version.
+            target_transform: A function/transform that takes in the
+              target and transforms it.
         """
 
         self.data_dir = data_dir

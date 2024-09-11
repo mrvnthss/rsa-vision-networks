@@ -75,11 +75,11 @@ def evaluate_classifier(
     )
 
     with torch.no_grad():
-        for features, targets in pbar:
-            features, targets = features.to(device), targets.to(device)
+        for inputs, targets in pbar:
+            inputs, targets = inputs.to(device), targets.to(device)
 
             # Make predictions and update metrics
-            predictions = model(features)
+            predictions = model(inputs)
             metrics.update(predictions, targets)
 
             # Compute loss and accumulate

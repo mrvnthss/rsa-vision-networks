@@ -37,12 +37,14 @@ class CIFAR10(ImageFolder):
         resource: The name and MD5 hash of the dataset archive.
         split: The dataset split to load, either "train" or "test".
         split_dir: The directory containing the dataset split.
-        target_transform: A transform to modify targets (labels).
+        target_transform: A function/transform that takes in the target
+          and transforms it.
         targets: A list containing the class index for each image in the
           dataset.
         test_batches: The names and MD5 hashes of the test batch.
         train_batches: The names and MD5 hashes of the training batches.
-        transform: A transform to modify features (images).
+        transform: A function/transform that takes in a PIL image and
+          returns a transformed version.
     """
 
     mirror = "https://www.cs.toronto.edu/~kriz/"
@@ -91,8 +93,10 @@ class CIFAR10(ImageFolder):
               split (False).
             load_into_memory: Whether to load the entire dataset into
               memory.
-            transform: A transform to modify features (images).
-            target_transform: A transform to modify targets (labels).
+            transform: A function/transform that takes in a PIL image
+              and returns a transformed version.
+            target_transform: A function/transform that takes in the
+              target and transforms it.
         """
 
         self.data_dir = data_dir

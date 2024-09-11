@@ -115,13 +115,13 @@ class ClassificationTrainer(BaseTrainer):
         # Loop over mini-batches
         with torch.set_grad_enabled(is_training):
             self.record_timestamp("start")
-            for batch_idx, (features, targets) in enumerate(wrapped_loader):
-                features, targets = features.to(self.device), targets.to(self.device)
+            for batch_idx, (inputs, targets) in enumerate(wrapped_loader):
+                inputs, targets = inputs.to(self.device), targets.to(self.device)
 
                 self.record_timestamp("preparation")
 
                 # Forward pass
-                predictions = self.model(features)
+                predictions = self.model(inputs)
                 loss = self.criterion(predictions, targets)
 
                 # Backward pass and optimization
