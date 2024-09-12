@@ -62,7 +62,7 @@ class LeNet(nn.Module):
             nn.MaxPool2d(2),                                     # S4
             nn.ReLU(),
             nn.Conv2d(16, 120, 5),                               # C5 (equiv. to full connection)
-            nn.ReLU(inplace=True),
+            nn.ReLU(),
             Rearrange("b c h w -> b (c h w)", c=120, h=1, w=1),
             nn.Linear(120, 84),                                  # F6
             nn.ReLU(),
