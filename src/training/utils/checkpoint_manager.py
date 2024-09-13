@@ -216,6 +216,7 @@ class CheckpointManager:
                 f"in checkpoint ({checkpoint['config'].optimizer.name})."
             )
 
+        # NOTE: This code currently assumes that the optimizer has only one parameter group!
         for hparam in checkpoint["config"].optimizer.params[0]:
             if hparam == "params":
                 continue
