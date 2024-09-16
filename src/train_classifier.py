@@ -38,9 +38,9 @@ def main(cfg: TrainClassifierConf) -> None:
 
     # Reproducibility
     set_seeds(
-        seed=cfg.seeds.torch,
-        cudnn_deterministic=True,
-        cudnn_benchmark=False
+        seed=cfg.reproducibility.torch_seed,
+        cudnn_deterministic=cfg.reproducibility.cudnn_deterministic,
+        cudnn_benchmark=cfg.reproducibility.cudnn_benchmark
     )
 
     # Set target device
@@ -50,6 +50,16 @@ def main(cfg: TrainClassifierConf) -> None:
         else "cpu"
     )
     logger.info("Target device is set to: %s.", device.type.upper())
+
+    # Instantiate model, optimizer, and criterion
+    logger.info("Instantiating model, setting up optimizer and criterion ...")
+    model = instantiate(cfg.model.architecture).to(device)
+    optimizer = instantiate(
+        {k: cfg.optimizer[k] for k in cfg.optimizer if k not in ["name", "params"]},
+        params=model.parameters()
+    )
+    cfg.optimizer.params = optimizer.state_dict()["param_groups"]
+    criterion = instantiate(cfg.criterion)
 
     # Prepare transforms and dataset
     logger.info("Preparing transforms and dataset ...")
@@ -77,16 +87,6 @@ def main(cfg: TrainClassifierConf) -> None:
     )
     dataset = instantiate(cfg.dataset.train_set)
 
-    # Instantiate model, criterion, and optimizer
-    logger.info("Instantiating model, setting up criterion and optimizer ...")
-    model = instantiate(cfg.model.architecture).to(device)
-    criterion = instantiate(cfg.criterion)
-    optimizer = instantiate(
-        {k: cfg.optimizer[k] for k in cfg.optimizer if k not in ["name", "params"]},
-        params=model.parameters()
-    )
-    cfg.optimizer.params = optimizer.state_dict()["param_groups"]
-
     # Instantiate metrics to track during training
     logger.info("Instantiating metrics ...")
     prediction_metrics = MetricCollection({
@@ -106,8 +106,8 @@ def main(cfg: TrainClassifierConf) -> None:
             shuffle=True,
             num_workers=cfg.dataloader.num_workers,
             pin_memory=True,
-            split_seed=cfg.seeds.split,
-            shuffle_seed=cfg.seeds.shuffle
+            split_seed=cfg.reproducibility.split_seed,
+            shuffle_seed=cfg.reproducibility.shuffle_seed
         )
         train_loader = base_loader.get_dataloader(mode="Main")
         val_loader = base_loader.get_dataloader(mode="Val")
@@ -142,8 +142,8 @@ def main(cfg: TrainClassifierConf) -> None:
             shuffle=True,
             num_workers=cfg.dataloader.num_workers,
             pin_memory=True,
-            fold_seed=cfg.seeds.split,
-            shuffle_seed=cfg.seeds.shuffle
+            fold_seed=cfg.reproducibility.split_seed,
+            shuffle_seed=cfg.reproducibility.shuffle_seed
         )
 
         # Store model and optimizer states to reset them for each fold
@@ -162,8 +162,11 @@ def main(cfg: TrainClassifierConf) -> None:
             # Reset random seeds and model and optimizer states
             if fold_idx > 0:
                 # Reset random seeds
-                torch.manual_seed(cfg.seeds.torch)
-                torch.cuda.manual_seed_all(cfg.seeds.torch)
+                set_seeds(
+                    seed=cfg.reproducibility.torch_seed,
+                    cudnn_deterministic=cfg.reproducibility.cudnn_deterministic,
+                    cudnn_benchmark=cfg.reproducibility.cudnn_benchmark
+                )
 
                 # Reset model and optimizer states
                 logger.info("Resetting model and optimizer states ...")

@@ -21,9 +21,9 @@ hydra:
       optimizer.momentum: 0.8, 0.85  # based on 'momentum_wd.yaml' grid search
 
 # Fixed training parameters
-seeds:
-  torch: 89
-  shuffle: 858
+reproducibility:
+  torch_seed: 89
+  shuffle_seed: 858
 dataset:
   transform_params:
     crop_scale:

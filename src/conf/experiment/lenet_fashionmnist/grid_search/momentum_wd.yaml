@@ -20,9 +20,9 @@ hydra:
       optimizer.weight_decay: 0.01, 0.001, 1e-4, 1e-5, 1e-6
 
 # Fixed training parameters
-seeds:
-  torch: 89
-  shuffle: 858
+reproducibility:
+  torch_seed: 89
+  shuffle_seed: 858
 dataset:
   transform_params:
     crop_scale:

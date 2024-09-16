@@ -109,10 +109,12 @@ class ExperimentConf:
 
 
 @dataclass
-class SeedsConf:
-    torch: int = MISSING
-    shuffle: int = MISSING
-    split: int = MISSING
+class ReproducibilityConf:
+    torch_seed: int = MISSING
+    shuffle_seed: int = MISSING
+    split_seed: int = MISSING
+    cudnn_deterministic: bool = MISSING
+    cudnn_benchmark: bool = MISSING
 
 
 @dataclass
@@ -169,7 +171,7 @@ class TestClassifierConf(DictConfig):
     dataset: DatasetConf = MISSING
     model: ModelConf = MISSING
     paths: PathsConf = MISSING
-    seeds: SeedsConf = MISSING
+    reproducibility: ReproducibilityConf = MISSING
     model_checkpoint: str = MISSING
     dataloader: DataloaderConf = MISSING
     metrics: Dict[str, MetricConf] = MISSING
@@ -183,7 +185,7 @@ class TrainClassifierConf(DictConfig):
     optimizer: OptimizerConf = MISSING
     experiment: ExperimentConf = MISSING
     paths: PathsConf = MISSING
-    seeds: SeedsConf = MISSING
+    reproducibility: ReproducibilityConf = MISSING
     dataloader: DataloaderConf = MISSING
     training: TrainingConf = MISSING
     metrics: Dict[str, MetricConf] = MISSING

@@ -7,8 +7,8 @@ defaults:
   - _self_
 paths:
   data: ../data
-seeds:
-  split: 42  # controls random split of the dataset into training and validation sets
+reproducibility:
+  split_seed: 42  # controls random split of the dataset into training and validation sets
 model_checkpoint: ???  # path to model checkpoint
 dataset:
   transform_params:

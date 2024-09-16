@@ -88,7 +88,7 @@ def main(cfg: TestClassifierConf) -> None:
         shuffle=False,
         num_workers=cfg.dataloader.num_workers,
         pin_memory=True,
-        split_seed=cfg.seeds.split
+        split_seed=cfg.reproducibility.split_seed
     )
     mode: Literal["Main", "Val"] = "Val" if cfg.dataloader.which_split == "Val" else "Main"
     test_loader = test_loader.get_dataloader(mode=mode)

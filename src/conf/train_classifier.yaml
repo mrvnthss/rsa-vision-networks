@@ -15,10 +15,12 @@ hydra:
 experiment:
   name: ???
   dir: ../out/${experiment.name}/${now:%Y-%m_%d-%H-%M-%S}
-seeds:
-  torch: ???
-  shuffle: ???  # controls shuffling of the training set
-  split: 42  # controls random splitting of the dataset into training and validation sets
+reproducibility:
+  torch_seed: ???
+  shuffle_seed: ???  # controls shuffling of the training set
+  split_seed: 42  # controls random splitting of the dataset into training and validation sets
+  cudnn_deterministic: True
+  cudnn_benchmark: False
 dataloader:
   val_split: 0.20  # fraction of the dataset to use as validation set
   batch_size: ???
