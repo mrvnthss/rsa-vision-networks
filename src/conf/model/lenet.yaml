@@ -3,3 +3,4 @@ architecture:
   _target_: models.lenet.LeNet
   num_classes: ${dataset.num_classes}
 input_size: 32
+load_weights_from: null

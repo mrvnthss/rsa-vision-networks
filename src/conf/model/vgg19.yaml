@@ -5,3 +5,4 @@ architecture:
   num_classes: ${dataset.num_classes}
   pretrained: False
 input_size: 224
+load_weights_from: null

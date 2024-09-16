@@ -54,6 +54,7 @@ class ModelConf:
     name: str = MISSING
     architecture: ArchConf = MISSING
     input_size: int = MISSING
+    load_weights_from: Optional[str] = None
 
 
 @dataclass
