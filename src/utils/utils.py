@@ -11,6 +11,8 @@ Functions:
         of log files.
     * parse_tb_data(log_dir, extract_hparams=True, drop_run_id=True):
         Parse data stored in TensorBoard event files.
+    * set_seeds(seed, cudnn_deterministic, cudnn_benchmark): Set random
+        seeds for reproducibility.
 """
 
 
@@ -19,16 +21,19 @@ __all__ = [
     "get_training_durations",
     "get_training_results",
     "parse_log_dir",
-    "parse_tb_data"
+    "parse_tb_data",
+    "set_seeds"
 ]
 
 import inspect
 import os
+import random
 import re
 from datetime import datetime
 from functools import partial
 from typing import Callable, Dict, List, Literal, Optional, Union
 
+import numpy as np
 import pandas as pd
 import torch
 from tbparse import SummaryReader
@@ -380,6 +385,28 @@ def parse_tb_data(
         df = df.drop(columns="run_id")
 
     return df
+
+
+def set_seeds(
+        seed: int,
+        cudnn_deterministic: bool,
+        cudnn_benchmark: bool
+) -> None:
+    """Set random seeds for reproducibility.
+
+    Args:
+        seed: The random seed to use.
+        cudnn_deterministic: Whether to enforce deterministic behavior
+          of cuDNN.
+        cudnn_benchmark: Whether to enable cuDNN benchmark mode.
+    """
+
+    random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed_all(seed)
+    torch.backends.cudnn.deterministic = cudnn_deterministic
+    torch.backends.cudnn.benchmark = cudnn_benchmark
 
 
 def _extract_hparams(run_dir: str) -> Dict[str, Union[int, float, str]]:

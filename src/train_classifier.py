@@ -11,11 +11,9 @@ Typical usage example:
 
 
 import logging
-import random
 from pathlib import Path
 
 import hydra
-import numpy as np
 import torch
 from hydra.core.config_store import ConfigStore
 from hydra.utils import instantiate
@@ -26,6 +24,7 @@ from src.config import TrainClassifierConf
 from src.dataloaders.stratified_k_fold_loader import StratifiedKFoldLoader
 from src.training.classification_trainer import ClassificationTrainer
 from src.utils.classification_presets import ClassificationPresets
+from src.utils.utils import set_seeds
 
 logger = logging.getLogger(__name__)
 
@@ -38,14 +37,11 @@ def main(cfg: TrainClassifierConf) -> None:
     """Train a model for image classification in PyTorch."""
 
     # Reproducibility
-    random.seed(cfg.seeds.torch)
-    np.random.seed(cfg.seeds.torch)
-
-    torch.manual_seed(cfg.seeds.torch)
-    torch.cuda.manual_seed_all(cfg.seeds.torch)
-
-    torch.backends.cudnn.deterministic = True
-    torch.backends.cudnn.benchmark = False
+    set_seeds(
+        seed=cfg.seeds.torch,
+        cudnn_deterministic=True,
+        cudnn_benchmark=False
+    )
 
     # Set target device
     device = torch.device(
