@@ -55,10 +55,13 @@ def main(cfg: TrainClassifierConf) -> None:
     logger.info("Instantiating model, setting up optimizer and criterion ...")
     model = instantiate(cfg.model.architecture).to(device)
     optimizer = instantiate(
-        {k: cfg.optimizer[k] for k in cfg.optimizer if k not in ["name", "params"]},
+        {
+            k: cfg.optimizer.kwargs[k]
+            for k in cfg.optimizer.kwargs if k != "params"
+        },
         params=model.parameters()
     )
-    cfg.optimizer.params = optimizer.state_dict()["param_groups"]
+    cfg.optimizer.kwargs.params = optimizer.state_dict()["param_groups"]
     criterion = instantiate(cfg.criterion)
 
     # Prepare transforms and dataset

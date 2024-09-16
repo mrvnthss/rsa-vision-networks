@@ -71,7 +71,7 @@ class CheckpointManager:
               * checkpoints.save_frequency
               * model.name
               * optimizer.name
-              * optimizer.params
+              * optimizer.kwargs
               * paths.checkpoints
               * performance.dataset
               * performance.metric
@@ -217,17 +217,18 @@ class CheckpointManager:
             )
 
         # NOTE: This code currently assumes that the optimizer has only one parameter group!
-        for hparam in checkpoint["config"].optimizer.params[0]:
+        checkpoint_hparams = checkpoint["config"].optimizer.kwargs.params[0]
+        for hparam in checkpoint_hparams:
             if hparam == "params":
                 continue
 
-            if hparam not in self.cfg.optimizer:
+            if hparam not in self.cfg.optimizer.kwargs:
                 raise ValueError(
                     "Optimizer in config does not match configuration found in checkpoint. "
                     f"Parameter '{hparam}' is missing in training configuration."
                 )
 
-            if checkpoint["config"].optimizer.params[0][hparam] != self.cfg.optimizer[hparam]:
+            if checkpoint_hparams[hparam] != self.cfg.optimizer.kwargs[hparam]:
                 raise ValueError(
                     "Optimizer in config does not match configuration found in checkpoint. "
                     f"Parameter '{hparam}' differs."

@@ -89,9 +89,8 @@ class SGDConf:
 
 @dataclass
 class OptimizerConf:
-    type: str = MISSING
-    adam: AdamConf = MISSING
-    sgd: SGDConf = MISSING
+    name: str = MISSING
+    kwargs: Union[AdamConf, SGDConf] = MISSING
 
 
 @dataclass

@@ -4,7 +4,7 @@
 experiment:
   name: lenet_fashionmnist/grid_search/momentum_wd
   dir:  ../out/${experiment.name}/${now:%Y-%m-%d_%H-%M-%S}
-  sub_dir: momentum=${optimizer.momentum},wd=${optimizer.weight_decay}
+  sub_dir: momentum=${optimizer.kwargs.momentum},wd=${optimizer.kwargs.weight_decay}
 paths:
   checkpoints: ${experiment.dir}/${experiment.sub_dir}/checkpoints
   tensorboard: ${experiment.dir}/${experiment.sub_dir}/tensorboard
@@ -16,8 +16,8 @@ hydra:
   sweeper:
     params:
       # Grid search parameters
-      optimizer.momentum: 0.7, 0.8, 0.85, 0.9, 0.95, 0.99
-      optimizer.weight_decay: 0.01, 0.001, 1e-4, 1e-5, 1e-6
+      optimizer.kwargs.momentum: 0.7, 0.8, 0.85, 0.9, 0.95, 0.99
+      optimizer.kwargs.weight_decay: 0.01, 0.001, 1e-4, 1e-5, 1e-6
 
 # Fixed training parameters
 reproducibility:
@@ -37,6 +37,7 @@ dataloader:
   batch_size: 64  # based on 'batch_size_lr.yaml' grid search
   num_workers: 0
 optimizer:
-  lr: 0.01  # based on 'batch_size_lr.yaml' grid search
+  kwargs:
+    lr: 0.01  # based on 'batch_size_lr.yaml' grid search
 performance:
   patience: 20

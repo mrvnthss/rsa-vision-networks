@@ -1,13 +1,14 @@
 # https://pytorch.org/docs/2.4/generated/torch.optim.SGD.html
 name: SGD
-_target_: torch.optim.sgd.SGD
-params: ???
-lr: 1e-3
-momentum: 0
-dampening: 0
-weight_decay: 0
-nesterov: false
-maximize: false
-foreach: null
-differentiable: false
-fused: null
+kwargs:
+  _target_: torch.optim.sgd.SGD
+  params: ???
+  lr: 1e-3
+  momentum: 0
+  dampening: 0
+  weight_decay: 0
+  nesterov: false
+  maximize: false
+  foreach: null
+  differentiable: false
+  fused: null
