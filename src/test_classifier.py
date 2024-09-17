@@ -22,7 +22,7 @@ from torchmetrics import MetricCollection
 
 from src.base_classes.base_loader import BaseLoader
 from src.config import TestClassifierConf
-from src.training.utils.checkpoint_manager import CheckpointManager
+from src.training.helpers.checkpoint_manager import CheckpointManager
 from src.utils.classification_presets import ClassificationPresets
 from src.utils.utils import evaluate_classifier
 

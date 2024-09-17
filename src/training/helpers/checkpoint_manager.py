@@ -10,7 +10,7 @@ from numpy import inf
 from omegaconf import DictConfig
 from torch import nn
 
-from src.training.utils.performance_tracker import PerformanceTracker
+from src.training.helpers.performance_tracker import PerformanceTracker
 
 
 class CheckpointManager:

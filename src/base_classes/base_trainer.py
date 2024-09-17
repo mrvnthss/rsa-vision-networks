@@ -13,9 +13,9 @@ from torch import nn
 from tqdm import tqdm
 
 from src.base_classes.base_sampler import BaseSampler
-from src.training.utils.checkpoint_manager import CheckpointManager
-from src.training.utils.experiment_tracker import ExperimentTracker
-from src.training.utils.performance_tracker import PerformanceTracker
+from src.training.helpers.checkpoint_manager import CheckpointManager
+from src.training.helpers.experiment_tracker import ExperimentTracker
+from src.training.helpers.performance_tracker import PerformanceTracker
 
 
 class BaseTrainer(ABC):

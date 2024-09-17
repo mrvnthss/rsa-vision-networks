@@ -10,7 +10,7 @@ from torchmetrics import MetricCollection
 from typing_extensions import override
 
 from src.base_classes.base_trainer import BaseTrainer
-from src.training.utils.metric_tracker import MetricTracker
+from src.training.helpers.metric_tracker import MetricTracker
 
 
 class ClassificationTrainer(BaseTrainer):
