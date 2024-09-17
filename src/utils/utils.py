@@ -7,6 +7,10 @@ Functions:
         single log file to determine training durations.
     * get_training_results(log_file_path, mode, drop_run_id=True):
         Parse a single log file to determine training results.
+    * get_upper_tri_matrix(sq_matrix): Extract the upper triangular part
+        of a square matrix.
+    * is_vector(x): Check if the input is a ``torch.Tensor`` of
+        dimension 1.
     * parse_log_dir(log_dir, parse_fn, ...): Parse a (parent) directory
         of log files.
     * parse_tb_data(log_dir, extract_hparams=True, drop_run_id=True):
@@ -20,6 +24,8 @@ __all__ = [
     "evaluate_classifier",
     "get_training_durations",
     "get_training_results",
+    "get_upper_tri_matrix",
+    "is_vector",
     "parse_log_dir",
     "parse_tb_data",
     "set_seeds"
@@ -246,6 +252,29 @@ def get_training_results(
         df = df.drop(columns="run_id")
 
     return df
+
+
+def get_upper_tri_matrix(sq_matrix: torch.Tensor) -> torch.Tensor:
+    """Extract the upper triangular part of a square matrix.
+
+    Args:
+        sq_matrix: The square matrix from which to extract the upper
+          triangular matrix (excluding the diagonal).
+
+    Returns:
+        The upper triangular matrix (excluding the diagonal) of the
+        square matrix ``sq_matrix``, flattened into a vector using
+        row-major order.
+    """
+
+    mask = torch.triu(torch.ones_like(sq_matrix, dtype=torch.bool), diagonal=1)
+    return sq_matrix[mask]
+
+
+def is_vector(x: torch.Tensor) -> bool:
+    """Check if the input is a ``torch.Tensor`` of dimension 1."""
+
+    return isinstance(x, torch.Tensor) and x.dim() == 1
 
 
 def parse_log_dir(

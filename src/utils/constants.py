@@ -2,6 +2,7 @@
 
 
 import numpy as np
+import torch
 
 
 COLORS = {
@@ -20,4 +21,10 @@ COLORS = {
     "dark-wood": np.array([145, 105, 70], np.uint8) / 255.0,
     "tangerine": np.array([210, 150, 0], np.uint8) / 255.0,
     "tacha": np.array([215, 180, 105], np.uint8) / 255.0
+}
+
+
+RSA_TRANSFORMS = {
+    "abs": torch.abs,
+    "square": torch.square
 }

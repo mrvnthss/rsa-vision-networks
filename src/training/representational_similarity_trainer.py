@@ -1,7 +1,7 @@
-"""A trainer class for RSA-based training"""
+"""A trainer class for RSA-based training."""
 
 
-from typing import Dict, Literal, Optional
+from typing import Callable, Dict, Literal, Optional
 
 import torch
 from einops import rearrange
@@ -69,7 +69,7 @@ class RepresentationalSimilarityTrainer(BaseTrainer):
             model_train: nn.Module,
             model_ref: nn.Module,
             optimizer: torch.optim.Optimizer,
-            criterion: nn.Module,
+            criterion: Callable,
             train_loader: torch.utils.data.DataLoader,
             val_loader: torch.utils.data.DataLoader,
             prediction_metrics: MetricCollection,
@@ -165,7 +165,7 @@ class RepresentationalSimilarityTrainer(BaseTrainer):
         # Reset MetricTracker
         self.metric_tracker.reset(partial=True, total=True)
 
-        # Set model to appropriate mode
+        # Set model being trained to appropriate mode
         self.model.train(is_training)
 
         # Loop over mini-batches
@@ -184,10 +184,8 @@ class RepresentationalSimilarityTrainer(BaseTrainer):
                 # NOTE: If activations are extracted from fully connected layers towards the end of
                 #       networks, they already have the shape (batch_size, num_features) and no
                 #       reshaping is needed.
-                if activations.dim() == 4:
-                    activations = rearrange(activations, "b c h w -> b (c h w)")
-                if activations_ref.dim() == 4:
-                    activations_ref = rearrange(activations_ref, "b c h w -> b (c h w)")
+                activations = self._reshape_activations(activations)
+                activations_ref = self._reshape_activations(activations_ref)
 
                 # Compute loss
                 rsa_score, loss = self.criterion(
@@ -284,3 +282,17 @@ class RepresentationalSimilarityTrainer(BaseTrainer):
                 module = getattr(module, name)
 
         return module.register_forward_hook(hook)
+
+    @staticmethod
+    def _reshape_activations(activations: torch.Tensor) -> torch.Tensor:
+        """Reshape activations if needed.
+
+        Args:
+            activations: The activations to reshape.  If the activations
+              are extracted from convolutional layers, they are reshaped
+              to have the shape (batch_size, num_features).
+        """
+
+        if activations.dim() == 4:
+            return rearrange(activations, "b c h w -> b (c h w)")
+        return activations

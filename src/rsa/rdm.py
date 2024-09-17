@@ -5,12 +5,15 @@ Functions:
         the specified method.
     * compute_rdm(activations, method, **kwargs): Compute an RDM using
         the specified method.
+    * validate_activations(activations): Validate activations from which
+        to compute an RDM.
 """
 
 
 __all__ = [
     "compare_rdm",
-    "compute_rdm"
+    "compute_rdm",
+    "validate_activations"
 ]
 
 from typing import Any, Callable, Dict, Literal
@@ -18,7 +21,7 @@ from typing import Any, Callable, Dict, Literal
 import torch
 from torch import linalg as LA
 
-from src.rsa.utils import get_upper_tri_matrix, is_vector, validate_activations
+from src.utils.utils import get_upper_tri_matrix, is_vector
 
 
 def compare_rdm(
@@ -92,6 +95,47 @@ def compute_rdm(
         )
 
     return methods[method](activations, **kwargs)
+
+
+def validate_activations(activations: torch.Tensor) -> None:
+    """Validate activations from which to compute an RDM.
+
+    This function is meant to be called on a matrix of activations from
+    which to compute an RDM.  Rows of the matrix are associated with
+    different stimuli, while columns correspond to unit activations.
+    N stimuli give rise to N * (N - 1) / 2 distinct pairwise distances.
+    Hence, there should be activations for at least N >= 3 stimuli.
+
+    Args:
+        activations: The matrix of activations from which to compute an
+          RDM.  Must be a 2-D tensor of size (N, M), where N >= 3 is the
+          number of stimuli (i.e., the batch size), and M >= 2 is the
+          number of unit activations per stimulus.
+
+    Raises:
+        ValueError: If the ``activations`` tensor does not meet the size
+          and dimensionality requirements stated above.
+    """
+
+    if not isinstance(activations, torch.Tensor):
+        raise ValueError(
+            f"'activations' should be of type torch.Tensor, but is of type {type(activations)}.'"
+        )
+
+    if activations.dim() != 2:
+        raise ValueError(
+            f"'activations' should be 2-dimensional, but has {activations.dim()} dimensions."
+        )
+
+    if activations.size(dim=0) < 3:
+        raise ValueError(
+            "'activations' should contain activations for at least 3 stimuli."
+        )
+
+    if activations.size(dim=1) < 2:
+        raise ValueError(
+            "The number of unit activations per stimulus should be at least 2."
+        )
 
 
 def _compare_rdm_cosine(

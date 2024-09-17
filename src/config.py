@@ -5,6 +5,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Literal, Optional, Union
 
+import torch
 from omegaconf import DictConfig, MISSING
 
 
@@ -156,7 +157,7 @@ class CheckpointsConf:
 
 @dataclass
 class TensorBoardConf:
-    updates_per_epoch: Dict[Literal['Train', 'Val'], Optional[int]] = MISSING
+    updates_per_epoch: Dict[Literal["Train", "Val"], Optional[int]] = MISSING
 
 
 @dataclass
@@ -192,3 +193,52 @@ class TrainClassifierConf(DictConfig):
     performance: PerformanceConf = MISSING
     checkpoints: CheckpointsConf = MISSING
     tensorboard: TensorBoardConf = MISSING
+
+
+@dataclass
+class RDMComputeConf(DictConfig):
+    name: Literal["correlation", "euclidean"] = MISSING
+    kwargs: Dict[str, Any] = MISSING
+
+
+@dataclass
+class RDMCompareConf(DictConfig):
+    name: Literal["cosine"] = MISSING
+    kwargs: Dict[str, Any] = MISSING
+
+
+@dataclass
+class RDMConf(DictConfig):
+    compute: RDMComputeConf = MISSING
+    compare: RDMCompareConf = MISSING
+
+
+@dataclass
+class HooksConf(DictConfig):
+    train: str = MISSING
+    ref: str = MISSING
+
+
+@dataclass
+class ReprSimilarityConf(DictConfig):
+    weight_rsa_score: float = MISSING
+    rsa_transform: Optional[Literal["abs", "square"]] = None
+
+
+@dataclass
+class TrainSimilarityConf(DictConfig):
+    dataset: DatasetConf = MISSING
+    model: ModelConf = MISSING
+    optimizer: OptimizerConf = MISSING
+    rdm: RDMConf = MISSING
+    experiment: ExperimentConf = MISSING
+    paths: PathsConf = MISSING
+    reproducibility: ReproducibilityConf = MISSING
+    dataloader: DataloaderConf = MISSING
+    training: TrainingConf = MISSING
+    metrics: Dict[str, MetricConf] = MISSING
+    performance: PerformanceConf = MISSING
+    checkpoints: CheckpointsConf = MISSING
+    tensorboard: TensorBoardConf = MISSING
+    hooks: HooksConf = MISSING
+    repr_similarity: ReprSimilarityConf = MISSING

@@ -1,0 +1,64 @@
+defaults:
+  - dataset: fashionmnist
+  - model: lenet
+  - optimizer: sgd
+  - rdm/compute: euclidean
+  - rdm/compare: cosine
+  - _self_
+  - experiment: ???
+paths:
+  checkpoints: ${experiment.dir}/checkpoints
+  data: ../data
+  tensorboard: ${experiment.dir}/tensorboard
+hydra:
+  run:
+    dir: ${experiment.dir}/logs
+experiment:
+  name: ???
+  dir: ../out/${experiment.name}/${now:%Y-%m_%d-%H-%M-%S}
+reproducibility:
+  torch_seed: ???
+  shuffle_seed: ???  # controls shuffling of the training set
+  split_seed: 42  # controls random splitting of the dataset into training and validation sets
+  cudnn_deterministic: True
+  cudnn_benchmark: False
+dataloader:
+  val_split: 0.20  # fraction of the dataset to use as validation set
+  batch_size: ???
+  num_workers: ???
+training:
+  num_epochs: 100
+  resume_from: null  # NOTE: Not yet implemented for similarity training!
+metrics:  # pass empty dict ``{}`` to disable tracking of additional metrics
+  Accuracy@1:
+    _target_: torchmetrics.classification.MulticlassAccuracy
+    num_classes: ${dataset.num_classes}
+    top_k: 1
+    average: micro
+    multidim_average: global
+  Accuracy@5:
+    _target_: torchmetrics.classification.MulticlassAccuracy
+    num_classes: ${dataset.num_classes}
+    top_k: 5
+    average: micro
+    multidim_average: global
+performance:
+  metric: Loss  # either "Loss", "RSAScore", or one of the keys in the ``metrics`` dict
+  higher_is_better: False
+  dataset: Val  # either "Train" or "Val"
+  patience: 20  # null to disable early stopping
+  keep_previous_best_score: True  # NOTE: Not yet implemented for similarity training!
+checkpoints:
+  save_frequency: 5  # null to disable regular checkpoint saves
+  save_best_model: True
+  delete_previous: True
+tensorboard:
+  updates_per_epoch:
+    Train: 10  # null to disable TensorBoard logging during training
+    Val: 10  # null to disable TensorBoard logging during validation
+hooks:
+  train: ???
+  ref: ???
+repr_similarity:
+  weight_rsa_score: ???
+  rsa_transform: null

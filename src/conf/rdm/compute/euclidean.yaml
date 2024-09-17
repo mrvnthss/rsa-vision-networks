@@ -1,0 +1,5 @@
+name: euclidean
+kwargs:
+  center_activations: false
+  normalize_distances: true
+  distance_type: squared
