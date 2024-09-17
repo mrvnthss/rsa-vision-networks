@@ -15,6 +15,7 @@ from tqdm import tqdm
 from src.base_classes.base_sampler import BaseSampler
 from src.training.helpers.checkpoint_manager import CheckpointManager
 from src.training.helpers.experiment_tracker import ExperimentTracker
+from src.training.helpers.metric_tracker import MetricTracker
 from src.training.helpers.performance_tracker import PerformanceTracker
 
 
@@ -56,6 +57,8 @@ class BaseTrainer(ABC):
           efficiency.
         train(): Train the model for multiple epochs.
         train_epoch(): Train the model for a single epoch.
+        update_pbar_and_log_metrics(metric_tracker, pbar, ...): Update
+          progress bar and log metrics to TensorBoard.
     """
 
     def __init__(
@@ -367,6 +370,57 @@ class BaseTrainer(ABC):
         """
 
         return self._run_epoch(is_training=True)
+
+    def update_pbar_and_log_metrics(
+            self,
+            metric_tracker: MetricTracker,
+            pbar: tqdm,
+            batch_idx: int,
+            mode: Literal["Train", "Val"],
+            batch_size: int
+    ) -> None:
+        """Update progress bar and log metrics to TensorBoard.
+
+        Args:
+            metric_tracker: The MetricTracker instance to track
+              performance metrics during training.
+            pbar: The progress bar to update.
+            batch_idx: The index of the current mini-batch.
+            mode: Whether the model is being trained ("Train") or
+              evaluated ("Val").
+            batch_size: The size of the current mini-batch.
+        """
+
+        # Update progress bar
+        mean_metrics_partial = metric_tracker.compute_mean_metrics("partial")
+        prediction_metrics_partial = metric_tracker.compute_prediction_metrics(
+            "partial"
+        )
+        all_metrics = {
+            **mean_metrics_partial,
+            **prediction_metrics_partial,
+            "ComputeEfficiency": self.eval_compute_efficiency()
+        }
+        pbar.set_postfix(all_metrics)
+
+        # Log to TensorBoard
+        if self.experiment_tracker.is_tracking:
+            # NOTE: The ``log_indices`` of the ExperimentTracker instance start from 1.
+            if batch_idx + 1 in self.experiment_tracker.log_indices[mode]:
+                all_metrics.pop("ComputeEfficiency")
+                is_training = mode == "Train"
+                self.experiment_tracker.log_scalars(
+                    scalars=all_metrics,
+                    step=self.get_global_step(
+                        is_training=is_training,
+                        batch_idx=batch_idx,
+                        batch_size=batch_size
+                    ),
+                    mode=mode
+                )
+
+                # Reset metrics for next set of mini-batches
+                metric_tracker.reset(partial=True)
 
     @abstractmethod
     def _run_epoch(

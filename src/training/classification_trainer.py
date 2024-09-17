@@ -52,6 +52,8 @@ class ClassificationTrainer(BaseTrainer):
           efficiency.
         train(): Train the model for multiple epochs.
         train_epoch(): Train the model for a single epoch.
+        update_pbar_and_log_metrics(metric_tracker, pbar, ...): Update
+          progress bar and log metrics to TensorBoard.
     """
 
     def __init__(
@@ -153,36 +155,14 @@ class ClassificationTrainer(BaseTrainer):
                     targets=targets
                 )
 
-                # Update progress bar
-                mean_metrics_partial = self.metric_tracker.compute_mean_metrics("partial")
-                prediction_metrics_partial = self.metric_tracker.compute_prediction_metrics(
-                    "partial"
+                # Update progress bar & log metrics to TensorBoard
+                self.update_pbar_and_log_metrics(
+                    metric_tracker=self.metric_tracker,
+                    pbar=wrapped_loader,
+                    batch_idx=batch_idx,
+                    mode=mode,
+                    batch_size=len(targets)
                 )
-                all_metrics = {
-                    **mean_metrics_partial,
-                    **prediction_metrics_partial,
-                    "ComputeEfficiency": self.eval_compute_efficiency()
-                }
-                wrapped_loader.set_postfix(all_metrics)
-                all_metrics.pop("ComputeEfficiency")
-
-                # Log to TensorBoard
-                if self.experiment_tracker.is_tracking:
-                    # NOTE: The ``log_indices`` of the ExperimentTracker instance start from 1.
-                    if batch_idx + 1 in self.experiment_tracker.log_indices[mode]:
-                        # Log metrics to TensorBoard
-                        self.experiment_tracker.log_scalars(
-                            scalars=all_metrics,
-                            step=self.get_global_step(
-                                is_training=is_training,
-                                batch_idx=batch_idx,
-                                batch_size=len(targets)
-                            ),
-                            mode=mode
-                        )
-
-                        # Reset metrics for next set of mini-batches
-                        self.metric_tracker.reset(partial=True)
 
                 # Reset timer for next mini-batch
                 self.record_timestamp("start")
