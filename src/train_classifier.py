@@ -36,13 +36,6 @@ cs.store(name="train_classifier_conf", node=TrainClassifierConf)
 def main(cfg: TrainClassifierConf) -> None:
     """Train a model for image classification in PyTorch."""
 
-    # Reproducibility
-    set_seeds(
-        seed=cfg.reproducibility.torch_seed,
-        cudnn_deterministic=cfg.reproducibility.cudnn_deterministic,
-        cudnn_benchmark=cfg.reproducibility.cudnn_benchmark
-    )
-
     # Set target device
     device = torch.device(
         "cuda" if torch.cuda.is_available()
@@ -50,19 +43,6 @@ def main(cfg: TrainClassifierConf) -> None:
         else "cpu"
     )
     logger.info("Target device is set to: %s.", device.type.upper())
-
-    # Instantiate model, optimizer, and criterion
-    logger.info("Instantiating model, setting up optimizer and criterion ...")
-    model = instantiate(cfg.model.architecture).to(device)
-    optimizer = instantiate(
-        {
-            k: cfg.optimizer.kwargs[k]
-            for k in cfg.optimizer.kwargs if k != "params"
-        },
-        params=model.parameters()
-    )
-    cfg.optimizer.kwargs.params = optimizer.state_dict()["param_groups"]
-    criterion = instantiate(cfg.criterion)
 
     # Prepare transforms and dataset
     logger.info("Preparing transforms and dataset ...")
@@ -96,6 +76,10 @@ def main(cfg: TrainClassifierConf) -> None:
         name: instantiate(metric) for name, metric in cfg.metrics.items()
     })
 
+    # Set up criterion
+    logger.info("Setting up criterion ...")
+    criterion = instantiate(cfg.criterion)
+
     # SINGLE TRAINING RUN
     if cfg.training.num_folds is None:
         # Set up dataloaders
@@ -115,6 +99,25 @@ def main(cfg: TrainClassifierConf) -> None:
         train_loader = base_loader.get_dataloader(mode="Main")
         val_loader = base_loader.get_dataloader(mode="Val")
 
+        # Set seeds for reproducibility
+        set_seeds(
+            seed=cfg.reproducibility.torch_seed,
+            cudnn_deterministic=cfg.reproducibility.cudnn_deterministic,
+            cudnn_benchmark=cfg.reproducibility.cudnn_benchmark
+        )
+
+        # Instantiate model and optimizer
+        logger.info("Instantiating model and optimizer ...")
+        model = instantiate(cfg.model.architecture).to(device)
+        optimizer = instantiate(
+            {
+                k: cfg.optimizer.kwargs[k]
+                for k in cfg.optimizer.kwargs if k != "params"
+            },
+            params=model.parameters()
+        )
+        cfg.optimizer.kwargs.params = optimizer.state_dict()["param_groups"]
+
         # Instantiate trainer and start training
         # NOTE: Training is automatically resumed if a checkpoint is provided.
         logger.info("Setting up trainer ...")
@@ -129,9 +132,10 @@ def main(cfg: TrainClassifierConf) -> None:
             cfg=cfg
         )
         trainer.train()
+
     # STRATIFIED K-FOLD CROSS-VALIDATION
     elif cfg.training.num_folds > 1:
-        # Set up dataloader for stratified k-fold cross-validation
+        # Set up folds for stratified k-fold cross-validation
         logger.info(
             "Preparing folds for stratified %s-fold cross-validation ...",
             cfg.training.num_folds
@@ -149,6 +153,36 @@ def main(cfg: TrainClassifierConf) -> None:
             shuffle_seed=cfg.reproducibility.shuffle_seed
         )
 
+        # Set up dataloaders
+        logger.info("Preparing dataloaders for first run ...")
+        train_loader = stratified_k_fold_loader.get_dataloader(
+            fold_idx=0,
+            mode="Train"
+        )
+        val_loader = stratified_k_fold_loader.get_dataloader(
+            fold_idx=0,
+            mode="Val"
+        )
+
+        # Set random seeds for reproducibility
+        set_seeds(
+            seed=cfg.reproducibility.torch_seed,
+            cudnn_deterministic=cfg.reproducibility.cudnn_deterministic,
+            cudnn_benchmark=cfg.reproducibility.cudnn_benchmark
+        )
+
+        # Instantiate model and optimizer
+        logger.info("Instantiating model and optimizer ...")
+        model = instantiate(cfg.model.architecture).to(device)
+        optimizer = instantiate(
+            {
+                k: cfg.optimizer.kwargs[k]
+                for k in cfg.optimizer.kwargs if k != "params"
+            },
+            params=model.parameters()
+        )
+        cfg.optimizer.kwargs.params = optimizer.state_dict()["param_groups"]
+
         # Store model and optimizer states to reset them for each fold
         init_model_state_dict_path = Path(cfg.experiment.dir) / "init_model_state_dict.pt"
         init_optimizer_state_dict_path = Path(cfg.experiment.dir) / "init_optimizer_state_dict.pt"
@@ -162,8 +196,18 @@ def main(cfg: TrainClassifierConf) -> None:
                 len(str(cfg.training.num_folds)), fold_idx + 1, cfg.training.num_folds
             )
 
-            # Reset random seeds and model and optimizer states
             if fold_idx > 0:
+                # Update dataloaders
+                logger.info("Updating dataloaders for next run ...")
+                train_loader = stratified_k_fold_loader.get_dataloader(
+                    fold_idx=fold_idx,
+                    mode="Train"
+                )
+                val_loader = stratified_k_fold_loader.get_dataloader(
+                    fold_idx=fold_idx,
+                    mode="Val"
+                )
+
                 # Reset random seeds
                 set_seeds(
                     seed=cfg.reproducibility.torch_seed,
@@ -179,17 +223,6 @@ def main(cfg: TrainClassifierConf) -> None:
                 optimizer.load_state_dict(
                     torch.load(init_optimizer_state_dict_path, weights_only=True)
                 )
-
-            # Set up dataloaders
-            logger.info("Preparing dataloaders ...")
-            train_loader = stratified_k_fold_loader.get_dataloader(
-                fold_idx=fold_idx,
-                mode="Train"
-            )
-            val_loader = stratified_k_fold_loader.get_dataloader(
-                fold_idx=fold_idx,
-                mode="Val"
-            )
 
             # Instantiate trainer and start training
             # NOTE: Training is automatically resumed if a checkpoint is provided.

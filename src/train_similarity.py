@@ -35,13 +35,6 @@ cs.store(name="train_similarity_conf", node=TrainSimilarityConf)
 def main(cfg: TrainSimilarityConf) -> None:
     """Train a model using custom representational similarity loss."""
 
-    # Reproducibility
-    set_seeds(
-        seed=cfg.reproducibility.torch_seed,
-        cudnn_deterministic=cfg.reproducibility.cudnn_deterministic,
-        cudnn_benchmark=cfg.reproducibility.cudnn_benchmark
-    )
-
     # Set target device
     device = torch.device(
         "cuda" if torch.cuda.is_available()
@@ -49,39 +42,6 @@ def main(cfg: TrainSimilarityConf) -> None:
         else "cpu"
     )
     logger.info("Target device is set to: %s.", device.type.upper())
-
-    # Instantiate both models (training and reference)
-    logger.info("Instantiating models ...")
-    model_state_dict = torch.load(
-        cfg.model.load_weights_from,
-        map_location=device,
-        weights_only=False
-    )["model_state_dict"]
-    model_train = instantiate(cfg.model.architecture).to(device)
-    model_train.load_state_dict(model_state_dict)
-    model_ref = instantiate(cfg.model.architecture).to(device)
-    model_ref.load_state_dict(model_state_dict)
-
-    # Instantiate optimizer
-    logger.info("Setting up optimizer and criterion ...")
-    optimizer = instantiate(
-        {
-            k: cfg.optimizer.kwargs[k]
-            for k in cfg.optimizer.kwargs if k != "params"
-        },
-        params=model_train.parameters()
-    )
-    cfg.optimizer.kwargs.params = optimizer.state_dict()["param_groups"]
-
-    # Set up criterion
-    criterion = get_rsa_loss(
-        compute_name=cfg.rdm.compute.name,
-        compute_kwargs=cfg.rdm.compute.kwargs,
-        compare_name=cfg.rdm.compare.name,
-        compare_kwargs=cfg.rdm.compare.kwargs,
-        weight_rsa_score=cfg.repr_similarity.weight_rsa_score,
-        rsa_transform_str=cfg.repr_similarity.rsa_transform
-    )
 
     # Prepare transforms and dataset
     logger.info("Preparing transforms and dataset ...")
@@ -125,6 +85,46 @@ def main(cfg: TrainSimilarityConf) -> None:
     )
     train_loader = base_loader.get_dataloader(mode="Main")
     val_loader = base_loader.get_dataloader(mode="Val")
+
+    # Set seeds for reproducibility
+    set_seeds(
+        seed=cfg.reproducibility.torch_seed,
+        cudnn_deterministic=cfg.reproducibility.cudnn_deterministic,
+        cudnn_benchmark=cfg.reproducibility.cudnn_benchmark
+    )
+
+    # Instantiate both models (training and reference)
+    logger.info("Instantiating models ...")
+    model_state_dict = torch.load(
+        cfg.model.load_weights_from,
+        map_location=device,
+        weights_only=False
+    )["model_state_dict"]
+    model_train = instantiate(cfg.model.architecture).to(device)
+    model_train.load_state_dict(model_state_dict)
+    model_ref = instantiate(cfg.model.architecture).to(device)
+    model_ref.load_state_dict(model_state_dict)
+
+    # Instantiate optimizer
+    logger.info("Setting up optimizer and criterion ...")
+    optimizer = instantiate(
+        {
+            k: cfg.optimizer.kwargs[k]
+            for k in cfg.optimizer.kwargs if k != "params"
+        },
+        params=model_train.parameters()
+    )
+    cfg.optimizer.kwargs.params = optimizer.state_dict()["param_groups"]
+
+    # Set up criterion
+    criterion = get_rsa_loss(
+        compute_name=cfg.rdm.compute.name,
+        compute_kwargs=cfg.rdm.compute.kwargs,
+        compare_name=cfg.rdm.compare.name,
+        compare_kwargs=cfg.rdm.compare.kwargs,
+        weight_rsa_score=cfg.repr_similarity.weight_rsa_score,
+        rsa_transform_str=cfg.repr_similarity.rsa_transform
+    )
 
     # Instantiate metrics to track during training
     logger.info("Instantiating metrics ...")
