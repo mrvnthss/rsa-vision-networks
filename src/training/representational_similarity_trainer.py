@@ -140,17 +140,17 @@ class RepresentationalSimilarityTrainer(BaseTrainer):
         # Attach hooks
         self.hooks = {}
         self.activations = {}
-        self.hooks["Train"] = self._register_hook(
+        self.hooks["train"] = self._register_hook(
             model=self.model,
             activations=self.activations,
             layer=cfg.hooks.train,
-            activations_key="Train"
+            activations_key="train"
         )
-        self.hooks["Ref"] = self._register_hook(
+        self.hooks["ref"] = self._register_hook(
             model=self.model_ref,
             activations=self.activations,
             layer=cfg.hooks.ref,
-            activations_key="Ref"
+            activations_key="ref"
         )
 
     def remove_hooks(self) -> None:
@@ -164,7 +164,7 @@ class RepresentationalSimilarityTrainer(BaseTrainer):
             self,
             is_training: bool
     ) -> Dict[str, float]:
-        mode: Literal["Train", "Val"] = "Train" if is_training else "Val"
+        mode: Literal["train", "val"] = "train" if is_training else "val"
 
         # Dataloader
         dataloader = self.train_loader if is_training else self.val_loader
@@ -186,7 +186,7 @@ class RepresentationalSimilarityTrainer(BaseTrainer):
 
                 # Forward pass, extract intermediate activations
                 predictions, _ = self.model(inputs), self.model_ref(inputs)
-                activations, activations_ref = self.activations["Train"], self.activations["Ref"]
+                activations, activations_ref = self.activations["train"], self.activations["ref"]
 
                 # Reshape activations (rows = stimuli/images, columns = flattened activations)
                 activations = self._reshape_activations(activations)

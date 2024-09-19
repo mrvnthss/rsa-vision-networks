@@ -70,8 +70,8 @@ def main(cfg: TrainClassifierConf) -> None:
             split_seed=cfg.reproducibility.split_seed,
             shuffle_seed=cfg.reproducibility.shuffle_seed
         )
-        train_loader = base_loader.get_dataloader(mode="Main")
-        val_loader = base_loader.get_dataloader(mode="Val")
+        train_loader = base_loader.get_dataloader(mode="main")
+        val_loader = base_loader.get_dataloader(mode="val")
 
         # Set seeds for reproducibility
         set_seeds(
@@ -82,7 +82,7 @@ def main(cfg: TrainClassifierConf) -> None:
 
         # Instantiate model and optimizer
         logger.info("Instantiating model and optimizer ...")
-        model = instantiate(cfg.model.architecture).to(device)
+        model = instantiate(cfg.model.kwargs).to(device)
 
         optimizer = instantiate(
             cfg.optimizer.kwargs,
@@ -138,11 +138,11 @@ def main(cfg: TrainClassifierConf) -> None:
         logger.info("Preparing dataloaders for first run ...")
         train_loader = stratified_k_fold_loader.get_dataloader(
             fold_idx=0,
-            mode="Train"
+            mode="train"
         )
         val_loader = stratified_k_fold_loader.get_dataloader(
             fold_idx=0,
-            mode="Val"
+            mode="val"
         )
 
         # Set random seeds for reproducibility
@@ -154,7 +154,7 @@ def main(cfg: TrainClassifierConf) -> None:
 
         # Instantiate model and optimizer
         logger.info("Instantiating model and optimizer ...")
-        model = instantiate(cfg.model.architecture).to(device)
+        model = instantiate(cfg.model.kwargs).to(device)
 
         optimizer = instantiate(
             cfg.optimizer.kwargs,
@@ -195,11 +195,11 @@ def main(cfg: TrainClassifierConf) -> None:
                 logger.info("Updating dataloaders for next run ...")
                 train_loader = stratified_k_fold_loader.get_dataloader(
                     fold_idx=fold_idx,
-                    mode="Train"
+                    mode="train"
                 )
                 val_loader = stratified_k_fold_loader.get_dataloader(
                     fold_idx=fold_idx,
-                    mode="Val"
+                    mode="val"
                 )
 
                 # Reset random seeds

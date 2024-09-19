@@ -1,4 +1,4 @@
-name: fashionmnist
+name: FashionMNIST
 num_classes: 10
 is_grayscale: True
 transform_params:
@@ -7,13 +7,13 @@ transform_params:
   std: [0.3205]
   crop_size: ${model.input_size}
   crop_scale:
-    lower: ???
-    upper: ???
+    lower: 1.0
+    upper: 1.0
   crop_ratio:
-    lower: ???
-    upper: ???
+    lower: 1.0
+    upper: 1.0
   resize_size: ???
-  flip_prob: 0.5
+  flip_prob: 0.0
 train_set:
   _target_: datasets.fashionmnist.FashionMNIST
   data_dir: ${paths.data}

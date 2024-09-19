@@ -2,10 +2,55 @@
 
 
 from dataclasses import dataclass
-from pathlib import Path
-from typing import Any, Callable, Dict, List, Literal, Optional, Union
+from enum import Enum
+from typing import Any, Dict, List, Optional, Union
 
 from omegaconf import DictConfig, MISSING
+
+
+class DatasetName(Enum):
+    CIFAR10 = "CIFAR10"
+    FashionMNIST = "FashionMNIST"
+    ImageNet = "ImageNet"
+
+
+class ModelName(Enum):
+    LeNet = "LeNet"
+    VGG = "VGG"
+
+
+class VGGNumLayers(Enum):
+    L11 = 11
+    L13 = 13
+    L16 = 16
+    L19 = 19
+
+
+class OptimizerName(Enum):
+    Adam = "Adam"
+    SGD = "SGD"
+
+
+class LRSchedulerName(Enum):
+    ConstantLR = "ConstantLR"
+    CosineAnnealingLR = "CosineAnnealingLR"
+    ExponentialLR = "ExponentialLR"
+    LinearLR = "LinearLR"
+    StepLR = "StepLR"
+
+
+class ComputeRDMName(Enum):
+    correlation = "correlation"
+    euclidean = "euclidean"
+
+
+class CompareRDMName(Enum):
+    cosine = "cosine"
+
+
+class RSATransformName(Enum):
+    abs = "abs"
+    square = "square"
 
 
 @dataclass
@@ -14,26 +59,39 @@ class CriterionConf:
 
 
 @dataclass
+class CropScaleConf:
+    lower: float = 1.0
+    upper: float = 1.0
+
+
+@dataclass
+class CropRatioConf:
+    lower: float = 1.0
+    upper: float = 1.0
+
+
+@dataclass
 class TransformConf:
     mean: List[float] = MISSING
     std: List[float] = MISSING
     crop_size: int = MISSING
-    crop_scale: Dict[Literal["lower", "upper"], float] = MISSING
-    crop_ratio: Dict[Literal["lower", "upper"], float] = MISSING
+    crop_scale: CropScaleConf = MISSING
+    crop_ratio: CropRatioConf = MISSING
     resize_size: int = MISSING
-    flip_prob: float = MISSING
+    flip_prob: float = 0.0
 
 
 @dataclass
 class VisionDatasetConf:
-    root: Union[str, Path] = MISSING
-    transform: Optional[Callable] = None
-    target_transform: Optional[Callable] = None
+    _target_: str = MISSING
+    data_dir: str = MISSING
+    train: bool = MISSING
+    load_into_memory: bool = MISSING
 
 
 @dataclass
 class DatasetConf:
-    name: str = MISSING
+    name: DatasetName = MISSING
     num_classes: int = MISSING
     is_grayscale: bool = MISSING
     transform_params: TransformConf = MISSING
@@ -42,17 +100,23 @@ class DatasetConf:
 
 
 @dataclass
-class ArchConf:
-    _target_: str = MISSING
-    num_layers: int = MISSING
+class LeNetConf:
+    _target_: str = "models.lenet.LeNet"
     num_classes: int = MISSING
-    pretrained: bool = MISSING
+
+
+@dataclass
+class VGGConf:
+    _target_: str = "models.vgg.VGG"
+    num_layers: VGGNumLayers = MISSING
+    num_classes: int = MISSING
+    pretrained: bool = False
 
 
 @dataclass
 class ModelConf:
-    name: str = MISSING
-    architecture: ArchConf = MISSING
+    name: ModelName = MISSING
+    kwargs: Union[LeNetConf, VGGConf] = MISSING
     input_size: int = MISSING
     load_weights_from: Optional[str] = None
 
@@ -88,12 +152,12 @@ class SGDConf:
 
 @dataclass
 class OptimizerConf:
-    name: Literal["Adam", "SGD"] = MISSING
+    name: OptimizerName = MISSING
     kwargs: Union[AdamConf, SGDConf] = MISSING
 
 
 @dataclass
-class ConstantLRConf(DictConfig):
+class ConstantLRConf:
     _target_: str = "torch.optim.lr_scheduler.ConstantLR"
     factor: float = 0.3333333333333333
     total_iters: int = 5
@@ -101,7 +165,7 @@ class ConstantLRConf(DictConfig):
 
 
 @dataclass
-class CosineAnnealingLRConf(DictConfig):
+class CosineAnnealingLRConf:
     _target_: str = "torch.optim.lr_scheduler.CosineAnnealingLR"
     T_max: int = MISSING
     eta_min: float = 0
@@ -116,7 +180,7 @@ class ExponentialLRConf:
 
 
 @dataclass
-class LinearLRConf(DictConfig):
+class LinearLRConf:
     _target_: str = "torch.optim.lr_scheduler.LinearLR"
     start_factor: float = 0.3333333333333333
     end_factor: float = 1.0
@@ -134,13 +198,7 @@ class StepLRConf:
 
 @dataclass
 class LRSchedulerConf:
-    name: Literal[
-        "ConstantLR",
-        "CosineAnnealingLR",
-        "ExponentialLR",
-        "LinearLR",
-        "StepLR"
-    ] = MISSING
+    name: LRSchedulerName = MISSING
     kwargs: Union[
         ConstantLRConf,
         CosineAnnealingLRConf,
@@ -175,7 +233,6 @@ class ReproducibilityConf:
 
 @dataclass
 class DataloaderConf:
-    which_split: Literal["Train", "Val", "Test"] = MISSING
     val_split: float = MISSING
     batch_size: int = MISSING
     num_workers: int = MISSING
@@ -189,16 +246,21 @@ class TrainingConf:
 
 
 @dataclass
-class MetricConf:
-    _target_: str = MISSING
-    params: Dict[str, Any] = MISSING
+class MulticlassAccuracyConf:
+    _target_: str = "torchmetrics.classification.MulticlassAccuracy"
+    num_classes: int = MISSING
+    top_k: int = 1
+    average: str = "macro"
+    multidim_average: str = "global"
+    ignore_index: Optional[int] = None
+    validate_args: bool = True
 
 
 @dataclass
 class PerformanceConf:
     metric: str = MISSING
     higher_is_better: bool = MISSING
-    dataset: Literal["train", "val"] = MISSING
+    evaluate_on: str = MISSING
     patience: Optional[int] = None
     keep_previous_best_score: bool = MISSING
 
@@ -211,8 +273,14 @@ class CheckpointsConf:
 
 
 @dataclass
+class NumUpdatesConf:
+    Train: Optional[int] = 10
+    Val: Optional[int] = 10
+
+
+@dataclass
 class TensorBoardConf:
-    updates_per_epoch: Dict[Literal["Train", "Val"], Optional[int]] = MISSING
+    updates_per_epoch: NumUpdatesConf = MISSING
 
 
 @dataclass
@@ -228,9 +296,9 @@ class TestClassifierConf(DictConfig):
     model: ModelConf = MISSING
     paths: PathsConf = MISSING
     reproducibility: ReproducibilityConf = MISSING
-    model_checkpoint: str = MISSING
     dataloader: DataloaderConf = MISSING
-    metrics: Dict[str, MetricConf] = MISSING
+    evaluate_on: str = MISSING
+    metrics: Dict[str, Union[MulticlassAccuracyConf]] = MISSING
 
 
 @dataclass
@@ -245,40 +313,36 @@ class TrainClassifierConf(DictConfig):
     reproducibility: ReproducibilityConf = MISSING
     dataloader: DataloaderConf = MISSING
     training: TrainingConf = MISSING
-    metrics: Dict[str, MetricConf] = MISSING
+    metrics: Dict[str, Union[MulticlassAccuracyConf]] = MISSING
     performance: PerformanceConf = MISSING
     checkpoints: CheckpointsConf = MISSING
     tensorboard: TensorBoardConf = MISSING
 
 
 @dataclass
-class RDMComputeConf(DictConfig):
-    name: Literal["correlation", "euclidean"] = MISSING
+class ComputeRDMConf:
+    name: ComputeRDMName = MISSING
     kwargs: Dict[str, Any] = MISSING
 
 
 @dataclass
-class RDMCompareConf(DictConfig):
-    name: Literal["cosine"] = MISSING
+class CompareRDMConf:
+    name: CompareRDMName = MISSING
     kwargs: Dict[str, Any] = MISSING
 
 
 @dataclass
-class RDMConf(DictConfig):
-    compute: RDMComputeConf = MISSING
-    compare: RDMCompareConf = MISSING
+class ReprSimilarityConf:
+    compute_rdm: ComputeRDMConf = MISSING
+    compare_rdm: CompareRDMConf = MISSING
+    weight_rsa_score: float = MISSING
+    rsa_transform: RSATransformName = None
 
 
 @dataclass
-class HooksConf(DictConfig):
+class HooksConf:
     train: str = MISSING
     ref: str = MISSING
-
-
-@dataclass
-class ReprSimilarityConf(DictConfig):
-    weight_rsa_score: float = MISSING
-    rsa_transform: Optional[Literal["abs", "square"]] = None
 
 
 @dataclass
@@ -287,15 +351,14 @@ class TrainSimilarityConf(DictConfig):
     model: ModelConf = MISSING
     optimizer: OptimizerConf = MISSING
     lr_scheduler: Optional[LRSchedulerConf] = None
-    rdm: RDMConf = MISSING
+    repr_similarity: ReprSimilarityConf = MISSING
     experiment: ExperimentConf = MISSING
     paths: PathsConf = MISSING
     reproducibility: ReproducibilityConf = MISSING
     dataloader: DataloaderConf = MISSING
     training: TrainingConf = MISSING
-    metrics: Dict[str, MetricConf] = MISSING
+    metrics: Dict[str, Union[MulticlassAccuracyConf]] = MISSING
     performance: PerformanceConf = MISSING
     checkpoints: CheckpointsConf = MISSING
     tensorboard: TensorBoardConf = MISSING
     hooks: HooksConf = MISSING
-    repr_similarity: ReprSimilarityConf = MISSING

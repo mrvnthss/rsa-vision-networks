@@ -27,12 +27,6 @@ reproducibility:
   shuffle_seed: 858
 dataset:
   transform_params:
-    crop_scale:
-      lower: 1.0
-      upper: 1.0
-    crop_ratio:
-      lower: 1.0
-      upper: 1.0
     resize_size: ${model.input_size}  # matches the input size of the model
 dataloader:
   num_workers: 0

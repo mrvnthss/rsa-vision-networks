@@ -33,7 +33,7 @@ class ExperimentTracker:
     def __init__(
             self,
             log_dir: str,
-            updates_per_epoch: Dict[Literal["Train", "Val"], Optional[int]],
+            updates_per_epoch: Dict[Literal["train", "val"], Optional[int]],
             batch_size: int,
             num_train_samples: int,
             num_val_samples: Optional[int] = None
@@ -54,13 +54,13 @@ class ExperimentTracker:
             ValueError: If one of the entries in ``updates_per_epoch``
               is neither a positive integer nor None or if
               ``num_val_samples`` is None while
-              ``updates_per_epoch['Val']`` is not None.
+              ``updates_per_epoch['val']`` is not None.
         """
 
         # Store the number of updates per epoch during training and validation
         self.updates_per_epoch = {}
-        mode: Literal["Train", "Val"]
-        for mode in ["Train", "Val"]:
+        mode: Literal["train", "val"]
+        for mode in ["train", "val"]:
             if updates_per_epoch[mode] is None or updates_per_epoch[mode] > 0:
                 self.updates_per_epoch[mode] = updates_per_epoch[mode]
             else:
@@ -69,9 +69,9 @@ class ExperimentTracker:
                     f"but got {updates_per_epoch[mode]}."
                 )
 
-        if self.updates_per_epoch["Val"] is not None and num_val_samples is None:
+        if self.updates_per_epoch["val"] is not None and num_val_samples is None:
             raise ValueError(
-                "'num_val_samples' must be provided if 'updates_per_epoch['Val']' is not None."
+                "'num_val_samples' must be provided if 'updates_per_epoch['val']' is not None."
             )
 
         self.is_tracking = any(updates is not None for updates in self.updates_per_epoch.values())
@@ -80,12 +80,12 @@ class ExperimentTracker:
         self.logger = logging.getLogger(__name__)
 
         # Set log indices (batch-based, starting at 1)
-        self.log_indices: Dict[Literal["Train", "Val"], List[int]] = {}
+        self.log_indices: Dict[Literal["train", "val"], List[int]] = {}
         if self.is_tracking:
             self._set_log_indices(
                 num_samples={
-                    "Train": num_train_samples,
-                    "Val": num_val_samples
+                    "train": num_train_samples,
+                    "val": num_val_samples
                 },
                 batch_size=batch_size
             )
@@ -104,7 +104,7 @@ class ExperimentTracker:
             self,
             scalars: Dict[str, float],
             step: int,
-            mode: Literal["Train", "Val"]
+            mode: Literal["train", "val"]
     ) -> None:
         """Log scalar values to TensorBoard.
 
@@ -112,18 +112,18 @@ class ExperimentTracker:
             scalars: A dictionary of scalar values to log.
             step: The current step index (batch-based).
             mode: The mode of the model at the time ``scalars`` were
-              collected.  This should be either "Train" or "Val".
+              collected.  This should be either "train" or "val".
 
         Raises:
-            ValueError: If ``mode`` is neither "Train" nor "Val".
+            ValueError: If ``mode`` is neither "train" nor "val".
         """
 
-        if mode not in ["Train", "Val"]:
-            raise ValueError(f"'mode' should be either 'Train' or 'Val', but got {mode}.")
+        if mode not in ["train", "val"]:
+            raise ValueError(f"'mode' should be either 'train' or 'val', but got {mode}.")
 
         for key, value in scalars.items():
             self.writer.add_scalar(
-                f"{key}/{mode}", value, global_step=step
+                f"{key}/{mode.capitalize()}", value, global_step=step
             )
 
     def report_status(self) -> None:
@@ -135,10 +135,10 @@ class ExperimentTracker:
             )
         else:
             msg_enabled = "Experiment tracking is enabled."
-            mode: Literal["Train", "Val"]
-            for mode in ["Train", "Val"]:
+            mode: Literal["train", "val"]
+            for mode in ["train", "val"]:
                 updates = self.updates_per_epoch[mode]
-                mode_str = "training" if mode == "Train" else "validation"
+                mode_str = "training" if mode == "train" else "validation"
                 if updates is None:
                     msg_enabled += f" No updates will be logged to TensorBoard during {mode_str}."
                 elif updates == 1:
@@ -155,7 +155,7 @@ class ExperimentTracker:
 
     def _set_log_indices(
             self,
-            num_samples: Dict[Literal["Train", "Val"], Optional[int]],
+            num_samples: Dict[Literal["train", "val"], Optional[int]],
             batch_size: int
     ) -> None:
         """Set batch indices at which to log to TensorBoard.
@@ -172,8 +172,8 @@ class ExperimentTracker:
             batch_size: The number of samples in each batch.
         """
 
-        mode: Literal["Train", "Val"]
-        for mode in ["Train", "Val"]:
+        mode: Literal["train", "val"]
+        for mode in ["train", "val"]:
             if self.updates_per_epoch[mode] is not None:
                 num_batches = int(math.ceil(num_samples[mode] / batch_size))
                 if num_batches < self.updates_per_epoch[mode]:
@@ -181,7 +181,7 @@ class ExperimentTracker:
                         "The number of mini-batches in the %s set is less than the desired number "
                         "of updates per epoch. Results are logged to TensorBoard after each "
                         "mini-batch. Consider reducing the number of updates.",
-                        "training" if mode == "Train" else "validation"
+                        "training" if mode == "train" else "validation"
                     )
                     self.updates_per_epoch[mode] = num_batches
                     self.log_indices[mode] = list(range(1, num_batches + 1))

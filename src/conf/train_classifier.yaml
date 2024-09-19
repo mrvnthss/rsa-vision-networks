@@ -46,7 +46,7 @@ metrics:  # pass empty dict ``{}`` to disable tracking of additional metrics
 performance:
   metric: Loss  # either "Loss" or one of the keys in the ``metrics`` dict
   higher_is_better: False
-  dataset: Val  # either "Train" or "Val"
+  evaluate_on: val  # either "train" or "val"
   patience: 20  # null to disable early stopping
   keep_previous_best_score: True
 checkpoints:
@@ -55,5 +55,5 @@ checkpoints:
   delete_previous: True
 tensorboard:
   updates_per_epoch:
-    Train: 10  # null to disable TensorBoard logging during training
-    Val: 10  # null to disable TensorBoard logging during validation
+    train: 10  # null to disable TensorBoard logging during training
+    val: 10  # null to disable TensorBoard logging during validation

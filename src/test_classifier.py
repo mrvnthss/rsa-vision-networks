@@ -6,9 +6,8 @@ associated with this script is named "test_classifier.yaml".
 
 Typical usage example:
 
-  >>> python test_classifier.py model=lenet dataset=fashionmnist
-  ...                           dataloader.which_split=Test
-  ...                           model_checkpoint=<path_to_checkpoint>
+  >>> python test_classifier.py model=lenet dataset=fashionmnist evaluate_on=test
+  ...                           model.load_weights_from=<path_to_checkpoint>
 """
 
 
@@ -22,9 +21,7 @@ from torchmetrics import MetricCollection
 
 from src.base_classes.base_loader import BaseLoader
 from src.config import TestClassifierConf
-from src.training.helpers.checkpoint_manager import CheckpointManager
-from src.utils.classification_presets import ClassificationPresets
-from src.utils.training import evaluate_classifier, set_device
+from src.utils.training import evaluate_classifier, get_transforms, set_device
 
 cs = ConfigStore.instance()
 cs.store(name="test_classifier_conf", node=TestClassifierConf)
@@ -34,7 +31,7 @@ cs.store(name="test_classifier_conf", node=TestClassifierConf)
 def main(cfg: TestClassifierConf) -> None:
     """Evaluate a trained classification model on a dataset."""
 
-    if cfg.dataloader.which_split in ["Train", "Val"]:
+    if cfg.evaluate_on in ["train", "val"]:
         if (cfg.dataloader.val_split is None
                 or cfg.dataloader.val_split <= 0
                 or cfg.dataloader.val_split >= 1):
@@ -47,34 +44,21 @@ def main(cfg: TestClassifierConf) -> None:
     device = set_device()
 
     # Load model from checkpoint
-    model = instantiate(cfg.model.architecture).to(device)
-    checkpoint_manager = CheckpointManager(cfg)
-    checkpoint = checkpoint_manager.load_checkpoint(
-        checkpoint_path=cfg.model_checkpoint,
-        device=device
-    )
-    checkpoint_manager.load_model(
-        model=model,
-        checkpoint=checkpoint
+    model = instantiate(cfg.model.kwargs).to(device)
+    model.load_state_dict(
+        torch.load(
+            cfg.model.load_weights_from,
+            map_location=device,
+            weights_only=False
+        )["model_state_dict"]
     )
 
     # Initialize dataloader providing test samples
-    # NOTE: The ``resize_size`` defines the size to which to resize the image to before performing
-    #       the center crop.  The ``crop_size`` defines the size of the center crop and should thus
-    #       match the input size expected by the network.
-    transform = ClassificationPresets(
-        mean=cfg.dataset.transform_params.mean,
-        std=cfg.dataset.transform_params.std,
-        crop_size=cfg.dataset.transform_params.crop_size,
-        resize_size=cfg.dataset.transform_params.resize_size,
-        is_training=False
-    )
     dataset = instantiate(
-        cfg.dataset.test_set if cfg.dataloader.which_split == "Test" else cfg.dataset.train_set
+        cfg.dataset.test_set if cfg.evaluate_on == "test" else cfg.dataset.train_set
     )
-    val_split = (
-        cfg.dataloader.val_split if cfg.dataloader.which_split in ["Train", "Val"] else None
-    )
+    _, transform = get_transforms(cfg.dataset.transform_params)
+    val_split = cfg.dataloader.val_split if cfg.evaluate_on in ["train", "val"] else None
     test_loader = BaseLoader(
         dataset=dataset,
         main_transform=transform,
@@ -86,7 +70,7 @@ def main(cfg: TestClassifierConf) -> None:
         pin_memory=True,
         split_seed=cfg.reproducibility.split_seed
     )
-    mode: Literal["Main", "Val"] = "Val" if cfg.dataloader.which_split == "Val" else "Main"
+    mode: Literal["main", "val"] = "val" if cfg.evaluate_on == "val" else "main"
     test_loader = test_loader.get_dataloader(mode=mode)
 
     # Instantiate criterion
@@ -108,10 +92,10 @@ def main(cfg: TestClassifierConf) -> None:
 
     # Print results to console
     split_str = {
-        "Train": "training",
-        "Val": "validation",
-        "Test": "test"
-    }[cfg.dataloader.which_split]
+        "train": "training",
+        "val": "validation",
+        "test": "test"
+    }[cfg.evaluate_on]
     output = [f"Results on {split_str} set:"]
     for metric_name, metric_value in results.items():
         if isinstance(metric_value, torch.Tensor):

@@ -1,5 +1,5 @@
-name: lenet
-architecture:
+name: LeNet
+kwargs:
   _target_: models.lenet.LeNet
   num_classes: ${dataset.num_classes}
 input_size: 32

@@ -26,11 +26,6 @@ reproducibility:
   shuffle_seed: 858
 dataset:
   transform_params:
-    crop_scale:
-      upper: 1.0
-    crop_ratio:
-      lower: 1.0
-      upper: 1.0
     resize_size: ${model.input_size}  # matches the input size of the model
     flip_prob: 0.5  # based on 'horizontal_flipping.yaml' experiment
 dataloader:

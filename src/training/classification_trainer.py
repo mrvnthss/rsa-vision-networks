@@ -122,7 +122,7 @@ class ClassificationTrainer(BaseTrainer):
             self,
             is_training: bool
     ) -> Dict[str, float]:
-        mode: Literal["Train", "Val"] = "Train" if is_training else "Val"
+        mode: Literal["train", "val"] = "train" if is_training else "val"
 
         # Dataloader
         dataloader = self.train_loader if is_training else self.val_loader

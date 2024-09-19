@@ -75,7 +75,7 @@ class CheckpointManager:
               * model.name
               * optimizer.name
               * paths.checkpoints
-              * performance.dataset
+              * performance.evaluate_on
               * performance.metric
 
         Args:
@@ -271,7 +271,9 @@ class CheckpointManager:
             return
 
         is_enabled = [self.save_frequency < inf, self.save_best_model]
-        dataset = "training set" if self.cfg.performance.dataset == "Train" else "validation set"
+        dataset = (
+            "training set" if self.cfg.performance.evaluate_on == "train" else "validation set"
+        )
 
         msgs_enabled = [
             (
@@ -435,7 +437,7 @@ class CheckpointManager:
                 "Best score is reset to %s for tracking purposes.",
                 default_best_score
             )
-        elif checkpoint["config"].performance.dataset != self.cfg.performance.dataset:
+        elif checkpoint["config"].performance.evaluate_on != self.cfg.performance.evaluate_on:
             self.logger.warning(
                 "Performance dataset in config does not match dataset found in checkpoint! "
                 "Best score is reset to %s for tracking purposes.",
@@ -455,7 +457,7 @@ class CheckpointManager:
                 "Best score (%s on the %s set) set to %.4f (achieved after %d epochs) for "
                 "tracking purposes.",
                 self.cfg.performance.metric,
-                "training" if self.cfg.performance.dataset == "Train" else "validation",
+                "training" if self.cfg.performance.evaluate_on == "train" else "validation",
                 performance_tracker.best_score,
                 performance_tracker.best_epoch_idx
             )

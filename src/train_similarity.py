@@ -52,10 +52,10 @@ def main(cfg: TrainSimilarityConf) -> None:
     # Set up criterion
     logger.info("Setting up criterion ...")
     criterion = get_rsa_loss(
-        compute_name=cfg.rdm.compute.name,
-        compute_kwargs=cfg.rdm.compute.kwargs,
-        compare_name=cfg.rdm.compare.name,
-        compare_kwargs=cfg.rdm.compare.kwargs,
+        compute_name=cfg.repr_similarity.compute_rdm.name,
+        compute_kwargs=cfg.repr_similarity.compute_rdm.kwargs,
+        compare_name=cfg.repr_similarity.compare_rdm.name,
+        compare_kwargs=cfg.repr_similarity.compare_rdm.kwargs,
         weight_rsa_score=cfg.repr_similarity.weight_rsa_score,
         rsa_transform_str=cfg.repr_similarity.rsa_transform
     )
@@ -74,8 +74,8 @@ def main(cfg: TrainSimilarityConf) -> None:
         split_seed=cfg.reproducibility.split_seed,
         shuffle_seed=cfg.reproducibility.shuffle_seed
     )
-    train_loader = base_loader.get_dataloader(mode="Main")
-    val_loader = base_loader.get_dataloader(mode="Val")
+    train_loader = base_loader.get_dataloader(mode="main")
+    val_loader = base_loader.get_dataloader(mode="val")
 
     # Set seeds for reproducibility
     set_seeds(
@@ -92,10 +92,10 @@ def main(cfg: TrainSimilarityConf) -> None:
         weights_only=False
     )["model_state_dict"]
 
-    model_train = instantiate(cfg.model.architecture).to(device)
+    model_train = instantiate(cfg.model.kwargs).to(device)
     model_train.load_state_dict(model_state_dict)
 
-    model_ref = instantiate(cfg.model.architecture).to(device)
+    model_ref = instantiate(cfg.model.kwargs).to(device)
     model_ref.load_state_dict(model_state_dict)
 
     optimizer = instantiate(

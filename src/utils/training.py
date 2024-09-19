@@ -110,12 +110,12 @@ def get_transforms(
         std=transform_params.std,
         crop_size=transform_params.crop_size,
         crop_scale=(
-            transform_params.crop_scale["lower"],
-            transform_params.crop_scale["upper"]
+            transform_params.crop_scale.lower,
+            transform_params.crop_scale.upper
         ),
         crop_ratio=(
-            transform_params.crop_ratio["lower"],
-            transform_params.crop_ratio["upper"]
+            transform_params.crop_ratio.lower,
+            transform_params.crop_ratio.upper
         ),
         flip_prob=transform_params.flip_prob,
         is_training=True

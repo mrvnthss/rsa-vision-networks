@@ -9,15 +9,16 @@ paths:
   data: ../data
 reproducibility:
   split_seed: 42  # controls random split of the dataset into training and validation sets
-model_checkpoint: ???  # path to model checkpoint
+model:
+  load_weights_from: ???  # path to model checkpoint
 dataset:
   transform_params:
     resize_size: ${model.input_size}
 dataloader:
-  which_split: Val  # either "Train", "Val", or "Test"
   val_split: 0.20  # fraction of the dataset to use as validation set
   batch_size: 32
   num_workers: 0
+evaluate_on: val  # either "train", "val", or "test"
 metrics:
   Accuracy@1:
     _target_: torchmetrics.classification.MulticlassAccuracy

@@ -8,7 +8,7 @@ Passes *DictConfig* ``cfg`` to the [``CheckpointManager``](#checkpointmanager) c
 * checkpoints.save_best_model
 * dataloader.batch_size
 * paths.tensorboard
-* performance.dataset
+* performance.evaluate_on
 * performance.higher_is_better
 * performance.keep_previous_best_score
 * performance.metric
@@ -27,7 +27,7 @@ Passes *DictConfig* ``cfg`` to the [``CheckpointManager``](#checkpointmanager) c
 * optimizer.name
 * optimizer.kwargs
 * paths.checkpoints
-* performance.dataset
+* performance.evaluate_on
 * performance.metric
 
 

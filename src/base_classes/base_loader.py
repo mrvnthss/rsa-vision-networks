@@ -139,7 +139,7 @@ class BaseLoader:
 
     def get_dataloader(
             self,
-            mode: Literal["Main", "Val"]
+            mode: Literal["main", "val"]
     ) -> Optional[torch.utils.data.DataLoader]:
         """Construct the dataloader for a particular mode.
 
@@ -151,17 +151,17 @@ class BaseLoader:
             The dataloader for the specified mode.
 
         Raises:
-            ValueError: If ``mode`` is neither "Main" nor "Val".
+            ValueError: If ``mode`` is neither "main" nor "val".
         """
 
-        if mode not in ["Main", "Val"]:
-            raise ValueError(f"'mode' should be either 'Main' or 'Val', but got {mode}.")
+        if mode not in ["main", "val"]:
+            raise ValueError(f"'mode' should be either 'main' or 'val', but got {mode}.")
 
-        if mode == "Val" and self.val_sampler is None:
+        if mode == "val" and self.val_sampler is None:
             return None
 
         dataset = copy.deepcopy(self.dataset)
-        transform, sampler = (self.main_transform, self.main_sampler) if mode == "Main" \
+        transform, sampler = (self.main_transform, self.main_sampler) if mode == "main" \
             else (self.val_transform, self.val_sampler)
         dataset.transform = transform
         return torch.utils.data.DataLoader(

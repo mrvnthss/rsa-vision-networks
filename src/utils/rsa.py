@@ -11,18 +11,19 @@ from typing import Any, Callable, Dict, Literal, Optional
 
 import torch
 
+from src.config import CompareRDMName, ComputeRDMName, RSATransformName
 from src.rsa.rdm import compute_rdm, compare_rdm
 from src.rsa.rsa_loss import rsa_loss
 from src.utils.constants import RSA_TRANSFORMS
 
 
 def get_rsa_loss(
-        compute_name: Literal["correlation", "euclidean"],
+        compute_name: ComputeRDMName,
         compute_kwargs: Dict[str, Any],
-        compare_name: Literal["cosine"],
+        compare_name: CompareRDMName,
         compare_kwargs: Dict[str, Any],
         weight_rsa_score: float,
-        rsa_transform_str: Optional[Literal["abs", "square"]] = None
+        rsa_transform_str: Optional[RSATransformName] = None
 ) -> Callable[[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor], torch.Tensor]:
     """Create an instance of the ``rsa_loss`` function w/ def. params.
 

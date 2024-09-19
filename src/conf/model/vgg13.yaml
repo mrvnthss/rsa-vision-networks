@@ -1,8 +1,0 @@
-name: vgg13
-architecture:
-  _target_: models.vgg.VGG
-  num_layers: 13
-  num_classes: ${dataset.num_classes}
-  pretrained: False
-input_size: 224
-load_weights_from: null

@@ -1,7 +1,7 @@
-name: vgg19
-architecture:
+name: VGG
+kwargs:
   _target_: models.vgg.VGG
-  num_layers: 19
+  num_layers: ???
   num_classes: ${dataset.num_classes}
   pretrained: False
 input_size: 224

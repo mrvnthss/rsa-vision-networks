@@ -1,0 +1,3 @@
+name: correlation
+kwargs:
+  center_activations: True

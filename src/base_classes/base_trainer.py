@@ -84,7 +84,7 @@ class BaseTrainer(ABC):
               * checkpoints.save_best_model
               * dataloader.batch_size
               * paths.tensorboard
-              * performance.dataset
+              * performance.evaluate_on
               * performance.higher_is_better
               * performance.keep_previous_best_score
               * performance.metric
@@ -124,14 +124,14 @@ class BaseTrainer(ABC):
         self.checkpoint_manager.report_status()
 
         # PerformanceTracker
-        if cfg.performance.dataset not in ["Train", "Val"]:
+        if cfg.performance.evaluate_on not in ["train", "val"]:
             raise ValueError(
-                "The dataset on which to evaluate the performance metric should be either 'Train' "
-                f"or 'Val', but got {cfg.performance.dataset}."
+                "The dataset on which to evaluate the performance metric should be either 'train' "
+                f"or 'val', but got {cfg.performance.evaluate_on}."
             )
         self.performance_metric = {
             "metric": cfg.performance.metric,
-            "dataset": cfg.performance.dataset
+            "evaluate_on": cfg.performance.evaluate_on
         }
         self.performance_tracker = PerformanceTracker(
             higher_is_better=cfg.performance.higher_is_better,
@@ -148,8 +148,8 @@ class BaseTrainer(ABC):
             log_dir=log_dir,
             updates_per_epoch=cfg.tensorboard.updates_per_epoch,
             batch_size=cfg.dataloader.batch_size,
-            num_train_samples=self._get_num_samples("Train"),
-            num_val_samples=self._get_num_samples("Val")
+            num_train_samples=self._get_num_samples("train"),
+            num_val_samples=self._get_num_samples("val")
         )
         self.experiment_tracker.report_status()
 
@@ -231,28 +231,31 @@ class BaseTrainer(ABC):
     def get_pbar(
             self,
             dataloader: torch.utils.data.DataLoader,
-            mode: Literal["Train", "Val"] = "Train"
+            mode: Literal["train", "val"] = "train"
     ) -> tqdm:
         """Wrap the provided dataloader with a progress bar.
 
         Args:
             dataloader: The dataloader to wrap with a progress bar.
             mode: The mode of the model to be displayed in the progress
-              bar description, either "Train" or "Val".
+              bar description, either "train" or "val".
 
         Returns:
             The provided dataloader wrapped with a progress bar.
 
         Raises:
-            ValueError: If ``mode`` is not one of "Train" or "Val".
+            ValueError: If ``mode`` is neither "train" nor "val".
         """
 
-        if mode not in ["Train", "Val"]:
-            raise ValueError(f"'mode' should be either 'Train' or 'Val', but got {mode}.")
+        if mode not in ["train", "val"]:
+            raise ValueError(f"'mode' should be either 'train' or 'val', but got {mode}.")
 
         # Construct description for progress bar
         num_digits = len(str(self.final_epoch_idx))
-        desc = f"Epoch [{self.epoch_idx:0{num_digits}d}/{self.final_epoch_idx}]    {mode}"
+        desc = (
+            f"Epoch [{self.epoch_idx:0{num_digits}d}/{self.final_epoch_idx}]    "
+            f"{mode.capitalize()}"
+        )
 
         # Wrap dataloader with progress bar
         pbar = tqdm(
@@ -306,7 +309,7 @@ class BaseTrainer(ABC):
 
             # Update PerformanceTracker
             if self.performance_tracker.is_tracking:
-                results = training_results if self.performance_metric["dataset"] == "Train" \
+                results = training_results if self.performance_metric["evaluate_on"] == "train" \
                     else validation_results
 
                 if self.performance_metric["metric"] not in results:
@@ -387,7 +390,7 @@ class BaseTrainer(ABC):
             metric_tracker: MetricTracker,
             pbar: tqdm,
             batch_idx: int,
-            mode: Literal["Train", "Val"],
+            mode: Literal["train", "val"],
             batch_size: int
     ) -> None:
         """Update progress bar and log metrics to TensorBoard.
@@ -397,8 +400,8 @@ class BaseTrainer(ABC):
               performance metrics during training.
             pbar: The progress bar to update.
             batch_idx: The index of the current mini-batch.
-            mode: Whether the model is being trained ("Train") or
-              evaluated ("Val").
+            mode: Whether the model is being trained ("train") or
+              evaluated ("val").
             batch_size: The size of the current mini-batch.
         """
 
@@ -419,7 +422,7 @@ class BaseTrainer(ABC):
             # NOTE: The ``log_indices`` of the ExperimentTracker instance start from 1.
             if batch_idx + 1 in self.experiment_tracker.log_indices[mode]:
                 all_metrics.pop("ComputeEfficiency")
-                is_training = mode == "Train"
+                is_training = mode == "train"
                 self.experiment_tracker.log_scalars(
                     scalars=all_metrics,
                     step=self.get_global_step(
@@ -465,24 +468,24 @@ class BaseTrainer(ABC):
 
     def _get_num_samples(
             self,
-            mode: Literal["Train", "Val"]
+            mode: Literal["train", "val"]
     ) -> int:
         """Count the number of total samples provided by a dataloader.
 
         Args:
-            mode: Which dataloader to evaluate, either "Train" or "Val".
+            mode: Which dataloader to evaluate, either "train" or "val".
 
         Returns:
             The number of samples iterated over by the dataloader.
 
         Raises:
-            ValueError: If ``mode`` is not one of "Train" or "Val".
+            ValueError: If ``mode`` is not one of "train" or "val".
         """
 
-        if mode not in ["Train", "Val"]:
-            raise ValueError(f"'mode' should be either 'Train' or 'Val', but got {mode}.")
+        if mode not in ["train", "val"]:
+            raise ValueError(f"'mode' should be either 'train' or 'val', but got {mode}.")
 
-        dataloader = self.train_loader if mode == "Train" else self.val_loader
+        dataloader = self.train_loader if mode == "train" else self.val_loader
         if hasattr(dataloader, "sampler"):
             return len(dataloader.sampler)
         return len(dataloader.dataset)
@@ -518,7 +521,7 @@ class BaseTrainer(ABC):
     def _report_results(self) -> None:
         """Report and log the final results of training."""
 
-        dataset_str = "training" if self.performance_metric["dataset"] == "Train" \
+        dataset_str = "training" if self.performance_metric["dataset"] == "train" \
             else "validation"
         self.logger.info(
             "Best performing model achieved a score of %.3f (%s) on the %s set after %d epochs of "

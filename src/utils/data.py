@@ -101,7 +101,7 @@ def get_training_durations(
 
 def get_training_results(
         log_file_path: str,
-        mode: Literal["Train", "Val"],
+        mode: Literal["train", "val"],
         drop_run_id: Optional[bool] = True
 ) -> pd.DataFrame:
     """Parse a single log file to determine training results.
@@ -148,7 +148,7 @@ def get_training_results(
             if match:
                 epoch = int(match.group(1))
                 if epoch == run_dict["Epochs"]:
-                    metrics = match.group(2 if mode == "Train" else 3).split("  ")
+                    metrics = match.group(2 if mode == "train" else 3).split("  ")
                     for metric in metrics:
                         k, v = metric.split(": ")
                         run_dict[k] = float(v)
@@ -179,7 +179,7 @@ def get_training_results(
 def parse_log_dir(
         log_dir: str,
         parse_fn: Callable,
-        mode: Optional[Literal["Train", "Val"]] = None,
+        mode: Optional[Literal["train", "val"]] = None,
         drop_run_id: Optional[bool] = True
 ) -> pd.DataFrame:
     """Parse a (parent) directory of log files.

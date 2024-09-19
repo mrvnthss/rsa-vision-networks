@@ -150,7 +150,7 @@ class StratifiedKFoldLoader:
     def get_dataloader(
             self,
             fold_idx: int,
-            mode: Literal["Train", "Val"]
+            mode: Literal["train", "val"]
     ) -> torch.utils.data.DataLoader:
         """Construct the dataloader for a particular fold and mode.
 
@@ -164,14 +164,14 @@ class StratifiedKFoldLoader:
             The dataloader for the specified fold and mode.
 
         Raises:
-            ValueError: If ``mode`` is neither "Train" nor "Val".
+            ValueError: If ``mode`` is neither "train" nor "val".
         """
 
-        if mode not in ["Train", "Val"]:
-            raise ValueError(f"'mode' should be either 'Train' or 'Val', but got {mode}.")
+        if mode not in ["train", "val"]:
+            raise ValueError(f"'mode' should be either 'train' or 'val', but got {mode}.")
 
         dataset = copy.deepcopy(self.dataset)
-        transform = self.train_transform if mode == "Train" else self.val_transform
+        transform = self.train_transform if mode == "train" else self.val_transform
         dataset.transform = transform
         sampler = self._get_sampler(fold_idx, mode)
         return torch.utils.data.DataLoader(
@@ -183,7 +183,7 @@ class StratifiedKFoldLoader:
     def _get_sampler(
             self,
             fold_idx: int,
-            mode: Literal["Train", "Val"]
+            mode: Literal["train", "val"]
     ) -> BaseSampler:
         """Construct the sampler for a particular fold and mode.
 
@@ -197,14 +197,14 @@ class StratifiedKFoldLoader:
             The sampler for the specified fold and mode.
 
         Raises:
-            ValueError: If ``mode`` is neither "Train" nor "Val".
+            ValueError: If ``mode`` is neither "train" nor "val".
         """
 
-        if mode not in ["Train", "Val"]:
-            raise ValueError(f"'mode' should be either 'Train' or 'Val', but got {mode}.")
+        if mode not in ["train", "val"]:
+            raise ValueError(f"'mode' should be either 'train' or 'val', but got {mode}.")
 
         train_indices, val_indices = self.all_folds[fold_idx]
-        indices = train_indices if mode == "Train" else val_indices
+        indices = train_indices if mode == "train" else val_indices
 
         # Arrange sample indices by class
         unique_class_indices = sorted(list(set(self.targets_np)))
@@ -213,7 +213,7 @@ class StratifiedKFoldLoader:
             indices_by_class[self.targets_np[sample_idx]].append(sample_idx)
 
         # Create sampler
-        shuffle, seed = (self.shuffle, self.shuffle_seed) if mode == "Train" else (False, None)
+        shuffle, seed = (self.shuffle, self.shuffle_seed) if mode == "train" else (False, None)
         sampler = BaseSampler(
             sample_indices_by_class=indices_by_class,
             shuffle=shuffle,
