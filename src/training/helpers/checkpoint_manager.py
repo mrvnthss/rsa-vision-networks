@@ -16,12 +16,6 @@ from src.training.helpers.performance_tracker import PerformanceTracker
 class CheckpointManager:
     """A manager to save model checkpoints in PyTorch.
 
-    Note:
-        This class may also be used for testing purposes to load
-        checkpoints and initialize models.  In that case, the
-        training configuration ``cfg`` may omit the "checkpoints" key
-        altogether.
-
     Attributes:
         cfg: The training configuration.
         checkpoint_dir: The directory to save model checkpoints in.
@@ -433,14 +427,15 @@ class CheckpointManager:
             # NOTE: The best score is initialized to -inf or inf in the PerformanceTracker
             #       class, so there is no need to set it here.
             self.logger.warning(
-                "Performance metric in config does not match metric found in checkpoint! "
-                "Best score is reset to %s for tracking purposes.",
+                "Metric in training configuration determining performance does not match metric "
+                "found in checkpoint! Best score is reset to %s for tracking purposes.",
                 default_best_score
             )
         elif checkpoint["config"].performance.evaluate_on != self.cfg.performance.evaluate_on:
             self.logger.warning(
-                "Performance dataset in config does not match dataset found in checkpoint! "
-                "Best score is reset to %s for tracking purposes.",
+                "Dataset split in training configuration on which to evaluate performance does "
+                "not match split found in checkpoint! Best score is reset to %s for tracking "
+                "purposes.",
                 default_best_score
             )
         elif not keep_previous_best_score:

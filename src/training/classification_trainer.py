@@ -122,10 +122,10 @@ class ClassificationTrainer(BaseTrainer):
             self,
             is_training: bool
     ) -> Dict[str, float]:
-        mode: Literal["train", "val"] = "train" if is_training else "val"
 
         # Dataloader
         dataloader = self.train_loader if is_training else self.val_loader
+        mode: Literal["train", "val"] = "train" if is_training else "val"
         wrapped_loader = self.get_pbar(dataloader, mode)
 
         # Reset MetricTracker
