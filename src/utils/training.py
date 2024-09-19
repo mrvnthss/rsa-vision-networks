@@ -3,6 +3,8 @@
 Functions:
     * evaluate_classifier(model, test_loader, ...): Evaluate a
         classification model.
+    * get_transforms(transform_params): Get transforms for a
+        classification task.
     * set_seeds(seed, cudnn_deterministic, cudnn_benchmark): Set random
         seeds for reproducibility.
 """
@@ -10,17 +12,21 @@ Functions:
 
 __all__ = [
     "evaluate_classifier",
+    "get_transforms",
     "set_seeds"
 ]
 
 import random
-from typing import Dict
+from typing import Dict, Tuple
 
 import numpy as np
 import torch
 from torch import nn
 from torchmetrics import MetricCollection
 from tqdm import tqdm
+
+from src.config import TransformConf
+from src.utils.classification_presets import ClassificationPresets
 
 
 def evaluate_classifier(
@@ -81,6 +87,47 @@ def evaluate_classifier(
     }
 
     return results
+
+
+def get_transforms(
+        transform_params: TransformConf
+) -> Tuple[ClassificationPresets, ClassificationPresets]:
+    """Get transforms for a classification task.
+
+    Args:
+        transform_params: The parameters to use for setting up the
+          transforms.
+
+    Returns:
+        The training and validation transforms for a classification
+        task.
+    """
+
+    train_transform = ClassificationPresets(
+        mean=transform_params.mean,
+        std=transform_params.std,
+        crop_size=transform_params.crop_size,
+        crop_scale=(
+            transform_params.crop_scale["lower"],
+            transform_params.crop_scale["upper"]
+        ),
+        crop_ratio=(
+            transform_params.crop_ratio["lower"],
+            transform_params.crop_ratio["upper"]
+        ),
+        flip_prob=transform_params.flip_prob,
+        is_training=True
+    )
+
+    val_transform = ClassificationPresets(
+        mean=transform_params.mean,
+        std=transform_params.std,
+        crop_size=transform_params.crop_size,
+        resize_size=transform_params.resize_size,
+        is_training=False
+    )
+
+    return train_transform, val_transform
 
 
 def set_seeds(

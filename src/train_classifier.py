@@ -23,8 +23,7 @@ from src.base_classes.base_loader import BaseLoader
 from src.config import TrainClassifierConf
 from src.dataloaders.stratified_k_fold_loader import StratifiedKFoldLoader
 from src.training.classification_trainer import ClassificationTrainer
-from src.utils.classification_presets import ClassificationPresets
-from src.utils.training import set_seeds
+from src.utils.training import get_transforms, set_seeds
 
 logger = logging.getLogger(__name__)
 
@@ -46,28 +45,7 @@ def main(cfg: TrainClassifierConf) -> None:
 
     # Prepare transforms and dataset
     logger.info("Preparing transforms and dataset ...")
-    train_transform = ClassificationPresets(
-        mean=cfg.dataset.transform_params.mean,
-        std=cfg.dataset.transform_params.std,
-        crop_size=cfg.dataset.transform_params.crop_size,
-        crop_scale=(
-            cfg.dataset.transform_params.crop_scale["lower"],
-            cfg.dataset.transform_params.crop_scale["upper"]
-        ),
-        crop_ratio=(
-            cfg.dataset.transform_params.crop_ratio["lower"],
-            cfg.dataset.transform_params.crop_ratio["upper"]
-        ),
-        flip_prob=cfg.dataset.transform_params.flip_prob,
-        is_training=True
-    )
-    val_transform = ClassificationPresets(
-        mean=cfg.dataset.transform_params.mean,
-        std=cfg.dataset.transform_params.std,
-        crop_size=cfg.dataset.transform_params.crop_size,
-        resize_size=cfg.dataset.transform_params.resize_size,
-        is_training=False
-    )
+    train_transform, val_transform = get_transforms(cfg.dataset.transform_params)
     dataset = instantiate(cfg.dataset.train_set)
 
     # Instantiate metrics to track during training
