@@ -23,7 +23,7 @@ from src.base_classes.base_loader import BaseLoader
 from src.config import TrainClassifierConf
 from src.dataloaders.stratified_k_fold_loader import StratifiedKFoldLoader
 from src.training.classification_trainer import ClassificationTrainer
-from src.utils.training import get_transforms, set_seeds
+from src.utils.training import get_transforms, set_device, set_seeds
 
 logger = logging.getLogger(__name__)
 
@@ -36,11 +36,7 @@ def main(cfg: TrainClassifierConf) -> None:
     """Train a model for image classification in PyTorch."""
 
     # Set target device
-    device = torch.device(
-        "cuda" if torch.cuda.is_available()
-        else "mps" if torch.backends.mps.is_available()
-        else "cpu"
-    )
+    device = set_device()
     logger.info("Target device is set to: %s.", device.type.upper())
 
     # Prepare transforms and dataset

@@ -5,6 +5,7 @@ Functions:
         classification model.
     * get_transforms(transform_params): Get transforms for a
         classification task.
+    * set_device(): Set the device to use for training.
     * set_seeds(seed, cudnn_deterministic, cudnn_benchmark): Set random
         seeds for reproducibility.
 """
@@ -13,6 +14,7 @@ Functions:
 __all__ = [
     "evaluate_classifier",
     "get_transforms",
+    "set_device",
     "set_seeds"
 ]
 
@@ -128,6 +130,20 @@ def get_transforms(
     )
 
     return train_transform, val_transform
+
+
+def set_device() -> torch.device:
+    """Set the device to use for training.
+
+    Returns:
+        The device to use for training.
+    """
+
+    if torch.cuda.is_available():
+        return torch.device("cuda")
+    if torch.backends.mps.is_available():
+        return torch.device("mps")
+    return torch.device("cpu")
 
 
 def set_seeds(

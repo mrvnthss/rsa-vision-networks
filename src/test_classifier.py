@@ -24,7 +24,7 @@ from src.base_classes.base_loader import BaseLoader
 from src.config import TestClassifierConf
 from src.training.helpers.checkpoint_manager import CheckpointManager
 from src.utils.classification_presets import ClassificationPresets
-from src.utils.training import evaluate_classifier
+from src.utils.training import evaluate_classifier, set_device
 
 cs = ConfigStore.instance()
 cs.store(name="test_classifier_conf", node=TestClassifierConf)
@@ -44,11 +44,7 @@ def main(cfg: TestClassifierConf) -> None:
             )
 
     # Set target device
-    device = torch.device(
-        "cuda" if torch.cuda.is_available()
-        else "mps" if torch.backends.mps.is_available()
-        else "cpu"
-    )
+    device = set_device()
 
     # Load model from checkpoint
     model = instantiate(cfg.model.architecture).to(device)
