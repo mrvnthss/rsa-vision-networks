@@ -1,0 +1,8 @@
+# https://pytorch.org/docs/2.4/generated/torch.optim.lr_scheduler.LinearLR.html
+name: LinearLR
+kwargs:
+  _target_: torch.optim.lr_scheduler.LinearLR
+  start_factor: 0.3333333333333333
+  end_factor: 1.0
+  total_iters: 5
+  last_epoch: -1

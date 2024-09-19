@@ -1,0 +1,7 @@
+# https://pytorch.org/docs/2.4/generated/torch.optim.lr_scheduler.ConstantLR.html
+name: ConstantLR
+kwargs:
+  _target_: torch.optim.lr_scheduler.ConstantLR
+  factor: 0.3333333333333333
+  total_iters: 5
+  last_epoch: -1

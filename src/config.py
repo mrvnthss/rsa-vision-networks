@@ -93,6 +93,14 @@ class OptimizerConf:
 
 
 @dataclass
+class ConstantLRConf(DictConfig):
+    _target_: str = "torch.optim.lr_scheduler.ConstantLR"
+    factor: float = 0.3333333333333333
+    total_iters: int = 5
+    last_epoch: int = -1
+
+
+@dataclass
 class CosineAnnealingLRConf(DictConfig):
     _target_: str = "torch.optim.lr_scheduler.CosineAnnealingLR"
     T_max: int = MISSING
@@ -102,23 +110,44 @@ class CosineAnnealingLRConf(DictConfig):
 
 @dataclass
 class ExponentialLRConf:
-    _target_: str = "torch.optim.lr_scheduler.ExponentialLR",
-    gamma: float = MISSING,
+    _target_: str = "torch.optim.lr_scheduler.ExponentialLR"
+    gamma: float = MISSING
+    last_epoch: int = -1
+
+
+@dataclass
+class LinearLRConf(DictConfig):
+    _target_: str = "torch.optim.lr_scheduler.LinearLR"
+    start_factor: float = 0.3333333333333333
+    end_factor: float = 1.0
+    total_iters: int = 5
     last_epoch: int = -1
 
 
 @dataclass
 class StepLRConf:
-    _target_: str = "torch.optim.lr_scheduler.StepLR",
-    step_size: int = MISSING,
-    gamma: float = 0.1,
+    _target_: str = "torch.optim.lr_scheduler.StepLR"
+    step_size: int = MISSING
+    gamma: float = 0.1
     last_epoch: int = -1
 
 
 @dataclass
 class LRSchedulerConf:
-    name: Literal["CosineAnnealingLRConf", "ExponentialLR", "StepLR"] = MISSING,
-    kwargs: Union[CosineAnnealingLRConf, ExponentialLRConf, StepLRConf] = MISSING
+    name: Literal[
+        "ConstantLR",
+        "CosineAnnealingLR",
+        "ExponentialLR",
+        "LinearLR",
+        "StepLR"
+    ] = MISSING
+    kwargs: Union[
+        ConstantLRConf,
+        CosineAnnealingLRConf,
+        ExponentialLRConf,
+        LinearLRConf,
+        StepLRConf
+    ] = MISSING
 
 
 @dataclass
