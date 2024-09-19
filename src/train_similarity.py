@@ -69,6 +69,23 @@ def main(cfg: TrainSimilarityConf) -> None:
     )
     dataset = instantiate(cfg.dataset.train_set)
 
+    # Instantiate metrics to track during training
+    logger.info("Instantiating metrics ...")
+    prediction_metrics = MetricCollection({
+        name: instantiate(metric) for name, metric in cfg.metrics.items()
+    })
+
+    # Set up criterion
+    logger.info("Setting up criterion ...")
+    criterion = get_rsa_loss(
+        compute_name=cfg.rdm.compute.name,
+        compute_kwargs=cfg.rdm.compute.kwargs,
+        compare_name=cfg.rdm.compare.name,
+        compare_kwargs=cfg.rdm.compare.kwargs,
+        weight_rsa_score=cfg.repr_similarity.weight_rsa_score,
+        rsa_transform_str=cfg.repr_similarity.rsa_transform
+    )
+
     # Set up dataloaders
     logger.info("Preparing dataloaders ...")
     base_loader = BaseLoader(
@@ -93,20 +110,21 @@ def main(cfg: TrainSimilarityConf) -> None:
         cudnn_benchmark=cfg.reproducibility.cudnn_benchmark
     )
 
-    # Instantiate both models (training and reference)
-    logger.info("Instantiating models ...")
+    # Instantiate both models (training and reference) and optimizer
+    logger.info("Instantiating models and optimizer ...")
     model_state_dict = torch.load(
         cfg.model.load_weights_from,
         map_location=device,
         weights_only=False
     )["model_state_dict"]
+
     model_train = instantiate(cfg.model.architecture).to(device)
     model_train.load_state_dict(model_state_dict)
+
     model_ref = instantiate(cfg.model.architecture).to(device)
     model_ref.load_state_dict(model_state_dict)
 
-    # Instantiate optimizer
-    logger.info("Setting up optimizer and criterion ...")
+    # TODO: Simplify the next block of code!
     optimizer = instantiate(
         {
             k: cfg.optimizer.kwargs[k]
@@ -116,21 +134,14 @@ def main(cfg: TrainSimilarityConf) -> None:
     )
     cfg.optimizer.kwargs.params = optimizer.state_dict()["param_groups"]
 
-    # Set up criterion
-    criterion = get_rsa_loss(
-        compute_name=cfg.rdm.compute.name,
-        compute_kwargs=cfg.rdm.compute.kwargs,
-        compare_name=cfg.rdm.compare.name,
-        compare_kwargs=cfg.rdm.compare.kwargs,
-        weight_rsa_score=cfg.repr_similarity.weight_rsa_score,
-        rsa_transform_str=cfg.repr_similarity.rsa_transform
-    )
-
-    # Instantiate metrics to track during training
-    logger.info("Instantiating metrics ...")
-    prediction_metrics = MetricCollection({
-        name: instantiate(metric) for name, metric in cfg.metrics.items()
-    })
+    # Set up learning rate scheduler
+    lr_scheduler = None
+    if "lr_scheduler" in cfg and cfg.lr_scheduler is not None:
+        logger.info("Setting up learning rate scheduler ...")
+        lr_scheduler = instantiate(
+            cfg.lr_scheduler.kwargs,
+            optimizer=optimizer
+        )
 
     # Instantiate trainer and start training
     logger.info("Setting up trainer ...")
@@ -143,7 +154,8 @@ def main(cfg: TrainSimilarityConf) -> None:
         val_loader=val_loader,
         prediction_metrics=prediction_metrics,
         device=device,
-        cfg=cfg
+        cfg=cfg,
+        lr_scheduler=lr_scheduler
     )
     trainer.train()
 

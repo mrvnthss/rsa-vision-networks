@@ -109,6 +109,8 @@ def main(cfg: TrainClassifierConf) -> None:
         # Instantiate model and optimizer
         logger.info("Instantiating model and optimizer ...")
         model = instantiate(cfg.model.architecture).to(device)
+
+        # TODO: Simplify the next block of code!
         optimizer = instantiate(
             {
                 k: cfg.optimizer.kwargs[k]
@@ -117,6 +119,15 @@ def main(cfg: TrainClassifierConf) -> None:
             params=model.parameters()
         )
         cfg.optimizer.kwargs.params = optimizer.state_dict()["param_groups"]
+
+        # Set up learning rate scheduler
+        lr_scheduler = None
+        if "lr_scheduler" in cfg and cfg.lr_scheduler is not None:
+            logger.info("Setting up learning rate scheduler ...")
+            lr_scheduler = instantiate(
+                cfg.lr_scheduler.kwargs,
+                optimizer=optimizer
+            )
 
         # Instantiate trainer and start training
         # NOTE: Training is automatically resumed if a checkpoint is provided.
@@ -129,7 +140,8 @@ def main(cfg: TrainClassifierConf) -> None:
             val_loader=val_loader,
             prediction_metrics=prediction_metrics,
             device=device,
-            cfg=cfg
+            cfg=cfg,
+            lr_scheduler=lr_scheduler
         )
         trainer.train()
 
@@ -183,11 +195,27 @@ def main(cfg: TrainClassifierConf) -> None:
         )
         cfg.optimizer.kwargs.params = optimizer.state_dict()["param_groups"]
 
-        # Store model and optimizer states to reset them for each fold
+        # Set up learning rate scheduler
+        lr_scheduler = None
+        if "lr_scheduler" in cfg and cfg.lr_scheduler is not None:
+            logger.info("Setting up learning rate scheduler ...")
+            lr_scheduler = instantiate(
+                cfg.lr_scheduler.kwargs,
+                optimizer=optimizer
+            )
+
+        # Save model, optimizer, and learning rate scheduler states to reset them for each fold
         init_model_state_dict_path = Path(cfg.experiment.dir) / "init_model_state_dict.pt"
-        init_optimizer_state_dict_path = Path(cfg.experiment.dir) / "init_optimizer_state_dict.pt"
         torch.save(model.state_dict(), init_model_state_dict_path)
+
+        init_optimizer_state_dict_path = Path(cfg.experiment.dir) / "init_optimizer_state_dict.pt"
         torch.save(optimizer.state_dict(), init_optimizer_state_dict_path)
+
+        init_scheduler_state_dict_path = None
+        if lr_scheduler is not None:
+            init_scheduler_state_dict_path = Path(
+                cfg.experiment.dir) / "init_scheduler_state_dict.pt"
+            torch.save(lr_scheduler.state_dict(), init_scheduler_state_dict_path)
 
         # Iterate over individual folds
         for fold_idx in range(cfg.training.num_folds):
@@ -215,7 +243,7 @@ def main(cfg: TrainClassifierConf) -> None:
                     cudnn_benchmark=cfg.reproducibility.cudnn_benchmark
                 )
 
-                # Reset model and optimizer states
+                # Reset model, optimizer, and learning rate scheduler states
                 logger.info("Resetting model and optimizer states ...")
                 model.load_state_dict(
                     torch.load(init_model_state_dict_path, weights_only=True)
@@ -223,6 +251,12 @@ def main(cfg: TrainClassifierConf) -> None:
                 optimizer.load_state_dict(
                     torch.load(init_optimizer_state_dict_path, weights_only=True)
                 )
+
+                if init_scheduler_state_dict_path is not None:
+                    logger.info("Resetting scheduler state ...")
+                    lr_scheduler.load_state_dict(
+                        torch.load(init_scheduler_state_dict_path, weights_only=True)
+                    )
 
             # Instantiate trainer and start training
             # NOTE: Training is automatically resumed if a checkpoint is provided.
@@ -236,6 +270,7 @@ def main(cfg: TrainClassifierConf) -> None:
                 prediction_metrics=prediction_metrics,
                 device=device,
                 cfg=cfg,
+                lr_scheduler=lr_scheduler,
                 run_id=fold_idx + 1
             )
             trainer.train()

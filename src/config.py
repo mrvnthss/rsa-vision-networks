@@ -91,8 +91,29 @@ class SGDConf:
 
 @dataclass
 class OptimizerConf:
-    name: str = MISSING
+    name: Literal["Adam", "SGD"] = MISSING
     kwargs: Union[AdamConf, SGDConf] = MISSING
+
+
+@dataclass
+class ExponentialLRConf:
+    _target_: str = "torch.optim.lr_scheduler.ExponentialLR",
+    gamma: float = MISSING,
+    last_epoch: int = -1
+
+
+@dataclass
+class StepLRConf:
+    _target_: str = "torch.optim.lr_scheduler.StepLR",
+    step_size: int = MISSING,
+    gamma: float = 0.1,
+    last_epoch: int = -1
+
+
+@dataclass
+class LRSchedulerConf:
+    name: Literal["ExponentialLR", "StepLR"] = MISSING,
+    kwargs: Union[ExponentialLRConf, StepLRConf] = MISSING
 
 
 @dataclass
@@ -184,6 +205,7 @@ class TrainClassifierConf(DictConfig):
     dataset: DatasetConf = MISSING
     model: ModelConf = MISSING
     optimizer: OptimizerConf = MISSING
+    lr_scheduler: Optional[LRSchedulerConf] = None
     experiment: ExperimentConf = MISSING
     paths: PathsConf = MISSING
     reproducibility: ReproducibilityConf = MISSING
@@ -230,6 +252,7 @@ class TrainSimilarityConf(DictConfig):
     dataset: DatasetConf = MISSING
     model: ModelConf = MISSING
     optimizer: OptimizerConf = MISSING
+    lr_scheduler: Optional[LRSchedulerConf] = None
     rdm: RDMConf = MISSING
     experiment: ExperimentConf = MISSING
     paths: PathsConf = MISSING

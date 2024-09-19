@@ -5,7 +5,7 @@ import logging
 import time
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import Dict, Literal, Optional
+from typing import Any, Dict, Literal, Optional
 
 import torch
 from omegaconf import DictConfig
@@ -31,6 +31,8 @@ class BaseTrainer(ABC):
           results to TensorBoard.
         final_epoch_idx: The index of the final epoch.
         logger: The logger instance to record logs.
+        lr_scheduler: The scheduler used to adjust the learning rate
+          during training.
         model: The model to be trained.
         optimizer: The optimizer used during training.
         performance_tracker: The PerformanceTracker instance to monitor
@@ -69,6 +71,7 @@ class BaseTrainer(ABC):
             val_loader: torch.utils.data.DataLoader,
             device: torch.device,
             cfg: DictConfig,
+            lr_scheduler: Optional[torch.optim.lr_scheduler.LRScheduler] = None,
             run_id: Optional[int] = None
     ) -> None:
         """Initialize the BaseTrainer instance.
@@ -97,6 +100,8 @@ class BaseTrainer(ABC):
             val_loader: The dataloader providing validation samples.
             device: The device to train on.
             cfg: The training configuration.
+            lr_scheduler: The scheduler used to adjust the learning rate
+              during training.
             run_id: Optional run ID to distinguish multiple runs using
               the same configuration.  Used to save checkpoints and
               event files in separate directories.
@@ -107,6 +112,7 @@ class BaseTrainer(ABC):
         self.train_loader = train_loader
         self.val_loader = val_loader
         self.device = device
+        self.lr_scheduler = lr_scheduler
 
         self.logger = logging.getLogger(__name__)
 
@@ -155,7 +161,8 @@ class BaseTrainer(ABC):
                 model=self.model,
                 optimizer=self.optimizer,
                 performance_tracker=self.performance_tracker,
-                keep_previous_best_score=cfg.performance.keep_previous_best_score
+                keep_previous_best_score=cfg.performance.keep_previous_best_score,
+                lr_scheduler=self.lr_scheduler
             )
         else:
             self.epoch_idx = 1
@@ -291,9 +298,11 @@ class BaseTrainer(ABC):
 
         self.logger.info("Starting training loop ...")
         while self.epoch_idx <= self.final_epoch_idx:
-            # Train and validate the model
+            # Train and validate the model, and update learning rate
             training_results = self.train_epoch()
             validation_results = self.eval_epoch()
+            if self.lr_scheduler is not None:
+                self.lr_scheduler.step()
 
             # Update PerformanceTracker
             if self.performance_tracker.is_tracking:
@@ -337,6 +346,7 @@ class BaseTrainer(ABC):
                         epoch_idx=self.epoch_idx,
                         model_state_dict=self.model.state_dict(),
                         optimizer_state_dict=self.optimizer.state_dict(),
+                        lr_scheduler_state_dict=self._get_lr_scheduler_state_dict(),
                         best_score=self.performance_tracker.best_score,
                         best_epoch_idx=self.performance_tracker.best_epoch_idx,
                         is_regular_save=False
@@ -348,6 +358,7 @@ class BaseTrainer(ABC):
                     epoch_idx=self.epoch_idx,
                     model_state_dict=self.model.state_dict(),
                     optimizer_state_dict=self.optimizer.state_dict(),
+                    lr_scheduler_state_dict=self._get_lr_scheduler_state_dict(),
                     best_score=self.performance_tracker.best_score,
                     best_epoch_idx=self.performance_tracker.best_epoch_idx,
                     is_regular_save=True
@@ -440,6 +451,17 @@ class BaseTrainer(ABC):
             A dictionary containing the average loss and additional
             metrics computed over the epoch.
         """
+
+    def _get_lr_scheduler_state_dict(self) -> Optional[Dict[str, Any]]:
+        """Retrieve the learning rate scheduler's state dict.
+
+        Returns:
+            The learning rate scheduler's state dict (if available).
+        """
+
+        if self.lr_scheduler is not None:
+            return self.lr_scheduler.state_dict()
+        return None
 
     def _get_num_samples(
             self,

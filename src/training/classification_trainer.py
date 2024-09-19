@@ -26,6 +26,8 @@ class ClassificationTrainer(BaseTrainer):
           results to TensorBoard.
         final_epoch_idx: The index of the final epoch.
         logger: The logger instance to record logs.
+        lr_scheduler: The scheduler used to adjust the learning rate
+          during training.
         metric_tracker: The MetricTracker instance to track performance
           metrics during training.
         model: The model to be trained.
@@ -66,6 +68,7 @@ class ClassificationTrainer(BaseTrainer):
             prediction_metrics: MetricCollection,
             device: torch.device,
             cfg: DictConfig,
+            lr_scheduler: Optional[torch.optim.lr_scheduler.LRScheduler] = None,
             run_id: Optional[int] = None
     ) -> None:
         """Initialize the ClassificationTrainer instance.
@@ -86,6 +89,8 @@ class ClassificationTrainer(BaseTrainer):
               values.
             device: The device to train on.
             cfg: The training configuration.
+            lr_scheduler: The scheduler used to adjust the learning rate
+              during training.
             run_id: Optional run ID to distinguish multiple runs using
               the same configuration.  Used to save checkpoints and
               event files in separate directories.
@@ -108,6 +113,7 @@ class ClassificationTrainer(BaseTrainer):
             val_loader=val_loader,
             device=device,
             cfg=cfg,
+            lr_scheduler=lr_scheduler,
             run_id=run_id
         )
 

@@ -1,0 +1,6 @@
+# https://pytorch.org/docs/2.4/generated/torch.optim.lr_scheduler.ExponentialLR.html
+name: ExponentialLR
+kwargs:
+  _target_: torch.optim.lr_scheduler.ExponentialLR
+  gamma: ???
+  last_epoch: -1

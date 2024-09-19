@@ -3,6 +3,7 @@ defaults:
   - dataset: fashionmnist
   - model: lenet
   - optimizer: sgd
+  - lr_scheduler: null
   - _self_
   - experiment: ???
 paths:

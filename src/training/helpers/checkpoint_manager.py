@@ -44,6 +44,8 @@ class CheckpointManager:
     Methods:
         load_checkpoint(checkpoint_path, device): Load a saved
           checkpoint.
+        load_lr_scheduler(lr_scheduler, checkpoint): Initialize a
+          learning rate scheduler from a saved checkpoint.
         load_model(model, checkpoint): Initialize a model from a saved
           checkpoint.
         load_optimizer(optimizer, checkpoint): Initialize an optimizer
@@ -69,6 +71,7 @@ class CheckpointManager:
               * checkpoints.delete_previous
               * checkpoints.save_best_model
               * checkpoints.save_frequency
+              * lr_scheduler.name
               * model.name
               * optimizer.name
               * optimizer.kwargs
@@ -156,6 +159,43 @@ class CheckpointManager:
         checkpoint = torch.load(checkpoint_path, map_location=device, weights_only=False)
         self.logger.info("Checkpoint loaded successfully.")
         return checkpoint
+
+    def load_lr_scheduler(
+            self,
+            lr_scheduler: torch.optim.lr_scheduler.LRScheduler,
+            checkpoint: Dict[str, Any]
+    ) -> None:
+        """Initialize a learning rate scheduler from a saved checkpoint.
+
+        Args:
+            lr_scheduler: The learning rate scheduler to initialize.
+            checkpoint: The checkpoint containing the learning rate
+              scheduler's state dictionary.
+
+        Raises:
+            ValueError: If the learning rate scheduler in the training
+              configuration does not match the scheduler found in the
+              checkpoint or if an error occurs while loading the
+              scheduler's state.
+        """
+
+        self.logger.info("Loading scheduler state ...")
+
+        if checkpoint["config"].lr_scheduler.name == self.cfg.lr_scheduler.name:
+            try:
+                lr_scheduler.load_state_dict(checkpoint["lr_scheduler_state_dict"])
+                self.logger.info("Scheduler state loaded successfully.")
+            except ValueError as e:
+                self.logger.exception(
+                    "Error occurred while loading scheduler state: %s", e
+                )
+                raise
+        else:
+            raise ValueError(
+                "Learning rate scheduler in training configuration "
+                f"({self.cfg.lr_scheduler.name}) does not match scheduler found in checkpoint "
+                f"({checkpoint['config'].lr_scheduler.name})."
+            )
 
     def load_model(
             self,
@@ -277,14 +317,16 @@ class CheckpointManager:
             model: nn.Module,
             optimizer: torch.optim.Optimizer,
             performance_tracker: PerformanceTracker,
-            keep_previous_best_score: bool
+            keep_previous_best_score: bool,
+            lr_scheduler: Optional[torch.optim.lr_scheduler.LRScheduler] = None
     ) -> int:
         """Resume training from a saved checkpoint.
 
-        This method loads the model and optimizer states from a saved
-        checkpoint and updates the model's and the optimizer's states
-        accordingly.  If applicable, relevant parameters of the
-        PerformanceTracker instance are updated as well.
+        This method loads the model, optimizer, and learning rate
+        scheduler (optional) states from a saved checkpoint and updates
+        the model's, optimizer's and scheduler's states accordingly.
+        If applicable, relevant parameters of the PerformanceTracker
+        instance are updated as well.
 
         Args:
             resume_from: The path of the checkpoint to resume training
@@ -299,6 +341,8 @@ class CheckpointManager:
               found in the checkpoint for early stopping purposes.  If
               set to False, this best score is discarded, and
               performance tracking will start from scratch.
+            lr_scheduler: The scheduler used to adjust the learning rate
+              during training.
 
         Returns:
             The epoch index to resume training from.
@@ -308,6 +352,8 @@ class CheckpointManager:
 
         self.load_model(model, checkpoint)
         self.load_optimizer(optimizer, checkpoint)
+        if lr_scheduler is not None:
+            self.load_lr_scheduler(lr_scheduler, checkpoint)
 
         if performance_tracker.is_tracking:
             self._init_performance_tracker(
@@ -323,6 +369,7 @@ class CheckpointManager:
             epoch_idx: int,
             model_state_dict: Dict[str, Any],
             optimizer_state_dict: Dict[str, Any],
+            lr_scheduler_state_dict: Optional[Dict[str, Any]] = None,
             best_score: Optional[float] = None,
             best_epoch_idx: Optional[int] = None,
             is_regular_save: bool = False
@@ -338,6 +385,8 @@ class CheckpointManager:
             model_state_dict: The model state dictionary to save.
             optimizer_state_dict: The optimizer state dictionary to
               save.
+            lr_scheduler_state_dict: The scheduler state dictionary to
+              save.
             best_score: The best score achieved during training.
             best_epoch_idx: The epoch index at which the best score was
               observed.
@@ -350,6 +399,7 @@ class CheckpointManager:
             "epoch_idx": epoch_idx,
             "model_state_dict": model_state_dict,
             "optimizer_state_dict": optimizer_state_dict,
+            "lr_scheduler_state_dict": lr_scheduler_state_dict,
             "best_score": best_score,
             "best_epoch_idx": best_epoch_idx,
             "config": self.cfg
