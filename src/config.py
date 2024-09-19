@@ -5,7 +5,6 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Literal, Optional, Union
 
-import torch
 from omegaconf import DictConfig, MISSING
 
 
