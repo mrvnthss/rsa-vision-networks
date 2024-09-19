@@ -120,6 +120,8 @@ class RepresentationalSimilarityTrainer(BaseTrainer):
         )
         self.metric_tracker.report_status()
 
+        self.criterion = criterion
+
         super().__init__(
             model=model_train,
             optimizer=optimizer,
@@ -150,8 +152,6 @@ class RepresentationalSimilarityTrainer(BaseTrainer):
             layer=cfg.hooks.ref,
             activations_key="Ref"
         )
-
-        self.criterion = criterion
 
     def remove_hooks(self) -> None:
         """Remove all hooks."""
@@ -189,9 +189,6 @@ class RepresentationalSimilarityTrainer(BaseTrainer):
                 activations, activations_ref = self.activations["Train"], self.activations["Ref"]
 
                 # Reshape activations (rows = stimuli/images, columns = flattened activations)
-                # NOTE: If activations are extracted from fully connected layers towards the end of
-                #       networks, they already have the shape (batch_size, num_features) and no
-                #       reshaping is needed.
                 activations = self._reshape_activations(activations)
                 activations_ref = self._reshape_activations(activations_ref)
 

@@ -159,6 +159,9 @@ def main(cfg: TrainSimilarityConf) -> None:
     )
     trainer.train()
 
+    # Remove hooks again
+    trainer.remove_hooks()
+
 
 if __name__ == "__main__":
     main()
