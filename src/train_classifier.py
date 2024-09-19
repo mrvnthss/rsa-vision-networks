@@ -24,7 +24,7 @@ from src.config import TrainClassifierConf
 from src.dataloaders.stratified_k_fold_loader import StratifiedKFoldLoader
 from src.training.classification_trainer import ClassificationTrainer
 from src.utils.classification_presets import ClassificationPresets
-from src.utils.utils import set_seeds
+from src.utils.training import set_seeds
 
 logger = logging.getLogger(__name__)
 

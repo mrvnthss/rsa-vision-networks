@@ -21,8 +21,6 @@ from typing import Any, Callable, Dict, Literal
 import torch
 from torch import linalg as LA
 
-from src.utils.utils import get_upper_tri_matrix, is_vector
-
 
 def compare_rdm(
     rdm1: torch.Tensor,
@@ -152,7 +150,7 @@ def _compare_rdm_cosine(
         The cosine similarity between the two RDMs.
     """
 
-    if not (is_vector(rdm1) and is_vector(rdm2)):
+    if not (_is_vector(rdm1) and _is_vector(rdm2)):
         raise ValueError(
             "Both 'rdm1' and 'rdm2' should be tensors of dimension 1."
         )
@@ -191,7 +189,7 @@ def _compute_rdm_correlation(
     if center_activations:
         activations -= activations.mean(dim=1, keepdim=True)
 
-    rdm = 1 - get_upper_tri_matrix(torch.corrcoef(activations))
+    rdm = 1 - _get_upper_tri_matrix(torch.corrcoef(activations))
 
     return rdm
 
@@ -241,7 +239,7 @@ def _compute_rdm_euclidean(
     distances_squared = norms_squared + norms_squared.T - 2 * torch.mm(activations, activations.T)
 
     # Clamp negative values (potential numerical inaccuracies) and extract RDM
-    rdm = get_upper_tri_matrix(torch.clamp(distances_squared, min=0.0))
+    rdm = _get_upper_tri_matrix(torch.clamp(distances_squared, min=0.0))
 
     if normalize_distances:
         rdm = rdm / activations.size(dim=1)
@@ -250,3 +248,26 @@ def _compute_rdm_euclidean(
         rdm = torch.sqrt(rdm)
 
     return rdm
+
+
+def _get_upper_tri_matrix(sq_matrix: torch.Tensor) -> torch.Tensor:
+    """Extract the upper triangular part of a square matrix.
+
+    Args:
+        sq_matrix: The square matrix from which to extract the upper
+          triangular matrix (excluding the diagonal).
+
+    Returns:
+        The upper triangular matrix (excluding the diagonal) of the
+        square matrix ``sq_matrix``, flattened into a vector using
+        row-major order.
+    """
+
+    mask = torch.triu(torch.ones_like(sq_matrix, dtype=torch.bool), diagonal=1)
+    return sq_matrix[mask]
+
+
+def _is_vector(x: torch.Tensor) -> bool:
+    """Check if the input is a ``torch.Tensor`` of dimension 1."""
+
+    return isinstance(x, torch.Tensor) and x.dim() == 1

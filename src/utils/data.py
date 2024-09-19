@@ -1,111 +1,33 @@
-"""Utility functions used throughout this project.
+"""Utility functions related to data handling.
 
 Functions:
-    * evaluate_classifier(model, test_loader, ...): Evaluate a
-        classification model.
     * get_training_durations(log_file_path, drop_run_id=True): Parse a
         single log file to determine training durations.
     * get_training_results(log_file_path, mode, drop_run_id=True):
         Parse a single log file to determine training results.
-    * get_upper_tri_matrix(sq_matrix): Extract the upper triangular part
-        of a square matrix.
-    * is_vector(x): Check if the input is a ``torch.Tensor`` of
-        dimension 1.
     * parse_log_dir(log_dir, parse_fn, ...): Parse a (parent) directory
         of log files.
     * parse_tb_data(log_dir, extract_hparams=True, drop_run_id=True):
         Parse data stored in TensorBoard event files.
-    * set_seeds(seed, cudnn_deterministic, cudnn_benchmark): Set random
-        seeds for reproducibility.
 """
 
 
 __all__ = [
-    "evaluate_classifier",
     "get_training_durations",
     "get_training_results",
-    "get_upper_tri_matrix",
-    "is_vector",
     "parse_log_dir",
-    "parse_tb_data",
-    "set_seeds"
+    "parse_tb_data"
 ]
 
 import inspect
 import os
-import random
 import re
 from datetime import datetime
 from functools import partial
 from typing import Callable, Dict, List, Literal, Optional, Union
 
-import numpy as np
 import pandas as pd
-import torch
 from tbparse import SummaryReader
-from torch import nn
-from torchmetrics import MetricCollection
-from tqdm import tqdm
-
-
-def evaluate_classifier(
-        model: nn.Module,
-        test_loader: torch.utils.data.DataLoader,
-        criterion: nn.Module,
-        metrics: MetricCollection,
-        device: torch.device
-) -> Dict[str, float]:
-    """Evaluate a classification model.
-
-    Args:
-        model: The classification model to evaluate.
-        test_loader: The dataloader providing test samples.
-        criterion: The criterion to use for evaluation.
-        metrics: The metrics to evaluate the model with.
-        device: The device to perform evaluation on.
-
-    Returns:
-        The loss along with the computed metrics, evaluated on the test
-        set.
-    """
-
-    model.eval()
-    metrics.reset()
-    metrics.to(device)
-
-    running_loss = 0.
-    running_samples = 0
-
-    # Set up progress bar
-    pbar = tqdm(
-        test_loader,
-        desc=f"Evaluating {model.__class__.__name__}",
-        total=len(test_loader),
-        leave=True,
-        unit="batch"
-    )
-
-    with torch.no_grad():
-        for inputs, targets in pbar:
-            inputs, targets = inputs.to(device), targets.to(device)
-
-            # Make predictions and update metrics
-            predictions = model(inputs)
-            metrics.update(predictions, targets)
-
-            # Compute loss and accumulate
-            loss = criterion(predictions, targets)
-            samples = targets.size(dim=0)
-            running_loss += loss.item() * samples
-            running_samples += samples
-
-    metric_values = metrics.compute()
-    results = {
-        "Loss": running_loss / running_samples,
-        **metric_values
-    }
-
-    return results
 
 
 def get_training_durations(
@@ -254,29 +176,6 @@ def get_training_results(
     return df
 
 
-def get_upper_tri_matrix(sq_matrix: torch.Tensor) -> torch.Tensor:
-    """Extract the upper triangular part of a square matrix.
-
-    Args:
-        sq_matrix: The square matrix from which to extract the upper
-          triangular matrix (excluding the diagonal).
-
-    Returns:
-        The upper triangular matrix (excluding the diagonal) of the
-        square matrix ``sq_matrix``, flattened into a vector using
-        row-major order.
-    """
-
-    mask = torch.triu(torch.ones_like(sq_matrix, dtype=torch.bool), diagonal=1)
-    return sq_matrix[mask]
-
-
-def is_vector(x: torch.Tensor) -> bool:
-    """Check if the input is a ``torch.Tensor`` of dimension 1."""
-
-    return isinstance(x, torch.Tensor) and x.dim() == 1
-
-
 def parse_log_dir(
         log_dir: str,
         parse_fn: Callable,
@@ -414,28 +313,6 @@ def parse_tb_data(
         df = df.drop(columns="run_id")
 
     return df
-
-
-def set_seeds(
-        seed: int,
-        cudnn_deterministic: bool,
-        cudnn_benchmark: bool
-) -> None:
-    """Set random seeds for reproducibility.
-
-    Args:
-        seed: The random seed to use.
-        cudnn_deterministic: Whether to enforce deterministic behavior
-          of cuDNN.
-        cudnn_benchmark: Whether to enable cuDNN benchmark mode.
-    """
-
-    random.seed(seed)
-    np.random.seed(seed)
-    torch.manual_seed(seed)
-    torch.cuda.manual_seed_all(seed)
-    torch.backends.cudnn.deterministic = cudnn_deterministic
-    torch.backends.cudnn.benchmark = cudnn_benchmark
 
 
 def _extract_hparams(run_dir: str) -> Dict[str, Union[int, float, str]]:

@@ -23,7 +23,7 @@ from src.config import TrainSimilarityConf
 from src.training.representational_similarity_trainer import RepresentationalSimilarityTrainer
 from src.utils.classification_presets import ClassificationPresets
 from src.utils.rsa import get_rsa_loss
-from src.utils.utils import set_seeds
+from src.utils.training import set_seeds
 
 logger = logging.getLogger(__name__)
 
