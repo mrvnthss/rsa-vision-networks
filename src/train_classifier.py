@@ -110,15 +110,10 @@ def main(cfg: TrainClassifierConf) -> None:
         logger.info("Instantiating model and optimizer ...")
         model = instantiate(cfg.model.architecture).to(device)
 
-        # TODO: Simplify the next block of code!
         optimizer = instantiate(
-            {
-                k: cfg.optimizer.kwargs[k]
-                for k in cfg.optimizer.kwargs if k != "params"
-            },
+            cfg.optimizer.kwargs,
             params=model.parameters()
         )
-        cfg.optimizer.kwargs.params = optimizer.state_dict()["param_groups"]
 
         # Set up learning rate scheduler
         lr_scheduler = None
@@ -186,14 +181,11 @@ def main(cfg: TrainClassifierConf) -> None:
         # Instantiate model and optimizer
         logger.info("Instantiating model and optimizer ...")
         model = instantiate(cfg.model.architecture).to(device)
+
         optimizer = instantiate(
-            {
-                k: cfg.optimizer.kwargs[k]
-                for k in cfg.optimizer.kwargs if k != "params"
-            },
+            cfg.optimizer.kwargs,
             params=model.parameters()
         )
-        cfg.optimizer.kwargs.params = optimizer.state_dict()["param_groups"]
 
         # Set up learning rate scheduler
         lr_scheduler = None

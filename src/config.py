@@ -61,7 +61,6 @@ class ModelConf:
 @dataclass
 class AdamConf:
     _target_: str = "torch.optim.adam.Adam"
-    params: Any = MISSING
     lr: float = 1e-3
     betas: List[float] = (0.9, 0.999)
     eps: float = 1e-8
@@ -77,7 +76,6 @@ class AdamConf:
 @dataclass
 class SGDConf:
     _target_: str = "torch.optim.sgd.SGD"
-    params: Any = MISSING
     lr: float = 1e-3
     momentum: float = 0
     dampening: float = 0

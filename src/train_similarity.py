@@ -124,15 +124,10 @@ def main(cfg: TrainSimilarityConf) -> None:
     model_ref = instantiate(cfg.model.architecture).to(device)
     model_ref.load_state_dict(model_state_dict)
 
-    # TODO: Simplify the next block of code!
     optimizer = instantiate(
-        {
-            k: cfg.optimizer.kwargs[k]
-            for k in cfg.optimizer.kwargs if k != "params"
-        },
+        cfg.optimizer.kwargs,
         params=model_train.parameters()
     )
-    cfg.optimizer.kwargs.params = optimizer.state_dict()["param_groups"]
 
     # Set up learning rate scheduler
     lr_scheduler = None

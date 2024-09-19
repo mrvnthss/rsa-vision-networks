@@ -29,7 +29,7 @@ dataloader:
   num_workers: ???
 training:
   num_epochs: 100
-  resume_from: null  # NOTE: Not yet implemented for similarity training!
+  resume_from: null  # checkpoint to resume training from, null to start training from scratch
 metrics:  # pass empty dict ``{}`` to disable tracking of additional metrics
   Accuracy@1:
     _target_: torchmetrics.classification.MulticlassAccuracy
@@ -48,7 +48,7 @@ performance:
   higher_is_better: False
   dataset: Val  # either "Train" or "Val"
   patience: 20  # null to disable early stopping
-  keep_previous_best_score: True  # NOTE: Not yet implemented for similarity training!
+  keep_previous_best_score: True
 checkpoints:
   save_frequency: 5  # null to disable regular checkpoint saves
   save_best_model: True

@@ -2,7 +2,6 @@
 name: SGD
 kwargs:
   _target_: torch.optim.sgd.SGD
-  params: ???
   lr: 1e-3
   momentum: 0
   dampening: 0

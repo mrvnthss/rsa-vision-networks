@@ -74,7 +74,6 @@ class CheckpointManager:
               * lr_scheduler.name
               * model.name
               * optimizer.name
-              * optimizer.kwargs
               * paths.checkpoints
               * performance.dataset
               * performance.metric
@@ -212,7 +211,7 @@ class CheckpointManager:
         Raises:
             ValueError: If the model architecture in the training
               configuration does not match the architecture found in the
-              checkpoint or if an error occurs while loading the model
+              checkpoint or if an error occurs while loading the model's
               state.
         """
 
@@ -227,7 +226,8 @@ class CheckpointManager:
                 raise
         else:
             raise ValueError(
-                "Model architecture in config does not match architecture found in checkpoint."
+                f"Model architecture in training configuration ({self.cfg.model.name}) does not "
+                f"match architecture found in checkpoint ({checkpoint['config'].model.name})."
             )
 
     def load_optimizer(
@@ -243,43 +243,25 @@ class CheckpointManager:
               dictionary.
 
         Raises:
-            ValueError: If the optimizer parameters in the training
-              configuration do not match those found in the checkpoint
-              or if an error occurs while loading the optimizer state.
+            ValueError: If the optimizer in the training configuration
+              does not match the optimizer found in the checkpoint or if
+              an error occurs while loading the optimizer's state.
         """
 
         self.logger.info("Loading optimizer state ...")
 
-        if checkpoint["config"].optimizer.name != self.cfg.optimizer.name:
+        if checkpoint["config"].optimizer.name == self.cfg.optimizer.name:
+            try:
+                optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
+                self.logger.info("Optimizer state loaded successfully.")
+            except ValueError as e:
+                self.logger.exception("Error occurred while loading optimizer state: %s", e)
+                raise
+        else:
             raise ValueError(
-                f"Optimizer in config ({self.cfg.optimizer.name}) does not match optimizer found "
-                f"in checkpoint ({checkpoint['config'].optimizer.name})."
+                f"Optimizer in training configuration ({self.cfg.optimizer.name}) does not match "
+                f"optimizer found in checkpoint ({checkpoint['config'].optimizer.name})."
             )
-
-        # NOTE: This code currently assumes that the optimizer has only one parameter group!
-        checkpoint_hparams = checkpoint["config"].optimizer.kwargs.params[0]
-        for hparam in checkpoint_hparams:
-            if hparam == "params":
-                continue
-
-            if hparam not in self.cfg.optimizer.kwargs:
-                raise ValueError(
-                    "Optimizer in config does not match configuration found in checkpoint. "
-                    f"Parameter '{hparam}' is missing in training configuration."
-                )
-
-            if checkpoint_hparams[hparam] != self.cfg.optimizer.kwargs[hparam]:
-                raise ValueError(
-                    "Optimizer in config does not match configuration found in checkpoint. "
-                    f"Parameter '{hparam}' differs."
-                )
-
-        try:
-            optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
-            self.logger.info("Optimizer state loaded successfully.")
-        except ValueError as e:
-            self.logger.exception("Error occurred while loading optimizer state: %s", e)
-            raise
 
     def report_status(self) -> None:
         """Report the status of checkpoint saving during training."""
