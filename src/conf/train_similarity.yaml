@@ -59,6 +59,7 @@ tensorboard:
     train: 10  # null to disable TensorBoard logging during training
     val: 10  # null to disable TensorBoard logging during validation
 repr_similarity:
+  label_smoothing: 0.0
   weight_rsa_score: ???
   rsa_transform: null
 hooks:

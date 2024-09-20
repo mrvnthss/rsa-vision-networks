@@ -1,7 +1,7 @@
 """Utility functions related to RSA.
 
 Functions:
-    * get_rsa_loss(compute_name, compute_kwargs, ...): Create an
+    * get_rsa_loss(label_smoothing, compute_name, ...): Create an
         instance of the ``rsa_loss`` function w/ def. params.
 """
 
@@ -18,6 +18,7 @@ from src.utils.constants import RSA_TRANSFORMS
 
 
 def get_rsa_loss(
+        label_smoothing: float,
         compute_name: ComputeRDMName,
         compute_kwargs: Dict[str, Any],
         compare_name: CompareRDMName,
@@ -28,6 +29,8 @@ def get_rsa_loss(
     """Create an instance of the ``rsa_loss`` function w/ def. params.
 
     Args:
+        label_smoothing: The amount of smoothing when computing the
+          cross-entropy loss.
         compute_name: The method to use for computing the RDMs.
         compute_kwargs: Additional keyword arguments to pass to the
           specific function used to compute the RDMs.
@@ -56,6 +59,7 @@ def get_rsa_loss(
 
     rsa_loss_fn = partial(
         rsa_loss,
+        label_smoothing=label_smoothing,
         method_compute=partial(
             compute_rdm,
             method=compute_name,

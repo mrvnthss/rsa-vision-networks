@@ -8,6 +8,10 @@ from typing import Any, Dict, List, Optional, Union
 from omegaconf import DictConfig, MISSING
 
 
+class CriterionName(Enum):
+    CrossEntropyLoss = "CrossEntropyLoss"
+
+
 class DatasetName(Enum):
     CIFAR10 = "CIFAR10"
     FashionMNIST = "FashionMNIST"
@@ -57,8 +61,15 @@ class RSATransformName(Enum):
 
 
 @dataclass
+class CrossEntropyLossConf:
+    _target_: str = "torch.nn.CrossEntropyLoss"
+    label_smoothing: float = 0.0
+
+
+@dataclass
 class CriterionConf:
-    _target_: str = MISSING
+    name: CriterionName = MISSING
+    kwargs: Union[CrossEntropyLossConf] = MISSING
 
 
 @dataclass
@@ -355,6 +366,7 @@ class CompareRDMConf:
 
 @dataclass
 class ReprSimilarityConf:
+    label_smoothing: float = 0.0
     compute_rdm: ComputeRDMConf = MISSING
     compare_rdm: CompareRDMConf = MISSING
     weight_rsa_score: float = MISSING

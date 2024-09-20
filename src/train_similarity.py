@@ -54,6 +54,7 @@ def main(cfg: TrainSimilarityConf) -> None:
     # Set up criterion
     logger.info("Setting up criterion ...")
     criterion = get_rsa_loss(
+        label_smoothing=cfg.repr_similarity.label_smoothing,
         compute_name=cfg.repr_similarity.compute_rdm.name,
         compute_kwargs=cfg.repr_similarity.compute_rdm.kwargs,
         compare_name=cfg.repr_similarity.compare_rdm.name,

@@ -65,7 +65,7 @@ def main(cfg: TrainClassifierConf) -> None:
 
     # Set up criterion
     logger.info("Setting up criterion ...")
-    criterion = instantiate(cfg.criterion)
+    criterion = instantiate(cfg.criterion.kwargs)
 
     # Instantiate metrics to track during training
     logger.info("Instantiating metrics ...")

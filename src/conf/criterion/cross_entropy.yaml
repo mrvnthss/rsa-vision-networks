@@ -1,1 +1,4 @@
-_target_: torch.nn.CrossEntropyLoss
+name: CrossEntropyLoss
+kwargs:
+  _target_: torch.nn.CrossEntropyLoss
+  label_smoothing: 0.0

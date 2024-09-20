@@ -74,7 +74,7 @@ def main(cfg: TestClassifierConf) -> None:
     test_loader = test_loader.get_dataloader(mode=mode)
 
     # Instantiate criterion
-    criterion = instantiate(cfg.criterion)
+    criterion = instantiate(cfg.criterion.kwargs)
 
     # Instantiate metrics
     metrics = MetricCollection({
