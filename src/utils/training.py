@@ -159,7 +159,9 @@ def get_train_transform(
         crop_size=train_transform_params.crop_size,
         crop_scale=train_transform_params.crop_scale,
         crop_ratio=train_transform_params.crop_ratio,
-        flip_prob=train_transform_params.flip_prob
+        flip_prob=train_transform_params.flip_prob,
+        ta_wide=train_transform_params.ta_wide,
+        random_erase_prob=train_transform_params.random_erase_prob
     )
     return transform
 

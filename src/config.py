@@ -81,6 +81,8 @@ class TransformTrainConf:
     crop_scale: CropScaleConf = MISSING
     crop_ratio: CropRatioConf = MISSING
     flip_prob: float = 0.0
+    ta_wide: bool = False
+    random_erase_prob: float = 0.0
 
 
 @dataclass

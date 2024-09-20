@@ -41,7 +41,9 @@ class ClassificationTransformsTrain:
             crop_size: Union[int, Sequence[int]],
             crop_scale: CropScaleConf,
             crop_ratio: CropRatioConf,
-            flip_prob: float = 0.5,
+            flip_prob: float,
+            ta_wide: bool,
+            random_erase_prob: float,
             interpolation: Union[InterpolationMode, int] = InterpolationMode.BILINEAR
     ) -> None:
         """Initialize the transform.
@@ -60,6 +62,9 @@ class ClassificationTransformsTrain:
             interpolation: The interpolation mode to use when resizing
               images.
             flip_prob: The probability of flipping images horizontally.
+            ta_wide: Whether to apply the ``TrivialAugmentWide`` policy.
+            random_erase_prob: The probability of applying random
+              erasing.
         """
 
         transforms = [
@@ -71,8 +76,12 @@ class ClassificationTransformsTrain:
                 antialias=True
             )
         ]
+
         if flip_prob > 0:
-            transforms.append(T.RandomHorizontalFlip(flip_prob))
+            transforms.append(T.RandomHorizontalFlip(p=flip_prob))
+
+        if ta_wide:
+            transforms.append(T.TrivialAugmentWide(interpolation=interpolation))
 
         transforms += [
             T.PILToTensor(),
@@ -80,6 +89,9 @@ class ClassificationTransformsTrain:
             T.Normalize(mean=mean, std=std),
             T.ToPureTensor()
         ]
+
+        if random_erase_prob > 0:
+            transforms.append(T.RandomErasing(p=random_erase_prob))
 
         self.transform = T.Compose(transforms)
 
