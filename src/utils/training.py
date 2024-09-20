@@ -3,6 +3,8 @@
 Functions:
     * evaluate_classifier(model, test_loader, ...): Evaluate a
         classification model.
+    * get_collate_fn(dataset_params): Get a collate function
+        incorporating MixUp/CutMix transforms.
     * get_lr_scheduler(cfg, optimizer): Get the learning rate scheduler
         to use during training.
     * get_train_transform(train_transform_params): Get the training
@@ -16,6 +18,7 @@ Functions:
 
 __all__ = [
     "evaluate_classifier",
+    "get_collate_fn",
     "get_lr_scheduler",
     "get_train_transform",
     "get_val_transform",
@@ -24,18 +27,20 @@ __all__ = [
 ]
 
 import random
-from typing import Dict, Optional, Union
+from typing import Any, Callable, Dict, List, Optional, Union
 
 import numpy as np
 import torch
+import torchvision.transforms.v2 as T
 from hydra.utils import instantiate
 from torch import nn
 from torch.optim.lr_scheduler import LRScheduler
+from torch.utils.data import default_collate
 from torchmetrics import MetricCollection
 from tqdm import tqdm
 
-from src.config import ReproducibilityConf, TrainClassifierConf, TrainSimilarityConf, \
-    TransformTrainConf, TransformValConf
+from src.config import DatasetConf, ReproducibilityConf, TrainClassifierConf, \
+    TrainSimilarityConf, TransformTrainConf, TransformValConf
 from src.utils.classification_transforms import *
 from src.utils.sequential_lr import SequentialLR
 
@@ -98,6 +103,33 @@ def evaluate_classifier(
     }
 
     return results
+
+
+def get_collate_fn(dataset_params: DatasetConf) -> Optional[Callable]:
+    """Get a collate function incorporating MixUp/CutMix transforms.
+
+    Args:
+        dataset_params: The dataset configuration, specifying the number
+          of classes and the MixUp/CutMix parameters.
+
+    Returns:
+        The collate function incorporating MixUp/CutMix transforms (if
+        specified).
+    """
+
+    mixup_cutmix = _get_mixup_cutmix(
+        mixup_alpha=dataset_params.transform_train.mixup_alpha,
+        cutmix_alpha=dataset_params.transform_train.cutmix_alpha,
+        num_classes=dataset_params.num_classes
+    )
+
+    if mixup_cutmix is not None:
+        def collate_fn(batch: List) -> Any:
+            return mixup_cutmix(*default_collate(batch))
+    else:
+        collate_fn = default_collate
+
+    return collate_fn
 
 
 def get_lr_scheduler(
@@ -216,3 +248,46 @@ def set_seeds(repr_params: ReproducibilityConf) -> None:
     torch.cuda.manual_seed_all(repr_params.torch_seed)
     torch.backends.cudnn.deterministic = repr_params.cudnn_deterministic
     torch.backends.cudnn.benchmark = repr_params.cudnn_benchmark
+
+
+def _get_mixup_cutmix(
+        mixup_alpha: float,
+        cutmix_alpha: float,
+        num_classes: int
+) -> Optional[T.RandomChoice]:
+    """Get a MixUp/CutMix transform.
+
+    Args:
+        mixup_alpha: Value of the two shape parameters of the beta
+          distribution used by the ``MixUp`` transform.
+        cutmix_alpha: Value of the two shape parameters of the beta
+          distribution used by the ``CutMix`` transform.
+        num_classes: The number of classes in the dataset.
+
+    Returns:
+        A transform that randomly (with equal probability) applies
+        either ``MixUp`` or ``CutMix`` with the given parameters (if
+        both are specified).
+    """
+
+    mixup_cutmix = []
+
+    if mixup_alpha > 0:
+        mixup_cutmix.append(
+            T.MixUp(
+                alpha=mixup_alpha,
+                num_classes=num_classes
+            )
+        )
+
+    if cutmix_alpha > 0:
+        mixup_cutmix.append(
+            T.CutMix(
+                alpha=cutmix_alpha,
+                num_classes=num_classes
+            )
+        )
+
+    if not mixup_cutmix:
+        return None
+    return T.RandomChoice(mixup_cutmix)

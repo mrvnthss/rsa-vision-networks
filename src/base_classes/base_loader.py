@@ -26,6 +26,8 @@ class BaseLoader:
     via the ``get_dataloader`` method.
 
     Attributes:
+        collate_fn: The function used by the main loader to merge a
+          list of samples into a mini-batch.
         dataset: The dataset to load samples from.
         main_sampler: The main sampler used to sample data from the
           dataset.
@@ -75,8 +77,8 @@ class BaseLoader:
               argument of the BaseSampler class.
             num_workers: The number of subprocesses to use for data
               loading.
-            collate_fn: The function used to merge a list of samples
-              into a mini-batch.
+            collate_fn: The function used by the main loader to merge a
+              list of samples into a mini-batch.
             pin_memory: Whether to use pinned memory for faster GPU
               transfers.
             drop_last: Whether to drop the last incomplete batch in case
@@ -109,6 +111,7 @@ class BaseLoader:
         self.dataset = dataset
         self.main_transform = main_transform
         self.val_transform = val_transform
+        self.collate_fn = collate_fn
 
         self.main_sampler, self.val_sampler = self._get_samplers(
             dataset.targets,
@@ -130,7 +133,6 @@ class BaseLoader:
         self.shared_kwargs = {
             "batch_size": batch_size,
             "num_workers": num_workers,
-            "collate_fn": collate_fn,
             "pin_memory": pin_memory,
             "drop_last": drop_last,
             "worker_init_fn": seed_worker,
@@ -161,12 +163,14 @@ class BaseLoader:
             return None
 
         dataset = copy.deepcopy(self.dataset)
-        transform, sampler = (self.main_transform, self.main_sampler) if mode == "main" \
-            else (self.val_transform, self.val_sampler)
+        transform = self.main_transform if mode == "main" else self.val_transform
         dataset.transform = transform
+        sampler = self.main_sampler if mode == "main" else self.val_sampler
+        collate_fn = self.collate_fn if mode == "main" else None
         return torch.utils.data.DataLoader(
             dataset=dataset,
             sampler=sampler,
+            collate_fn=collate_fn,
             **self.shared_kwargs
         )
 

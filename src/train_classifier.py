@@ -20,8 +20,8 @@ from torchmetrics import MetricCollection
 from src.base_classes.base_loader import BaseLoader
 from src.config import TrainClassifierConf
 from src.training.classification_trainer import ClassificationTrainer
-from src.utils.training import get_lr_scheduler, get_train_transform, get_val_transform, \
-    set_device, set_seeds
+from src.utils.training import get_lr_scheduler, get_collate_fn, get_train_transform, \
+    get_val_transform, set_device, set_seeds
 
 logger = logging.getLogger(__name__)
 
@@ -48,6 +48,7 @@ def main(cfg: TrainClassifierConf) -> None:
 
     # Set up dataloaders
     logger.info("Preparing dataloaders ...")
+    collate_fn = get_collate_fn(cfg.dataset)
     base_loader = BaseLoader(
         dataset=dataset,
         main_transform=train_transform,
@@ -56,6 +57,7 @@ def main(cfg: TrainClassifierConf) -> None:
         batch_size=cfg.dataloader.batch_size,
         shuffle=True,
         num_workers=cfg.dataloader.num_workers,
+        collate_fn=collate_fn,
         pin_memory=True,
         split_seed=cfg.reproducibility.split_seed,
         shuffle_seed=cfg.reproducibility.shuffle_seed
