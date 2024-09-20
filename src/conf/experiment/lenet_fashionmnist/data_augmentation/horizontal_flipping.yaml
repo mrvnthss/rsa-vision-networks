@@ -1,5 +1,16 @@
 # @package _global_
 
+# This configuration file can be used to run a grid search on a total of
+# 4 parameters (flip probability, batch size, momentum, weight decay)
+# used to train the LeNet-5 model on the FashionMNIST dataset.
+#
+# To run this experiment, execute the following command from the
+# "thesis-experiments/src/" directory:
+#
+#   >>> python train_classifier.py experiment=lenet_fashionmnist/data_augmentation/horizontal_flipping
+#
+
+
 # Multi-run configuration
 experiment:
   name: lenet_fashionmnist/data_augmentation/horizontal_flipping
@@ -17,9 +28,9 @@ hydra:
     params:
       # Grid search parameters
       dataset.transform_params.flip_prob: 0.0, 0.5
-      dataloader.batch_size: 64, 128  # based on 'batch_size_lr.yaml' grid search
-      optimizer.kwargs.momentum: 0.8, 0.85  # based on 'momentum_wd.yaml' grid search
-      optimizer.kwargs.weight_decay: 0.001, 1e-4  # based on 'momentum_wd.yaml' grid search
+      dataloader.batch_size: 64, 128  # based on "batch_size_lr.yaml" grid search
+      optimizer.kwargs.momentum: 0.8, 0.85  # based on "momentum_wd.yaml" grid search
+      optimizer.kwargs.weight_decay: 0.001, 1e-4  # based on "momentum_wd.yaml" grid search
 
 # Fixed training parameters
 reproducibility:
@@ -32,6 +43,6 @@ dataloader:
   num_workers: 0
 optimizer:
   kwargs:
-    lr: 0.01  # based on 'batch_size_lr.yaml' grid search
+    lr: 0.01  # based on "batch_size_lr.yaml" grid search
 performance:
   patience: 20

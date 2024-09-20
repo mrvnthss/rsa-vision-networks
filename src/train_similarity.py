@@ -78,11 +78,7 @@ def main(cfg: TrainSimilarityConf) -> None:
     val_loader = base_loader.get_dataloader(mode="val")
 
     # Set seeds for reproducibility
-    set_seeds(
-        seed=cfg.reproducibility.torch_seed,
-        cudnn_deterministic=cfg.reproducibility.cudnn_deterministic,
-        cudnn_benchmark=cfg.reproducibility.cudnn_benchmark
-    )
+    set_seeds(cfg.reproducibility)
 
     # Instantiate both models (training and reference) and optimizer
     logger.info("Instantiating models and optimizer ...")

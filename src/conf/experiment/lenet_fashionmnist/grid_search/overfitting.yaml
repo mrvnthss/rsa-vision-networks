@@ -1,5 +1,17 @@
 # @package _global_
 
+# This configuration file can be used to run a grid search on the
+# batch size and weight decay parameters used to train the LeNet-5
+# model on the FashionMNIST dataset, to see how changes in the weight
+# decay parameter affect overfitting.
+#
+# To run this experiment, execute the following command from the
+# "thesis-experiments/src/" directory:
+#
+#   >>> python train_classifier_cv.py experiment=lenet_fashionmnist/grid_search/overfitting
+#
+
+
 # Multi-run configuration
 experiment:
   name: lenet_fashionmnist/grid_search/overfitting

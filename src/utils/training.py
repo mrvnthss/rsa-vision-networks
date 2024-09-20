@@ -6,8 +6,7 @@ Functions:
     * get_transforms(transform_params): Get transforms for a
         classification task.
     * set_device(): Set the device to use for training.
-    * set_seeds(seed, cudnn_deterministic, cudnn_benchmark): Set random
-        seeds for reproducibility.
+    * set_seeds(repr_params): Set random seeds for reproducibility.
 """
 
 
@@ -27,7 +26,7 @@ from torch import nn
 from torchmetrics import MetricCollection
 from tqdm import tqdm
 
-from src.config import TransformConf
+from src.config import ReproducibilityConf, TransformConf
 from src.utils.classification_presets import ClassificationPresets
 
 
@@ -146,23 +145,17 @@ def set_device() -> torch.device:
     return torch.device("cpu")
 
 
-def set_seeds(
-        seed: int,
-        cudnn_deterministic: bool,
-        cudnn_benchmark: bool
-) -> None:
+def set_seeds(repr_params: ReproducibilityConf) -> None:
     """Set random seeds for reproducibility.
 
     Args:
-        seed: The random seed to use.
-        cudnn_deterministic: Whether to enforce deterministic behavior
-          of cuDNN.
-        cudnn_benchmark: Whether to enable cuDNN benchmark mode.
+        repr_params: The parameters to use for setting up the random
+          seeds.
     """
 
-    random.seed(seed)
-    np.random.seed(seed)
-    torch.manual_seed(seed)
-    torch.cuda.manual_seed_all(seed)
-    torch.backends.cudnn.deterministic = cudnn_deterministic
-    torch.backends.cudnn.benchmark = cudnn_benchmark
+    random.seed(repr_params.torch_seed)
+    np.random.seed(repr_params.torch_seed)
+    torch.manual_seed(repr_params.torch_seed)
+    torch.cuda.manual_seed_all(repr_params.torch_seed)
+    torch.backends.cudnn.deterministic = repr_params.cudnn_deterministic
+    torch.backends.cudnn.benchmark = repr_params.cudnn_benchmark

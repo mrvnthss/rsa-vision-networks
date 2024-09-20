@@ -1,5 +1,16 @@
 # @package _global_
 
+# This configuration file can be used to run a grid search on the
+# momentum and weight decay parameters used to train the LeNet-5 model
+# on the FashionMNIST dataset.
+#
+# To run this experiment, execute the following command from the
+# "thesis-experiments/src/" directory:
+#
+#   >>> python train_classifier.py experiment=lenet_fashionmnist/grid_search/momentum_wd
+#
+
+
 # Multi-run configuration
 experiment:
   name: lenet_fashionmnist/grid_search/momentum_wd
@@ -27,10 +38,10 @@ dataset:
   transform_params:
     resize_size: ${model.input_size}  # matches the input size of the model
 dataloader:
-  batch_size: 64  # based on 'batch_size_lr.yaml' grid search
+  batch_size: 64  # based on "batch_size_lr.yaml" grid search
   num_workers: 0
 optimizer:
   kwargs:
-    lr: 0.01  # based on 'batch_size_lr.yaml' grid search
+    lr: 0.01  # based on "batch_size_lr.yaml" grid search
 performance:
   patience: 20

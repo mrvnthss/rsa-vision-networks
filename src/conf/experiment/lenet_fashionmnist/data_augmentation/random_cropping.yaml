@@ -1,5 +1,16 @@
 # @package _global_
 
+# This configuration file can be used to run a grid search on a total of
+# 3 parameters (lower bound of crop scale, batch size, momentum)
+# used to train the LeNet-5 model on the FashionMNIST dataset.
+#
+# To run this experiment, execute the following command from the
+# "thesis-experiments/src/" directory:
+#
+#   >>> python train_classifier.py experiment=lenet_fashionmnist/data_augmentation/random_cropping
+#
+
+
 # Multi-run configuration
 experiment:
   name: lenet_fashionmnist/data_augmentation/random_cropping
@@ -17,8 +28,8 @@ hydra:
     params:
       # Grid search parameters
       dataset.transform_params.crop_scale.lower: 0.4, 0.6, 0.8, 1.0
-      dataloader.batch_size: 64, 128  # based on 'batch_size_lr.yaml' grid search
-      optimizer.kwargs.momentum: 0.8, 0.85  # based on 'momentum_wd.yaml' grid search
+      dataloader.batch_size: 64, 128  # based on "batch_size_lr.yaml" grid search
+      optimizer.kwargs.momentum: 0.8, 0.85  # based on "momentum_wd.yaml" grid search
 
 # Fixed training parameters
 reproducibility:
@@ -27,14 +38,14 @@ reproducibility:
 dataset:
   transform_params:
     resize_size: ${model.input_size}  # matches the input size of the model
-    flip_prob: 0.5  # based on 'horizontal_flipping.yaml' experiment
+    flip_prob: 0.5  # based on "horizontal_flipping.yaml" grid search
 dataloader:
   num_workers: 0
 training:
   num_epochs: 200  # increased from previous experiments
 optimizer:
   kwargs:
-    lr: 0.01  # based on 'batch_size_lr.yaml' grid search
-    weight_decay: 1e-3  # based on 'momentum_wd.yaml' grid search & 'horizontal_flipping.yaml' experiment
+    lr: 0.01  # based on "batch_size_lr.yaml" grid search
+    weight_decay: 1e-3  # based on "momentum_wd.yaml" & "horizontal_flipping.yaml" grid searches
 performance:
   patience: 20

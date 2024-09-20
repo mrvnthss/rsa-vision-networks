@@ -521,7 +521,7 @@ class BaseTrainer(ABC):
     def _report_results(self) -> None:
         """Report and log the final results of training."""
 
-        dataset_str = "training" if self.performance_metric["dataset"] == "train" \
+        dataset_str = "training" if self.performance_metric["evaluate_on"] == "train" \
             else "validation"
         self.logger.info(
             "Best performing model achieved a score of %.3f (%s) on the %s set after %d epochs of "

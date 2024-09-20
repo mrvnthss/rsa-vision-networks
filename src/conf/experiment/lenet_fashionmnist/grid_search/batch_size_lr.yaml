@@ -1,5 +1,16 @@
 # @package _global_
 
+# This configuration file can be used to run a grid search on the
+# batch size and learning rate parameters used to train the LeNet-5
+# model on the FashionMNIST dataset.
+#
+# To run this experiment, execute the following command from the
+# "thesis-experiments/src/" directory:
+#
+#   >>> python train_classifier.py experiment=lenet_fashionmnist/grid_search/batch_size_lr
+#
+
+
 # Multi-run configuration
 experiment:
   name: lenet_fashionmnist/grid_search/batch_size_lr

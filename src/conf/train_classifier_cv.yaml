@@ -28,7 +28,7 @@ dataloader:
   num_workers: ???
 training:
   num_epochs: 100
-  resume_from: null  # checkpoint to resume training from, null to start training from scratch
+  num_folds: 5  # number of folds for cross-validation, null to disable cross-validation
 metrics:  # pass empty dict ``{}`` to disable tracking of additional metrics
   Accuracy@1:
     _target_: torchmetrics.classification.MulticlassAccuracy
