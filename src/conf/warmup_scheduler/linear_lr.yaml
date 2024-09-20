@@ -1,5 +1,6 @@
 # https://pytorch.org/docs/2.4/generated/torch.optim.lr_scheduler.LinearLR.html
 name: LinearLR
+warmup_epochs: ${warmup_scheduler.kwargs.total_iters}
 kwargs:
   _target_: torch.optim.lr_scheduler.LinearLR
   start_factor: 0.3333333333333333

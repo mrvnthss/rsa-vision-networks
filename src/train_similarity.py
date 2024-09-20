@@ -22,7 +22,7 @@ from src.base_classes.base_loader import BaseLoader
 from src.config import TrainSimilarityConf
 from src.training.representational_similarity_trainer import RepresentationalSimilarityTrainer
 from src.utils.rsa import get_rsa_loss
-from src.utils.training import get_transforms, set_device, set_seeds
+from src.utils.training import get_lr_scheduler, get_transforms, set_device, set_seeds
 
 logger = logging.getLogger(__name__)
 
@@ -100,16 +100,17 @@ def main(cfg: TrainSimilarityConf) -> None:
     )
 
     # Set up learning rate scheduler
-    lr_scheduler = None
-    if "lr_scheduler" in cfg and cfg.lr_scheduler is not None:
-        logger.info("Setting up learning rate scheduler ...")
-        lr_scheduler = instantiate(
-            cfg.lr_scheduler.kwargs,
-            optimizer=optimizer
-        )
+    logger.info("Setting up learning rate scheduler (if specified) ...")
+    lr_scheduler = get_lr_scheduler(
+        cfg=cfg,
+        optimizer=optimizer
+    )
 
     # Instantiate trainer and start training
     logger.info("Setting up trainer ...")
+    # NOTE: Training is automatically resumed if a checkpoint is provided.  It's the user's
+    #       responsibility to ensure that the checkpoint is compatible with the current model,
+    #       optimizer, and scheduler.
     trainer = RepresentationalSimilarityTrainer(
         model_train=model_train,
         model_ref=model_ref,

@@ -38,12 +38,6 @@ class CheckpointManager:
     Methods:
         load_checkpoint(checkpoint_path, device): Load a saved
           checkpoint.
-        load_lr_scheduler(lr_scheduler, checkpoint): Initialize a
-          learning rate scheduler from a saved checkpoint.
-        load_model(model, checkpoint): Initialize a model from a saved
-          checkpoint.
-        load_optimizer(optimizer, checkpoint): Initialize an optimizer
-          from a saved checkpoint.
         report_status(): Report the status of checkpoint saving during
           training.
         resume_training(resume_from, device, ...): Resume training from
@@ -65,9 +59,6 @@ class CheckpointManager:
               * checkpoints.delete_previous
               * checkpoints.save_best_model
               * checkpoints.save_frequency
-              * lr_scheduler.name
-              * model.name
-              * optimizer.name
               * paths.checkpoints
               * performance.evaluate_on
               * performance.metric
@@ -153,110 +144,6 @@ class CheckpointManager:
         self.logger.info("Checkpoint loaded successfully.")
         return checkpoint
 
-    def load_lr_scheduler(
-            self,
-            lr_scheduler: torch.optim.lr_scheduler.LRScheduler,
-            checkpoint: Dict[str, Any]
-    ) -> None:
-        """Initialize a learning rate scheduler from a saved checkpoint.
-
-        Args:
-            lr_scheduler: The learning rate scheduler to initialize.
-            checkpoint: The checkpoint containing the learning rate
-              scheduler's state dictionary.
-
-        Raises:
-            ValueError: If the learning rate scheduler in the training
-              configuration does not match the scheduler found in the
-              checkpoint or if an error occurs while loading the
-              scheduler's state.
-        """
-
-        self.logger.info("Loading scheduler state ...")
-
-        if checkpoint["config"].lr_scheduler.name == self.cfg.lr_scheduler.name:
-            try:
-                lr_scheduler.load_state_dict(checkpoint["lr_scheduler_state_dict"])
-                self.logger.info("Scheduler state loaded successfully.")
-            except ValueError as e:
-                self.logger.exception(
-                    "Error occurred while loading scheduler state: %s", e
-                )
-                raise
-        else:
-            raise ValueError(
-                "Learning rate scheduler in training configuration "
-                f"({self.cfg.lr_scheduler.name}) does not match scheduler found in checkpoint "
-                f"({checkpoint['config'].lr_scheduler.name})."
-            )
-
-    def load_model(
-            self,
-            model: nn.Module,
-            checkpoint: Dict[str, Any]
-    ) -> None:
-        """Initialize a model from a saved checkpoint.
-
-        Args:
-            model: The model to initialize.
-            checkpoint: The checkpoint containing the model state
-              dictionary.
-
-        Raises:
-            ValueError: If the model architecture in the training
-              configuration does not match the architecture found in the
-              checkpoint or if an error occurs while loading the model's
-              state.
-        """
-
-        self.logger.info("Loading model state ...")
-
-        if checkpoint["config"].model.name == self.cfg.model.name:
-            try:
-                model.load_state_dict(checkpoint["model_state_dict"])
-                self.logger.info("Model state loaded successfully.")
-            except ValueError as e:
-                self.logger.exception("Error occurred while loading model state: %s", e)
-                raise
-        else:
-            raise ValueError(
-                f"Model architecture in training configuration ({self.cfg.model.name}) does not "
-                f"match architecture found in checkpoint ({checkpoint['config'].model.name})."
-            )
-
-    def load_optimizer(
-            self,
-            optimizer: torch.optim.Optimizer,
-            checkpoint: Dict[str, Any]
-    ) -> None:
-        """Initialize an optimizer from a saved checkpoint.
-
-        Args:
-            optimizer: The optimizer to initialize.
-            checkpoint: The checkpoint containing the optimizer state
-              dictionary.
-
-        Raises:
-            ValueError: If the optimizer in the training configuration
-              does not match the optimizer found in the checkpoint or if
-              an error occurs while loading the optimizer's state.
-        """
-
-        self.logger.info("Loading optimizer state ...")
-
-        if checkpoint["config"].optimizer.name == self.cfg.optimizer.name:
-            try:
-                optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
-                self.logger.info("Optimizer state loaded successfully.")
-            except ValueError as e:
-                self.logger.exception("Error occurred while loading optimizer state: %s", e)
-                raise
-        else:
-            raise ValueError(
-                f"Optimizer in training configuration ({self.cfg.optimizer.name}) does not match "
-                f"optimizer found in checkpoint ({checkpoint['config'].optimizer.name})."
-            )
-
     def report_status(self) -> None:
         """Report the status of checkpoint saving during training."""
 
@@ -326,13 +213,18 @@ class CheckpointManager:
             The epoch index to resume training from.
         """
 
+        # Load checkpoint and update states
         checkpoint = self.load_checkpoint(resume_from, device)
-
-        self.load_model(model, checkpoint)
-        self.load_optimizer(optimizer, checkpoint)
         if lr_scheduler is not None:
-            self.load_lr_scheduler(lr_scheduler, checkpoint)
+            self.logger.info("Updating model, optimizer, and learning rate scheduler states ...")
+        else:
+            self.logger.info("Updating model and optimizer states ...")
+        model.load_state_dict(checkpoint["model_state_dict"])
+        optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
+        if lr_scheduler is not None:
+            lr_scheduler.load_state_dict(checkpoint["lr_scheduler_state_dict"])
 
+        # Update PerformanceTracker instance, if necessary
         if performance_tracker.is_tracking:
             self._init_performance_tracker(
                 performance_tracker=performance_tracker,

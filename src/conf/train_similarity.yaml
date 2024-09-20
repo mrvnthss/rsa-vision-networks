@@ -2,7 +2,8 @@ defaults:
   - dataset: fashionmnist
   - model: lenet
   - optimizer: sgd
-  - lr_scheduler: null
+  - main_scheduler: null
+  - warmup_scheduler: null
   - repr_similarity/compute_rdm: euclidean
   - repr_similarity/compare_rdm: cosine
   - _self_

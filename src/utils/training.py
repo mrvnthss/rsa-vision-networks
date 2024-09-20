@@ -3,6 +3,8 @@
 Functions:
     * evaluate_classifier(model, test_loader, ...): Evaluate a
         classification model.
+    * get_lr_scheduler(cfg, optimizer): Get the learning rate scheduler
+        to use during training.
     * get_transforms(transform_params): Get transforms for a
         classification task.
     * set_device(): Set the device to use for training.
@@ -12,21 +14,24 @@ Functions:
 
 __all__ = [
     "evaluate_classifier",
+    "get_lr_scheduler",
     "get_transforms",
     "set_device",
     "set_seeds"
 ]
 
 import random
-from typing import Dict, Tuple
+from typing import Dict, Optional, Tuple, Union
 
 import numpy as np
 import torch
+from hydra.utils import instantiate
 from torch import nn
+from torch.optim.lr_scheduler import LRScheduler, SequentialLR
 from torchmetrics import MetricCollection
 from tqdm import tqdm
 
-from src.config import ReproducibilityConf, TransformConf
+from src.config import ReproducibilityConf, TrainClassifierConf, TrainSimilarityConf, TransformConf
 from src.utils.classification_presets import ClassificationPresets
 
 
@@ -88,6 +93,46 @@ def evaluate_classifier(
     }
 
     return results
+
+
+def get_lr_scheduler(
+        cfg: Union[TrainClassifierConf, TrainSimilarityConf],
+        optimizer: torch.optim.Optimizer
+) -> Optional[LRScheduler]:
+    """Get the learning rate scheduler to use during training.
+
+    Args:
+        cfg: The training configuration.
+        optimizer: The optimizer used during training.
+    """
+
+    main_scheduler, warmup_scheduler = None, None
+
+    if "main_scheduler" in cfg and cfg.main_scheduler is not None:
+        main_scheduler = instantiate(
+            cfg.main_scheduler.kwargs,
+            optimizer=optimizer
+        )
+
+    if "warmup_scheduler" in cfg and cfg.warmup_scheduler is not None:
+        warmup_scheduler = instantiate(
+            cfg.warmup_scheduler.kwargs,
+            optimizer=optimizer
+        )
+
+    if main_scheduler is None:
+        # NOTE: ``warmup_scheduler`` can also be None in this case!
+        return warmup_scheduler
+    if warmup_scheduler is None:
+        return main_scheduler
+
+    lr_scheduler = SequentialLR(
+        optimizer,
+        schedulers=[warmup_scheduler, main_scheduler],
+        milestones=[cfg.warmup_scheduler.warmup_epochs]
+    )
+
+    return lr_scheduler
 
 
 def get_transforms(

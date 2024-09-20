@@ -23,9 +23,6 @@ Passes *DictConfig* ``cfg`` to the [``CheckpointManager``](#checkpointmanager) c
 * checkpoints.delete_previous
 * checkpoints.save_best_model
 * checkpoints.save_frequency
-* model.name
-* optimizer.name
-* optimizer.kwargs
 * paths.checkpoints
 * performance.evaluate_on
 * performance.metric

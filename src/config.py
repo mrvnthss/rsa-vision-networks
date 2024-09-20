@@ -31,12 +31,15 @@ class OptimizerName(Enum):
     SGD = "SGD"
 
 
-class LRSchedulerName(Enum):
-    ConstantLR = "ConstantLR"
+class MainSchedulerName(Enum):
     CosineAnnealingLR = "CosineAnnealingLR"
     ExponentialLR = "ExponentialLR"
-    LinearLR = "LinearLR"
     StepLR = "StepLR"
+
+
+class WarmupSchedulerName(Enum):
+    ConstantLR = "ConstantLR"
+    LinearLR = "LinearLR"
 
 
 class ComputeRDMName(Enum):
@@ -197,14 +200,22 @@ class StepLRConf:
 
 
 @dataclass
-class LRSchedulerConf:
-    name: LRSchedulerName = MISSING
+class MainSchedulerConf:
+    name: MainSchedulerName = MISSING
     kwargs: Union[
-        ConstantLRConf,
         CosineAnnealingLRConf,
         ExponentialLRConf,
-        LinearLRConf,
         StepLRConf
+    ] = MISSING
+
+
+@dataclass
+class WarmupSchedulerConf:
+    name: WarmupSchedulerName = MISSING
+    warmup_epochs: int = MISSING
+    kwargs: Union[
+        ConstantLRConf,
+        LinearLRConf
     ] = MISSING
 
 
@@ -307,7 +318,8 @@ class TrainClassifierConf(DictConfig):
     dataset: DatasetConf = MISSING
     model: ModelConf = MISSING
     optimizer: OptimizerConf = MISSING
-    lr_scheduler: Optional[LRSchedulerConf] = None
+    main_scheduler: Optional[MainSchedulerConf] = None
+    warmup_scheduler: Optional[WarmupSchedulerConf] = None
     experiment: ExperimentConf = MISSING
     paths: PathsConf = MISSING
     reproducibility: ReproducibilityConf = MISSING
@@ -350,7 +362,8 @@ class TrainSimilarityConf(DictConfig):
     dataset: DatasetConf = MISSING
     model: ModelConf = MISSING
     optimizer: OptimizerConf = MISSING
-    lr_scheduler: Optional[LRSchedulerConf] = None
+    main_scheduler: Optional[MainSchedulerConf] = None
+    warmup_scheduler: Optional[WarmupSchedulerConf] = None
     repr_similarity: ReprSimilarityConf = MISSING
     experiment: ExperimentConf = MISSING
     paths: PathsConf = MISSING

@@ -23,7 +23,7 @@ from torchmetrics import MetricCollection
 from src.config import TrainClassifierConf
 from src.dataloaders.stratified_k_fold_loader import StratifiedKFoldLoader
 from src.training.classification_trainer import ClassificationTrainer
-from src.utils.training import get_transforms, set_device, set_seeds
+from src.utils.training import get_lr_scheduler, get_transforms, set_device, set_seeds
 
 logger = logging.getLogger(__name__)
 
@@ -106,13 +106,11 @@ def main(cfg: TrainClassifierConf) -> None:
     )
 
     # Set up learning rate scheduler
-    lr_scheduler = None
-    if "lr_scheduler" in cfg and cfg.lr_scheduler is not None:
-        logger.info("Setting up learning rate scheduler ...")
-        lr_scheduler = instantiate(
-            cfg.lr_scheduler.kwargs,
-            optimizer=optimizer
-        )
+    logger.info("Setting up learning rate scheduler (if specified) ...")
+    lr_scheduler = get_lr_scheduler(
+        cfg=cfg,
+        optimizer=optimizer
+    )
 
     # Save model, optimizer, and learning rate scheduler states to reset them for each fold
     init_model_state_dict_path = Path(cfg.experiment.dir) / "init_model_state_dict.pt"
