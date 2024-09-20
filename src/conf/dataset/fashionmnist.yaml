@@ -1,7 +1,7 @@
 name: FashionMNIST
 num_classes: 10
 is_grayscale: True
-transform_params:
+transform_train:
   # Normalization constants computed on training set
   mean: [0.2860]
   std: [0.3205]
@@ -12,8 +12,12 @@ transform_params:
   crop_ratio:
     lower: 1.0
     upper: 1.0
-  resize_size: ???
   flip_prob: 0.0
+transform_val:
+  mean: ${dataset.transform_train.mean}
+  std: ${dataset.transform_train.std}
+  resize_size: ???
+  crop_size: ${model.input_size}
 train_set:
   _target_: datasets.fashionmnist.FashionMNIST
   data_dir: ${paths.data}

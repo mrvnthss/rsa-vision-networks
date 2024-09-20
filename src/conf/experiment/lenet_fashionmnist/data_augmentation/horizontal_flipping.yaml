@@ -15,7 +15,7 @@
 experiment:
   name: lenet_fashionmnist/data_augmentation/horizontal_flipping
   dir:  ../out/${experiment.name}/${now:%Y-%m-%d_%H-%M-%S}
-  sub_dir: flip_p=${dataset.transform_params.flip_prob},b=${dataloader.batch_size},momentum=${optimizer.kwargs.momentum},wd=${optimizer.kwargs.weight_decay}
+  sub_dir: flip_p=${dataset.transform_train.flip_prob},b=${dataloader.batch_size},momentum=${optimizer.kwargs.momentum},wd=${optimizer.kwargs.weight_decay}
 paths:
   checkpoints: ${experiment.dir}/${experiment.sub_dir}/checkpoints
   tensorboard: ${experiment.dir}/${experiment.sub_dir}/tensorboard
@@ -27,7 +27,7 @@ hydra:
   sweeper:
     params:
       # Grid search parameters
-      dataset.transform_params.flip_prob: 0.0, 0.5
+      dataset.transform_train.flip_prob: 0.0, 0.5
       dataloader.batch_size: 64, 128  # based on "batch_size_lr.yaml" grid search
       optimizer.kwargs.momentum: 0.8, 0.85  # based on "momentum_wd.yaml" grid search
       optimizer.kwargs.weight_decay: 0.001, 1e-4  # based on "momentum_wd.yaml" grid search
@@ -37,7 +37,7 @@ reproducibility:
   torch_seed: 89
   shuffle_seed: 858
 dataset:
-  transform_params:
+  transform_val:
     resize_size: ${model.input_size}  # matches the input size of the model
 dataloader:
   num_workers: 0

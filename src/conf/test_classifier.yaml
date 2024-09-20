@@ -12,7 +12,7 @@ reproducibility:
 model:
   load_weights_from: ???  # path to model checkpoint
 dataset:
-  transform_params:
+  transform_val:
     resize_size: ${model.input_size}
 dataloader:
   val_split: 0.20  # fraction of the dataset to use as validation set

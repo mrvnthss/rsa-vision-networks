@@ -74,14 +74,21 @@ class CropRatioConf:
 
 
 @dataclass
-class TransformConf:
+class TransformTrainConf:
     mean: List[float] = MISSING
     std: List[float] = MISSING
     crop_size: int = MISSING
     crop_scale: CropScaleConf = MISSING
     crop_ratio: CropRatioConf = MISSING
-    resize_size: int = MISSING
     flip_prob: float = 0.0
+
+
+@dataclass
+class TransformValConf:
+    mean: List[float] = MISSING
+    std: List[float] = MISSING
+    resize_size: int = MISSING
+    crop_size: int = MISSING
 
 
 @dataclass
@@ -97,7 +104,8 @@ class DatasetConf:
     name: DatasetName = MISSING
     num_classes: int = MISSING
     is_grayscale: bool = MISSING
-    transform_params: TransformConf = MISSING
+    transform_train: TransformTrainConf = MISSING
+    transform_val: TransformValConf = MISSING
     train_set: VisionDatasetConf = MISSING
     test_set: VisionDatasetConf = MISSING
 

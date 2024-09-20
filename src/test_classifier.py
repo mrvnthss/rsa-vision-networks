@@ -21,7 +21,7 @@ from torchmetrics import MetricCollection
 
 from src.base_classes.base_loader import BaseLoader
 from src.config import TestClassifierConf
-from src.utils.training import evaluate_classifier, get_transforms, set_device
+from src.utils.training import evaluate_classifier, get_val_transform, set_device
 
 cs = ConfigStore.instance()
 cs.store(name="test_classifier_conf", node=TestClassifierConf)
@@ -57,7 +57,7 @@ def main(cfg: TestClassifierConf) -> None:
     dataset = instantiate(
         cfg.dataset.test_set if cfg.evaluate_on == "test" else cfg.dataset.train_set
     )
-    _, transform = get_transforms(cfg.dataset.transform_params)
+    transform = get_val_transform(cfg.dataset.transform_val)
     val_split = cfg.dataloader.val_split if cfg.evaluate_on in ["train", "val"] else None
     test_loader = BaseLoader(
         dataset=dataset,

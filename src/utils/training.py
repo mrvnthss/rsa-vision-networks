@@ -5,8 +5,10 @@ Functions:
         classification model.
     * get_lr_scheduler(cfg, optimizer): Get the learning rate scheduler
         to use during training.
-    * get_transforms(transform_params): Get transforms for a
-        classification task.
+    * get_train_transform(train_transform_params): Get the training
+        transforms for an image classification task.
+    * get_val_transform(val_transform_params): Get the validation
+        transforms for an image classification task.
     * set_device(): Set the device to use for training.
     * set_seeds(repr_params): Set random seeds for reproducibility.
 """
@@ -15,13 +17,14 @@ Functions:
 __all__ = [
     "evaluate_classifier",
     "get_lr_scheduler",
-    "get_transforms",
+    "get_train_transform",
+    "get_val_transform",
     "set_device",
     "set_seeds"
 ]
 
 import random
-from typing import Dict, Optional, Tuple, Union
+from typing import Dict, Optional, Union
 
 import numpy as np
 import torch
@@ -31,8 +34,9 @@ from torch.optim.lr_scheduler import LRScheduler
 from torchmetrics import MetricCollection
 from tqdm import tqdm
 
-from src.config import ReproducibilityConf, TrainClassifierConf, TrainSimilarityConf, TransformConf
-from src.utils.classification_presets import ClassificationPresets
+from src.config import ReproducibilityConf, TrainClassifierConf, TrainSimilarityConf, \
+    TransformTrainConf, TransformValConf
+from src.utils.classification_transforms import *
 from src.utils.sequential_lr import SequentialLR
 
 
@@ -136,45 +140,50 @@ def get_lr_scheduler(
     return lr_scheduler
 
 
-def get_transforms(
-        transform_params: TransformConf
-) -> Tuple[ClassificationPresets, ClassificationPresets]:
-    """Get transforms for a classification task.
+def get_train_transform(
+        train_transform_params: TransformTrainConf
+) -> ClassificationTransformsTrain:
+    """Get the training transforms for an image classification task.
 
     Args:
-        transform_params: The parameters to use for setting up the
+        train_transform_params: The parameters to use for the training
           transforms.
 
     Returns:
-        The training and validation transforms for a classification
-        task.
+        The training transforms for an image classification task.
     """
 
-    train_transform = ClassificationPresets(
-        mean=transform_params.mean,
-        std=transform_params.std,
-        crop_size=transform_params.crop_size,
-        crop_scale=(
-            transform_params.crop_scale.lower,
-            transform_params.crop_scale.upper
-        ),
-        crop_ratio=(
-            transform_params.crop_ratio.lower,
-            transform_params.crop_ratio.upper
-        ),
-        flip_prob=transform_params.flip_prob,
-        is_training=True
+    transform = ClassificationTransformsTrain(
+        mean=train_transform_params.mean,
+        std=train_transform_params.std,
+        crop_size=train_transform_params.crop_size,
+        crop_scale=train_transform_params.crop_scale,
+        crop_ratio=train_transform_params.crop_ratio,
+        flip_prob=train_transform_params.flip_prob
     )
+    return transform
 
-    val_transform = ClassificationPresets(
-        mean=transform_params.mean,
-        std=transform_params.std,
-        crop_size=transform_params.crop_size,
-        resize_size=transform_params.resize_size,
-        is_training=False
+
+def get_val_transform(
+        val_transform_params: TransformValConf
+) -> ClassificationTransformsVal:
+    """Get the validation transforms for an image classification task.
+
+    Args:
+        val_transform_params: The parameters to use for the validation
+          transforms.
+
+    Returns:
+        The validation transforms for an image classification task.
+    """
+
+    transform = ClassificationTransformsVal(
+        mean=val_transform_params.mean,
+        std=val_transform_params.std,
+        resize_size=val_transform_params.resize_size,
+        crop_size=val_transform_params.resize_size
     )
-
-    return train_transform, val_transform
+    return transform
 
 
 def set_device() -> torch.device:

@@ -23,7 +23,8 @@ from torchmetrics import MetricCollection
 from src.config import TrainClassifierConf
 from src.dataloaders.stratified_k_fold_loader import StratifiedKFoldLoader
 from src.training.classification_trainer import ClassificationTrainer
-from src.utils.training import get_lr_scheduler, get_transforms, set_device, set_seeds
+from src.utils.training import get_lr_scheduler, get_train_transform, get_val_transform, \
+    set_device, set_seeds
 
 logger = logging.getLogger(__name__)
 
@@ -65,7 +66,8 @@ def main(cfg: TrainClassifierConf) -> None:
 
     # Prepare transforms and dataset
     logger.info("Preparing transforms and dataset ...")
-    train_transform, val_transform = get_transforms(cfg.dataset.transform_params)
+    train_transform = get_train_transform(cfg.dataset.transform_train)
+    val_transform = get_val_transform(cfg.dataset.transform_val)
     dataset = instantiate(cfg.dataset.train_set)
 
     # Set up folds for stratified k-fold cross-validation

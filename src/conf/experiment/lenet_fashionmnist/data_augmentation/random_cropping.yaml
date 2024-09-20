@@ -15,7 +15,7 @@
 experiment:
   name: lenet_fashionmnist/data_augmentation/random_cropping
   dir:  ../out/${experiment.name}/${now:%Y-%m-%d_%H-%M-%S}
-  sub_dir: crop_lower=${dataset.transform_params.crop_scale.lower},b=${dataloader.batch_size},momentum=${optimizer.kwargs.momentum}
+  sub_dir: crop_lower=${dataset.transform_train.crop_scale.lower},b=${dataloader.batch_size},momentum=${optimizer.kwargs.momentum}
 paths:
   checkpoints: ${experiment.dir}/${experiment.sub_dir}/checkpoints
   tensorboard: ${experiment.dir}/${experiment.sub_dir}/tensorboard
@@ -27,7 +27,7 @@ hydra:
   sweeper:
     params:
       # Grid search parameters
-      dataset.transform_params.crop_scale.lower: 0.4, 0.6, 0.8, 1.0
+      dataset.transform_train.crop_scale.lower: 0.4, 0.6, 0.8, 1.0
       dataloader.batch_size: 64, 128  # based on "batch_size_lr.yaml" grid search
       optimizer.kwargs.momentum: 0.8, 0.85  # based on "momentum_wd.yaml" grid search
 
@@ -36,9 +36,10 @@ reproducibility:
   torch_seed: 89
   shuffle_seed: 858
 dataset:
-  transform_params:
-    resize_size: ${model.input_size}  # matches the input size of the model
+  transform_train:
     flip_prob: 0.5  # based on "horizontal_flipping.yaml" grid search
+  transform_val:
+    resize_size: ${model.input_size}  # matches the input size of the model
 dataloader:
   num_workers: 0
 training:

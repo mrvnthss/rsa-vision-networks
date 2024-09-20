@@ -1,7 +1,7 @@
 name: ImageNet
 num_classes: 1000
 is_grayscale: False
-transform_params:
+transform_train:
   # https://pytorch.org/vision/0.19/models/generated/torchvision.models.alexnet.html
   mean: [0.485, 0.456, 0.406]
   std: [0.229, 0.224, 0.225]
@@ -12,8 +12,12 @@ transform_params:
   crop_ratio:
     lower: 1.0
     upper: 1.0
-  resize_size: ???
   flip_prob: 0.0
+transform_val:
+  mean: ${dataset.transform_train.mean}
+  std: ${dataset.transform_train.std}
+  resize_size: ???
+  crop_size: ${model.input_size}
 train_set:
   _target_: datasets.imagenet.ImageNet
   data_dir: ${paths.data}

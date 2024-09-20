@@ -36,7 +36,7 @@ reproducibility:
   torch_seed: 89
   shuffle_seed: 858
 dataset:
-  transform_params:
+  transform_val:
     resize_size: ${model.input_size}  # matches the input size of the model
 dataloader:
   num_workers: 0
