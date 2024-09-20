@@ -27,12 +27,13 @@ import numpy as np
 import torch
 from hydra.utils import instantiate
 from torch import nn
-from torch.optim.lr_scheduler import LRScheduler, SequentialLR
+from torch.optim.lr_scheduler import LRScheduler
 from torchmetrics import MetricCollection
 from tqdm import tqdm
 
 from src.config import ReproducibilityConf, TrainClassifierConf, TrainSimilarityConf, TransformConf
 from src.utils.classification_presets import ClassificationPresets
+from src.utils.sequential_lr import SequentialLR
 
 
 def evaluate_classifier(
