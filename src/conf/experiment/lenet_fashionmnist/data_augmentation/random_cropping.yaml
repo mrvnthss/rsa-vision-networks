@@ -27,7 +27,7 @@ hydra:
   sweeper:
     params:
       # Grid search parameters
-      dataset.transform_train.crop_scale.lower: 0.4, 0.6, 0.8, 1.0
+      dataset.transform_train.crop_scale.lower: 0.6, 0.7, 0.8, 0.9
       dataloader.batch_size: 64, 128  # based on "batch_size_lr.yaml" grid search
       optimizer.kwargs.momentum: 0.8, 0.85  # based on "momentum_wd.yaml" grid search
 
