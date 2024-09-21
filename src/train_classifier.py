@@ -59,8 +59,7 @@ def main(cfg: TrainClassifierConf) -> None:
         num_workers=cfg.dataloader.num_workers,
         collate_fn=collate_fn,
         pin_memory=True,
-        split_seed=cfg.reproducibility.split_seed,
-        shuffle_seed=cfg.reproducibility.shuffle_seed
+        seeds=cfg.reproducibility
     )
     train_loader = base_loader.get_dataloader(mode="main")
     val_loader = base_loader.get_dataloader(mode="val")

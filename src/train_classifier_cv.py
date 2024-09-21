@@ -84,8 +84,7 @@ def main(cfg: TrainClassifierConf) -> None:
         shuffle=True,
         num_workers=cfg.dataloader.num_workers,
         pin_memory=True,
-        fold_seed=cfg.reproducibility.split_seed,
-        shuffle_seed=cfg.reproducibility.shuffle_seed
+        seeds=cfg.reproducibility
     )
 
     # Set up criterion

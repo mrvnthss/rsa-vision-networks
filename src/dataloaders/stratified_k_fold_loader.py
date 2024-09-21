@@ -2,6 +2,7 @@
 
 
 import copy
+import random
 from typing import Any, Callable, List, Optional, TypeVar, Literal
 
 import numpy as np
@@ -9,6 +10,7 @@ import torch
 from sklearn.model_selection import StratifiedKFold
 
 from src.base_classes.base_sampler import BaseSampler
+from src.config import ReproducibilityConf
 
 T = TypeVar('T')
 _collate_fn_t = Callable[[List[T]], Any]
@@ -26,6 +28,8 @@ class StratifiedKFoldLoader:
         all_folds: A list of tuples, where each tuple contains the
           indices of the training and validation samples for a single
           fold.
+        collate_fn: The function used by the training loader to merge a
+          list of samples into a mini-batch.
         dataset: The dataset to load samples from.
         shared_kwargs: Keyword arguments shared between the training
           dataloader and the validation dataloader.
@@ -59,8 +63,7 @@ class StratifiedKFoldLoader:
             collate_fn: Optional[_collate_fn_t] = None,
             pin_memory: bool = False,
             drop_last: bool = False,
-            fold_seed: int = 0,
-            shuffle_seed: int = 0
+            seeds: Optional[ReproducibilityConf] = None
     ) -> None:
         """Initialize the StratifiedKFoldLoader instance.
 
@@ -78,17 +81,17 @@ class StratifiedKFoldLoader:
               argument of the BaseSampler class.
             num_workers: The number of subprocesses to use for data
               loading.
-            collate_fn: The function used to merge a list of samples
-              into a mini-batch.
+            collate_fn: The function used by the training loader to
+              merge a list of samples into a mini-batch.
             pin_memory: Whether to use pinned memory for faster GPU
               transfers.
             drop_last: Whether to drop the last incomplete batch in case
               the dataset size is not divisible by the batch size.
-            fold_seed: The random seed that controls shuffling of each
-              class's samples prior to constructing the folds.
-            shuffle_seed: The random seed that controls the shuffling
-              behavior of the training sampler across epochs.  See also
-              the ``seed`` argument of the BaseSampler class.
+            seeds: The configuration that contains the random seeds for
+              (a) constructing the folds, (b) the shuffling behavior of
+              the training sampler across epochs, and (c) the function
+              that is used to seed the worker processes for data
+              loading.
 
         Raises:
             ValueError: If the dataset does not have a ``targets``
@@ -120,31 +123,49 @@ class StratifiedKFoldLoader:
                 f"'num_folds' should be an integer greater than 1, but got {num_folds}."
             )
 
+        self.shuffle = shuffle
+
+        if seeds is not None:
+            split_seed = seeds.split_seed
+            self.shuffle_seed = seeds.shuffle_seed
+            torch_seed = seeds.torch_seed
+        else:
+            split_seed = 0
+            self.shuffle_seed = 0
+            torch_seed = 0
+
         self.dataset = dataset
         self.train_transform = train_transform
         self.val_transform = val_transform
-
-        # Attributes controlling shuffling behavior of the training sampler
-        self.shuffle = shuffle
-        self.shuffle_seed = shuffle_seed
+        self.collate_fn = collate_fn
 
         # Set up folds
         skf = StratifiedKFold(
             n_splits=num_folds,
             shuffle=True,
-            random_state=fold_seed
+            random_state=split_seed
         )
         self.all_folds = list(skf.split(
             np.zeros(len(dataset)),
             dataset.targets
         ))
 
+        # https://pytorch.org/docs/stable/notes/randomness.html#dataloader
+        def seed_worker(worker_id: int) -> None:
+            worker_seed = torch_seed % 2 ** 32
+            np.random.seed(worker_seed)
+            random.seed(worker_seed)
+
+        g = torch.Generator()
+        g.manual_seed(0)
+
         self.shared_kwargs = {
             "batch_size": batch_size,
             "num_workers": num_workers,
-            "collate_fn": collate_fn,
             "pin_memory": pin_memory,
-            "drop_last": drop_last
+            "drop_last": drop_last,
+            "worker_init_fn": seed_worker,
+            "generator": g
         }
 
     def get_dataloader(
@@ -174,9 +195,11 @@ class StratifiedKFoldLoader:
         transform = self.train_transform if mode == "train" else self.val_transform
         dataset.transform = transform
         sampler = self._get_sampler(fold_idx, mode)
+        collate_fn = self.collate_fn if mode == "train" else None
         return torch.utils.data.DataLoader(
             dataset=dataset,
             sampler=sampler,
+            collate_fn=collate_fn,
             **self.shared_kwargs
         )
 
@@ -213,7 +236,8 @@ class StratifiedKFoldLoader:
             indices_by_class[self.targets_np[sample_idx]].append(sample_idx)
 
         # Create sampler
-        shuffle, seed = (self.shuffle, self.shuffle_seed) if mode == "train" else (False, None)
+        shuffle = self.shuffle if mode == "train" else False
+        seed = self.shuffle_seed if mode == "train" else None
         sampler = BaseSampler(
             sample_indices_by_class=indices_by_class,
             shuffle=shuffle,

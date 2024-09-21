@@ -10,6 +10,7 @@ import torch
 from torch.utils.data import Sampler
 
 from src.base_classes.base_sampler import BaseSampler
+from src.config import ReproducibilityConf
 
 T = TypeVar('T')
 _collate_fn_t = Callable[[List[T]], Any]
@@ -57,8 +58,7 @@ class BaseLoader:
             collate_fn: Optional[_collate_fn_t] = None,
             pin_memory: bool = False,
             drop_last: bool = False,
-            split_seed: int = 0,
-            shuffle_seed: int = 0
+            seeds: Optional[ReproducibilityConf] = None
     ) -> None:
         """Initialize the BaseLoader instance.
 
@@ -83,12 +83,11 @@ class BaseLoader:
               transfers.
             drop_last: Whether to drop the last incomplete batch in case
               the dataset size is not divisible by the batch size.
-            split_seed: The random seed that controls the random split
-              of the dataset into main samples and validation samples.
-              Has no effect if ``val_split`` is None.
-            shuffle_seed: The random seed that controls the shuffling
-              behavior of the main sampler across epochs.  See also the
-              ``seed`` argument of the BaseSampler class.
+            seeds: The configuration that contains the random seeds for
+              (a) the split of the dataset into main and validation
+              samples, (b) the shuffling behavior of the main sampler
+              across epochs, and (c) the function that is used to seed
+              the worker processes for data loading.
 
         Raises:
             ValueError: If the dataset does not have a ``targets``
@@ -108,6 +107,15 @@ class BaseLoader:
                     f"but got {val_split}."
                 )
 
+        if seeds is not None:
+            split_seed = seeds.split_seed
+            shuffle_seed = seeds.shuffle_seed
+            torch_seed = seeds.torch_seed
+        else:
+            split_seed = 0
+            shuffle_seed = 0
+            torch_seed = 0
+
         self.dataset = dataset
         self.main_transform = main_transform
         self.val_transform = val_transform
@@ -123,7 +131,7 @@ class BaseLoader:
 
         # https://pytorch.org/docs/stable/notes/randomness.html#dataloader
         def seed_worker(worker_id: int) -> None:
-            worker_seed = torch.initial_seed() % 2 ** 32
+            worker_seed = torch_seed % 2 ** 32
             np.random.seed(worker_seed)
             random.seed(worker_seed)
 
