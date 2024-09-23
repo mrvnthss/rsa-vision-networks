@@ -31,6 +31,7 @@ def compare_rdm(
     """Compare two RDMs using the specified method.
 
     Available methods:
+        * "correlation": (Pearson) correlation coefficient.
         * "cosine": Cosine similarity.
 
     Args:
@@ -46,6 +47,7 @@ def compare_rdm(
     """
 
     methods: dict[str, Callable[..., torch.Tensor]] = {
+        "correlation": _compare_rdm_correlation,
         "cosine": _compare_rdm_cosine
     }
 
@@ -136,6 +138,34 @@ def validate_activations(activations: torch.Tensor) -> None:
         )
 
 
+def _compare_rdm_correlation(
+        rdm1: torch.Tensor,
+        rdm2: torch.Tensor
+) -> torch.Tensor:
+    """Compare two RDMs using the Pearson correlation coefficient.
+
+        Args:
+            rdm1: The first RDM in vectorized form.
+            rdm2: The second RDM in vectorized form.
+
+        Returns:
+            The Pearson correlation coefficient between the two RDMs.
+
+        Raises:
+        ValueError: If one (or both) of the RDMs are not passed in
+          vectorized form (i.e., as tensors of dimension 1).
+        """
+
+    if not (_is_vector(rdm1) and _is_vector(rdm2)):
+        raise ValueError(
+            "Both 'rdm1' and 'rdm2' should be tensors of dimension 1."
+        )
+
+    rdms_stacked = torch.stack([rdm1, rdm2], dim=0)
+    pearson_correlation = torch.corrcoef(rdms_stacked)[0, 1]
+    return pearson_correlation
+
+
 def _compare_rdm_cosine(
         rdm1: torch.Tensor,
         rdm2: torch.Tensor
@@ -148,6 +178,10 @@ def _compare_rdm_cosine(
 
     Returns:
         The cosine similarity between the two RDMs.
+
+    Raises:
+        ValueError: If one (or both) of the RDMs are not passed in
+          vectorized form (i.e., as tensors of dimension 1).
     """
 
     if not (_is_vector(rdm1) and _is_vector(rdm2)):
