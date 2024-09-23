@@ -85,9 +85,8 @@ class BaseLoader:
               the dataset size is not divisible by the batch size.
             seeds: The configuration that contains the random seeds for
               (a) the split of the dataset into main and validation
-              samples, (b) the shuffling behavior of the main sampler
-              across epochs, and (c) the function that is used to seed
-              the worker processes for data loading.
+              samples and (b) the shuffling behavior of the main sampler
+              across epochs.
 
         Raises:
             ValueError: If the dataset does not have a ``targets``
@@ -109,12 +108,10 @@ class BaseLoader:
 
         if seeds is not None:
             split_seed = seeds.split_seed
-            shuffle_seed = seeds.shuffle_seed
-            torch_seed = seeds.torch_seed
+            shuffle_seed = seeds.shuffle_seed if shuffle else None
         else:
             split_seed = 0
-            shuffle_seed = 0
-            torch_seed = 0
+            shuffle_seed = 0 if shuffle else None
 
         self.dataset = dataset
         self.main_transform = main_transform
@@ -131,7 +128,7 @@ class BaseLoader:
 
         # https://pytorch.org/docs/stable/notes/randomness.html#dataloader
         def seed_worker(worker_id: int) -> None:
-            worker_seed = torch_seed % 2 ** 32
+            worker_seed = torch.initial_seed() % 2 ** 32
             np.random.seed(worker_seed)
             random.seed(worker_seed)
 
