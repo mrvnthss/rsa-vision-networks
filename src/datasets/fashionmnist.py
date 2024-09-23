@@ -7,7 +7,7 @@ from typing import Any, Callable, Optional, Tuple
 
 import numpy as np
 from PIL import Image
-from torchvision.datasets.folder import default_loader, ImageFolder
+from torchvision.datasets.folder import ImageFolder
 from torchvision.datasets.mnist import read_image_file, read_label_file
 from torchvision.datasets.utils import check_integrity, download_and_extract_archive
 from tqdm import tqdm
@@ -247,7 +247,10 @@ class FashionMNIST(ImageFolder):
     ) -> Image.Image:
         """Load a sample from disk."""
 
-        return default_loader(self.imgs[index][0])
+        with open(self.imgs[index][0], "rb") as f:
+            img = Image.open(f)
+            img.load()
+            return img
 
     @property
     def raw_folder(self) -> str:
