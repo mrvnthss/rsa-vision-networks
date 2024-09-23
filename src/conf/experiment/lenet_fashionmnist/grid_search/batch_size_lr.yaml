@@ -39,6 +39,8 @@ dataset:
     resize_size: ${model.input_size}  # matches the input size of the model
 dataloader:
   num_workers: 0
+training:
+  num_epochs: 100
 optimizer:
   kwargs:
     momentum: 0.9

@@ -41,6 +41,8 @@ dataset:
     resize_size: ${model.input_size}  # matches the input size of the model
 dataloader:
   num_workers: 0
+training:
+  num_epochs: 100
 optimizer:
   kwargs:
     lr: 0.01  # based on "batch_size_lr.yaml" grid search

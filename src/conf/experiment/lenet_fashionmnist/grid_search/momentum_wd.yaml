@@ -40,6 +40,8 @@ dataset:
 dataloader:
   batch_size: 64  # based on "batch_size_lr.yaml" grid search
   num_workers: 0
+training:
+  num_epochs: 100
 optimizer:
   kwargs:
     lr: 0.01  # based on "batch_size_lr.yaml" grid search
