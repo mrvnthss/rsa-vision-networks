@@ -257,7 +257,7 @@ def _compute_rdm_correlation(
     validate_activations(activations)
 
     if center_activations:
-        activations -= activations.mean(dim=1, keepdim=True)
+        activations = activations - activations.mean(dim=1, keepdim=True)
 
     rdm = 1 - _get_upper_tri_matrix(torch.corrcoef(activations))
 
@@ -302,7 +302,7 @@ def _compute_rdm_euclidean(
         )
 
     if center_activations:
-        activations -= activations.mean(dim=1, keepdim=True)
+        activations = activations - activations.mean(dim=1, keepdim=True)
 
     # Compute squared pairwise distances
     norms_squared = torch.sum(torch.square(activations), dim=1, keepdim=True)

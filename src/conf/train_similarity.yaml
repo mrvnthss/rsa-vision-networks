@@ -4,8 +4,8 @@ defaults:
   - optimizer: sgd
   - main_scheduler: null
   - warmup_scheduler: null
-  - repr_similarity/compute_rdm: euclidean
-  - repr_similarity/compare_rdm: cosine
+  - repr_similarity/compute_rdm: ???
+  - repr_similarity/compare_rdm: ???
   - _self_
   - experiment: ???
 paths:
