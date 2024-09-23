@@ -52,7 +52,9 @@ class ComputeRDMName(Enum):
 
 
 class CompareRDMName(Enum):
+    correlation = "correlation"
     cosine = "cosine"
+    spearman = "spearman"
 
 
 class RSATransformName(Enum):

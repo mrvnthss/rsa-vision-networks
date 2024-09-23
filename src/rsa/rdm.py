@@ -20,6 +20,7 @@ from typing import Any, Callable, Dict, Literal
 
 import torch
 from torch import linalg as LA
+from torchmetrics.functional.regression import spearman_corrcoef
 
 
 def compare_rdm(
@@ -31,8 +32,9 @@ def compare_rdm(
     """Compare two RDMs using the specified method.
 
     Available methods:
-        * "correlation": (Pearson) correlation coefficient.
+        * "correlation": Pearson correlation.
         * "cosine": Cosine similarity.
+        * "spearman": Spearman rank correlation.
 
     Args:
         rdm1: The first RDM in vectorized form.
@@ -48,7 +50,8 @@ def compare_rdm(
 
     methods: dict[str, Callable[..., torch.Tensor]] = {
         "correlation": _compare_rdm_correlation,
-        "cosine": _compare_rdm_cosine
+        "cosine": _compare_rdm_cosine,
+        "spearman": _compare_rdm_spearman
     }
 
     if method not in methods:
@@ -68,7 +71,7 @@ def compute_rdm(
 
     Available methods:
         * "euclidean": Euclidean distance.
-        * "correlation": (Pearson) correlation distance.
+        * "correlation": Pearson correlation distance.
 
     Args:
         activations: The matrix of activations from which to compute the
@@ -142,18 +145,18 @@ def _compare_rdm_correlation(
         rdm1: torch.Tensor,
         rdm2: torch.Tensor
 ) -> torch.Tensor:
-    """Compare two RDMs using the Pearson correlation coefficient.
+    """Compare two RDMs using Pearson correlation.
 
         Args:
             rdm1: The first RDM in vectorized form.
             rdm2: The second RDM in vectorized form.
 
         Returns:
-            The Pearson correlation coefficient between the two RDMs.
+            The Pearson correlation between the two RDMs.
 
         Raises:
-        ValueError: If one (or both) of the RDMs are not passed in
-          vectorized form (i.e., as tensors of dimension 1).
+            ValueError: If one (or both) of the RDMs are not passed in
+              vectorized form (i.e., as tensors of dimension 1).
         """
 
     if not (_is_vector(rdm1) and _is_vector(rdm2)):
@@ -195,11 +198,44 @@ def _compare_rdm_cosine(
     return cosine_similarity
 
 
+def _compare_rdm_spearman(
+        rdm1: torch.Tensor,
+        rdm2: torch.Tensor
+) -> torch.Tensor:
+    """Compare two RDMs using Spearman rank correlation.
+
+    Note:
+        When computing ranks of the dissimilarities for each RDM, ties
+        are assigned the average of the ranks that would have been
+        assigned to each value.  This mimics the default behavior of the
+        ``scipy.stats.rankdata`` function.
+
+    Args:
+        rdm1: The first RDM in vectorized form.
+        rdm2: The second RDM in vectorized form.
+
+    Returns:
+        The Spearman rank correlation between the two RDMs.
+
+    Raises:
+        ValueError: If one (or both) of the RDMs are not passed in
+          vectorized form (i.e., as tensors of dimension 1).
+    """
+
+    if not (_is_vector(rdm1) and _is_vector(rdm2)):
+        raise ValueError(
+            "Both 'rdm1' and 'rdm2' should be tensors of dimension 1."
+        )
+
+    spearman_correlation = spearman_corrcoef(rdm1, rdm2)
+    return spearman_correlation
+
+
 def _compute_rdm_correlation(
     activations: torch.Tensor,
     center_activations: bool = True
 ) -> torch.Tensor:
-    """Compute an RDM using (Pearson) correlation distance.
+    """Compute an RDM using Pearson correlation distance.
 
     Note:
         This function returns only the upper triangular matrix of the
@@ -215,7 +251,7 @@ def _compute_rdm_correlation(
 
     Returns:
         The RDM (in vectorized form) computed from the data using
-        (Pearson) correlation distance.
+        Pearson correlation distance.
     """
 
     validate_activations(activations)
