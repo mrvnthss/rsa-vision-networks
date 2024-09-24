@@ -23,8 +23,8 @@ from torchmetrics import MetricCollection
 from src.config import TrainClassifierConf
 from src.dataloaders.stratified_k_fold_loader import StratifiedKFoldLoader
 from src.training.classification_trainer import ClassificationTrainer
-from src.utils.training import get_lr_scheduler, get_train_transform, get_val_transform, \
-    set_device, set_seeds
+from src.utils.training import get_collate_fn, get_lr_scheduler, get_train_transform, \
+    get_val_transform, set_device, set_seeds
 
 logger = logging.getLogger(__name__)
 
@@ -75,6 +75,8 @@ def main(cfg: TrainClassifierConf) -> None:
         "Preparing folds for stratified %s-fold cross-validation ...",
         cfg.training.num_folds
     )
+    collate_fn = get_collate_fn(cfg.dataset)
+    multiprocessing_context = "fork" if cfg.dataloader.num_workers > 0 else None
     stratified_k_fold_loader = StratifiedKFoldLoader(
         dataset=dataset,
         train_transform=train_transform,
@@ -83,7 +85,9 @@ def main(cfg: TrainClassifierConf) -> None:
         batch_size=cfg.dataloader.batch_size,
         shuffle=True,
         num_workers=cfg.dataloader.num_workers,
+        collate_fn=collate_fn,
         pin_memory=True,
+        multiprocessing_context=multiprocessing_context,
         seeds=cfg.reproducibility
     )
 

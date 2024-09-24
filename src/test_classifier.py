@@ -59,6 +59,7 @@ def main(cfg: TestClassifierConf) -> None:
     )
     transform = get_val_transform(cfg.dataset.transform_val)
     val_split = cfg.dataloader.val_split if cfg.evaluate_on in ["train", "val"] else None
+    multiprocessing_context = "fork" if cfg.dataloader.num_workers > 0 else None
     test_loader = BaseLoader(
         dataset=dataset,
         main_transform=transform,
@@ -68,6 +69,7 @@ def main(cfg: TestClassifierConf) -> None:
         shuffle=False,
         num_workers=cfg.dataloader.num_workers,
         pin_memory=True,
+        multiprocessing_context=multiprocessing_context,
         seeds=cfg.reproducibility
     )
     mode: Literal["main", "val"] = "val" if cfg.evaluate_on == "val" else "main"

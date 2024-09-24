@@ -63,6 +63,7 @@ class StratifiedKFoldLoader:
             collate_fn: Optional[_collate_fn_t] = None,
             pin_memory: bool = False,
             drop_last: bool = False,
+            multiprocessing_context: Optional[str] = None,
             seeds: Optional[ReproducibilityConf] = None
     ) -> None:
         """Initialize the StratifiedKFoldLoader instance.
@@ -87,6 +88,9 @@ class StratifiedKFoldLoader:
               transfers.
             drop_last: Whether to drop the last incomplete batch in case
               the dataset size is not divisible by the batch size.
+            multiprocessing_context: The multiprocessing context to use
+              (e.g., "fork" or "spawn").  If None, the operating
+              system's default context is used.
             seeds: The configuration that contains the random seeds for
               (a) constructing the folds and (b) the shuffling behavior
               of the training sampler across epochs.
@@ -161,6 +165,7 @@ class StratifiedKFoldLoader:
             "pin_memory": pin_memory,
             "drop_last": drop_last,
             "worker_init_fn": seed_worker,
+            "multiprocessing_context": multiprocessing_context,
             "generator": g
         }
 

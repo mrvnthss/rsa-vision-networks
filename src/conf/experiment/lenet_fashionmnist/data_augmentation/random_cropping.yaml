@@ -41,7 +41,7 @@ dataset:
   transform_val:
     resize_size: ${model.input_size}  # matches the input size of the model
 dataloader:
-  num_workers: 0
+  num_workers: 4
 training:
   num_epochs: 200  # increased from previous experiments
 optimizer:

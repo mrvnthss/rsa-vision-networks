@@ -26,9 +26,9 @@ train_set:
   _target_: datasets.fashionmnist.FashionMNIST
   data_dir: ${paths.data}
   train: True
-  load_into_memory: True
+  load_into_memory: False
 test_set:
   _target_: datasets.fashionmnist.FashionMNIST
   data_dir: ${paths.data}
   train: False
-  load_into_memory: True
+  load_into_memory: False

@@ -25,7 +25,7 @@ transform_val:
 train_set:
   _target_: datasets.imagenet.ImageNet
   data_dir: ${paths.data}
-  train: True
+  train: False
 test_set:
   _target_: datasets.imagenet.ImageNet
   data_dir: ${paths.data}

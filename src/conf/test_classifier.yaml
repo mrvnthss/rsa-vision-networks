@@ -17,7 +17,7 @@ dataset:
 dataloader:
   val_split: 0.20  # fraction of the dataset to use as validation set
   batch_size: 32
-  num_workers: 0
+  num_workers: 4
 evaluate_on: val  # either "train", "val", or "test"
 metrics:
   Accuracy@1:

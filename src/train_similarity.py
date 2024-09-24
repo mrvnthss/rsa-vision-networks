@@ -22,8 +22,8 @@ from src.base_classes.base_loader import BaseLoader
 from src.config import TrainSimilarityConf
 from src.training.representational_similarity_trainer import RepresentationalSimilarityTrainer
 from src.utils.rsa import get_rsa_loss
-from src.utils.training import get_lr_scheduler, get_train_transform, get_val_transform, \
-    set_device, set_seeds
+from src.utils.training import get_collate_fn, get_lr_scheduler, get_train_transform, \
+    get_val_transform, set_device, set_seeds
 
 logger = logging.getLogger(__name__)
 
@@ -65,6 +65,8 @@ def main(cfg: TrainSimilarityConf) -> None:
 
     # Set up dataloaders
     logger.info("Preparing dataloaders ...")
+    collate_fn = get_collate_fn(cfg.dataset)
+    multiprocessing_context = "fork" if cfg.dataloader.num_workers > 0 else None
     base_loader = BaseLoader(
         dataset=dataset,
         main_transform=train_transform,
@@ -73,7 +75,9 @@ def main(cfg: TrainSimilarityConf) -> None:
         batch_size=cfg.dataloader.batch_size,
         shuffle=True,
         num_workers=cfg.dataloader.num_workers,
+        collate_fn=collate_fn,
         pin_memory=True,
+        multiprocessing_context=multiprocessing_context,
         seeds=cfg.reproducibility
     )
     train_loader = base_loader.get_dataloader(mode="main")

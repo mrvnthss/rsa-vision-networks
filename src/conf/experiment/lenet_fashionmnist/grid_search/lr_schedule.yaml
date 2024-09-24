@@ -45,8 +45,8 @@ dataset:
   transform_val:
     resize_size: ${model.input_size}  # matches the input size of the model
 dataloader:
-  num_workers: 0
   batch_size: 64  # based on "batch_size_lr.yaml" grid search
+  num_workers: 4
 training:
   num_epochs: 200
 optimizer:
