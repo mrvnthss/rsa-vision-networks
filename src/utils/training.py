@@ -146,6 +146,11 @@ def get_lr_scheduler(
     main_scheduler, warmup_scheduler = None, None
 
     if "main_scheduler" in cfg and cfg.main_scheduler is not None:
+        # Populate the ``T_max`` argument of the ``CosineAnnealingLR`` scheduler, if applicable
+        if cfg.main_scheduler.name == "CosineAnnealingLR":
+            warmup_epochs = _get_warmup_epochs(cfg)
+            cfg.main_scheduler.kwargs.T_max = cfg.training.num_epochs - warmup_epochs
+
         main_scheduler = instantiate(
             cfg.main_scheduler.kwargs,
             optimizer=optimizer
@@ -291,3 +296,20 @@ def _get_mixup_cutmix(
     if not mixup_cutmix:
         return None
     return T.RandomChoice(mixup_cutmix)
+
+
+def _get_warmup_epochs(
+        cfg: Union[TrainClassifierConf, TrainSimilarityConf]
+) -> int:
+    """Get the number of warmup epochs specified for the training run.
+
+    Args:
+        cfg: The training configuration.
+
+    Returns:
+        The number of warmup epochs specified for the training run.
+    """
+
+    if "warmup_scheduler" not in cfg or cfg.warmup_scheduler is None:
+        return 0
+    return cfg.warmup_scheduler.warmup_epochs

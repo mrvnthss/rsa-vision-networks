@@ -1,7 +1,8 @@
 # https://pytorch.org/docs/2.4/generated/torch.optim.lr_scheduler.CosineAnnealingLR.html
 name: CosineAnnealingLR
+lr_min: ???
 kwargs:
   _target_: torch.optim.lr_scheduler.CosineAnnealingLR
-  T_max: ???
-  eta_min: 0
+  T_max: ???  # NOTE: This is automatically set (difference between training and warmup epochs)!
+  eta_min: ${main_scheduler.lr_min}
   last_epoch: -1

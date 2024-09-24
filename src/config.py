@@ -227,6 +227,9 @@ class StepLRConf:
 @dataclass
 class MainSchedulerConf:
     name: MainSchedulerName = MISSING
+    lr_min: Optional[float] = None
+    lr_gamma: Optional[float] = None
+    lr_step_size: Optional[float] = None
     kwargs: Union[
         CosineAnnealingLRConf,
         ExponentialLRConf,
@@ -237,6 +240,7 @@ class MainSchedulerConf:
 @dataclass
 class WarmupSchedulerConf:
     name: WarmupSchedulerName = MISSING
+    warmup_decay: float = MISSING
     warmup_epochs: int = MISSING
     kwargs: Union[
         ConstantLRConf,

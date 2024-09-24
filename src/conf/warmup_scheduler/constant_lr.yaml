@@ -1,8 +1,9 @@
 # https://pytorch.org/docs/2.4/generated/torch.optim.lr_scheduler.ConstantLR.html
 name: ConstantLR
-warmup_epochs: ${warmup_scheduler.kwargs.total_iters}
+warmup_decay: ???
+warmup_epochs: ???
 kwargs:
   _target_: torch.optim.lr_scheduler.ConstantLR
-  factor: 0.3333333333333333
-  total_iters: 5
+  factor: ${warmup_scheduler.warmup_decay}
+  total_iters: ${warmup_scheduler.warmup_epochs}
   last_epoch: -1
