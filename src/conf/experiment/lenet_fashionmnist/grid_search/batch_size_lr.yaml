@@ -15,7 +15,7 @@
 experiment:
   name: lenet_fashionmnist/grid_search/batch_size_lr
   dir:  ../out/${experiment.name}/${now:%Y-%m-%d_%H-%M-%S}
-  sub_dir: b=${dataloader.batch_size},lr=${optimizer.kwargs.lr}
+  sub_dir: b=${dataloader.batch_size},lr=${optimizer.lr}
 paths:
   checkpoints: ${experiment.dir}/${experiment.sub_dir}/checkpoints
   tensorboard: ${experiment.dir}/${experiment.sub_dir}/tensorboard
@@ -28,7 +28,7 @@ hydra:
     params:
       # Grid search parameters
       dataloader.batch_size: 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096
-      optimizer.kwargs.lr: 0.1, 0.01, 0.001
+      optimizer.lr: 0.1, 0.01, 0.001
 
 # Fixed training parameters
 reproducibility:
@@ -42,8 +42,7 @@ dataloader:
 training:
   num_epochs: 100
 optimizer:
-  kwargs:
-    momentum: 0.9
-    weight_decay: 1e-4
+  momentum: 0.9
+  weight_decay: 1e-4
 performance:
   patience: 5

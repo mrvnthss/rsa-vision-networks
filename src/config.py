@@ -3,7 +3,7 @@
 
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 from omegaconf import DictConfig, MISSING
 
@@ -71,6 +71,7 @@ class CrossEntropyLossConf:
 @dataclass
 class CriterionConf:
     name: CriterionName = MISSING
+    label_smoothing: float = 0.0
     kwargs: Union[CrossEntropyLossConf] = MISSING
 
 
@@ -144,9 +145,11 @@ class VGGConf:
 @dataclass
 class ModelConf:
     name: ModelName = MISSING
-    kwargs: Union[LeNetConf, VGGConf] = MISSING
     input_size: int = MISSING
     load_weights_from: Optional[str] = None
+    num_layers: Optional[int] = None
+    pretrained: Optional[bool] = None
+    kwargs: Union[LeNetConf, VGGConf] = MISSING
 
 
 @dataclass
@@ -181,6 +184,11 @@ class SGDConf:
 @dataclass
 class OptimizerConf:
     name: OptimizerName = MISSING
+    lr: float = MISSING
+    weight_decay: float = MISSING
+    betas: Optional[Tuple[float]] = None
+    momentum: Optional[float] = None
+    dampening: Optional[float] = None
     kwargs: Union[AdamConf, SGDConf] = MISSING
 
 
@@ -363,6 +371,9 @@ class TrainClassifierConf(DictConfig):
 @dataclass
 class ComputeRDMConf:
     name: ComputeRDMName = MISSING
+    center_activations: bool = False
+    normalize_distances: Optional[bool] = None
+    distance_type: Optional[str] = None
     kwargs: Dict[str, Any] = MISSING
 
 

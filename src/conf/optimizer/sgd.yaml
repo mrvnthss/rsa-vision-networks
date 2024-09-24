@@ -1,11 +1,15 @@
 # https://pytorch.org/docs/2.4/generated/torch.optim.SGD.html
 name: SGD
+lr: 0.001
+momentum: 0
+dampening: 0
+weight_decay: 0
 kwargs:
   _target_: torch.optim.sgd.SGD
-  lr: 1e-3
-  momentum: 0
-  dampening: 0
-  weight_decay: 0
+  lr: ${optimizer.lr}
+  momentum: ${optimizer.momentum}
+  dampening: ${optimizer.dampening}
+  weight_decay: ${optimizer.weight_decay}
   nesterov: false
   maximize: false
   foreach: null

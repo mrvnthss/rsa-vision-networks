@@ -1,5 +1,8 @@
 name: euclidean
+center_activations: False
+normalize_distances: True
+distance_type: squared
 kwargs:
-  center_activations: False
-  normalize_distances: True
-  distance_type: squared
+  center_activations: ${repr_similarity.compute_rdm.center_activations}
+  normalize_distances: ${repr_similarity.compute_rdm.normalize_distances}
+  distance_type: ${repr_similarity.compute_rdm.distance_type}

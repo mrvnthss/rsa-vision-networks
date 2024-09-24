@@ -15,7 +15,7 @@
 experiment:
   name: lenet_fashionmnist/data_augmentation/random_cropping
   dir:  ../out/${experiment.name}/${now:%Y-%m-%d_%H-%M-%S}
-  sub_dir: crop_lower=${dataset.transform_train.crop_scale.lower},b=${dataloader.batch_size},momentum=${optimizer.kwargs.momentum}
+  sub_dir: crop_lower=${dataset.transform_train.crop_scale.lower},b=${dataloader.batch_size},momentum=${optimizer.momentum}
 paths:
   checkpoints: ${experiment.dir}/${experiment.sub_dir}/checkpoints
   tensorboard: ${experiment.dir}/${experiment.sub_dir}/tensorboard
@@ -29,7 +29,7 @@ hydra:
       # Grid search parameters
       dataset.transform_train.crop_scale.lower: 0.6, 0.7, 0.8, 0.9
       dataloader.batch_size: 64, 128  # based on "batch_size_lr.yaml" grid search
-      optimizer.kwargs.momentum: 0.8, 0.85  # based on "momentum_wd.yaml" grid search
+      optimizer.momentum: 0.8, 0.85  # based on "momentum_wd.yaml" grid search
 
 # Fixed training parameters
 reproducibility:
@@ -45,8 +45,7 @@ dataloader:
 training:
   num_epochs: 200  # increased from previous experiments
 optimizer:
-  kwargs:
-    lr: 0.01  # based on "batch_size_lr.yaml" grid search
-    weight_decay: 1e-3  # based on "momentum_wd.yaml" & "horizontal_flipping.yaml" grid searches
+  lr: 0.01  # based on "batch_size_lr.yaml" grid search
+  weight_decay: 1e-3  # based on "momentum_wd.yaml" & "horizontal_flipping.yaml" grid searches
 performance:
   patience: 20

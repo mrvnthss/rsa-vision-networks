@@ -16,7 +16,7 @@
 experiment:
   name: lenet_fashionmnist/grid_search/overfitting
   dir:  ../out/${experiment.name}/${now:%Y-%m-%d_%H-%M-%S}
-  sub_dir: b=${dataloader.batch_size},wd=${optimizer.kwargs.weight_decay}
+  sub_dir: b=${dataloader.batch_size},wd=${optimizer.weight_decay}
 paths:
   checkpoints: ${experiment.dir}/${experiment.sub_dir}/checkpoints
   tensorboard: ${experiment.dir}/${experiment.sub_dir}/tensorboard
@@ -29,7 +29,7 @@ hydra:
     params:
       # Grid search parameters
       dataloader.batch_size: 64, 128
-      optimizer.kwargs.weight_decay: 1e-4, 1e-3
+      optimizer.weight_decay: 1e-4, 1e-3
 
 # Fixed training parameters
 reproducibility:
@@ -44,8 +44,7 @@ training:
   num_epochs: 30
   num_folds: 5  # 5-fold cross-validation
 optimizer:
-  kwargs:
-    lr: 0.01
-    momentum: 0.9
+  lr: 0.01
+  momentum: 0.9
 performance:
   patience: null  # no early stopping

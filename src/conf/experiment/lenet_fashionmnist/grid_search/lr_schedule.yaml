@@ -16,7 +16,7 @@
 experiment:
   name: lenet_fashionmnist/grid_search/lr_schedule
   dir:  ../out/${experiment.name}/${now:%Y-%m-%d_%H-%M-%S}
-  sub_dir: gamma=${main_scheduler.kwargs.gamma},step_size=${main_scheduler.kwargs.step_size}
+  sub_dir: gamma=${main_scheduler.lr_gamma},step_size=${main_scheduler.lr_step_size}
 paths:
   checkpoints: ${experiment.dir}/${experiment.sub_dir}/checkpoints
   tensorboard: ${experiment.dir}/${experiment.sub_dir}/tensorboard
@@ -28,8 +28,8 @@ hydra:
   sweeper:
     params:
       # Grid search parameters
-      main_scheduler.kwargs.gamma: 0.1, 0.5, 0.9
-      main_scheduler.kwargs.step_size: 10, 20, 30, 40, 50
+      main_scheduler.lr_gamma: 0.1, 0.5, 0.9
+      main_scheduler.lr_step_size: 10, 20, 30, 40, 50
 
 # Fixed training parameters
 defaults:
@@ -50,9 +50,8 @@ dataloader:
 training:
   num_epochs: 200
 optimizer:
-  kwargs:
-    lr: 0.01  # based on "batch_size_lr.yaml" grid search
-    momentum: 0.8  # based on "momentum_wd.yaml" grid search
-    weight_decay: 1e-3  # based on "momentum_wd.yaml" & "horizontal_flipping.yaml" grid searches
+  lr: 0.01  # based on "batch_size_lr.yaml" grid search
+  momentum: 0.8  # based on "momentum_wd.yaml" grid search
+  weight_decay: 1e-3  # based on "momentum_wd.yaml" & "horizontal_flipping.yaml" grid searches
 performance:
   patience: 20
