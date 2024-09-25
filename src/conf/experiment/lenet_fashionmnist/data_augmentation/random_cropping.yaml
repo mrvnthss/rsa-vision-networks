@@ -15,7 +15,7 @@
 experiment:
   name: lenet_fashionmnist/data_augmentation/random_cropping
   dir:  ../out/${experiment.name}/${now:%Y-%m-%d_%H-%M-%S}
-  sub_dir: crop_lower=${dataset.transform_train.crop_scale.lower},b=${dataloader.batch_size},momentum=${optimizer.momentum}
+  sub_dir: crop_scale.lower=${dataset.transform_train.crop_scale.lower},b=${dataloader.batch_size},momentum=${optimizer.momentum}
 paths:
   checkpoints: ${experiment.dir}/${experiment.sub_dir}/checkpoints
   tensorboard: ${experiment.dir}/${experiment.sub_dir}/tensorboard
