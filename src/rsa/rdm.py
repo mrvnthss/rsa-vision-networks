@@ -19,7 +19,7 @@ __all__ = [
 from typing import Any, Callable, Dict, Literal
 
 import torch
-from torchmetrics.functional.regression import spearman_corrcoef
+from torch.nn import functional as F
 
 
 def compare_rdm(
@@ -162,11 +162,11 @@ def _compare_rdm_correlation(
         The Pearson correlation between the two RDMs.
     """
 
-    # NOTE: The Pearson correlation of two vectors x and y is the same as the cosine similarity
-    #       between the centered versions of x and y.
+    # NOTE: The Pearson correlation of two vectors is the same as the cosine similarity between the
+    #       centered vectors.
     rdm1 = rdm1 - rdm1.mean()
     rdm2 = rdm2 - rdm2.mean()
-    return _cosine_similarity(rdm1, rdm2)
+    return F.cosine_similarity(rdm1, rdm2, dim=0)
 
 
 def _compare_rdm_cosine(
@@ -183,7 +183,7 @@ def _compare_rdm_cosine(
         The cosine similarity between the two RDMs.
     """
 
-    return _cosine_similarity(rdm1, rdm2)
+    return F.cosine_similarity(rdm1, rdm2, dim=0)
 
 
 def _compare_rdm_spearman(
@@ -206,8 +206,9 @@ def _compare_rdm_spearman(
         The Spearman rank correlation between the two RDMs.
     """
 
-    spearman_correlation = spearman_corrcoef(rdm1, rdm2)
-    return spearman_correlation
+    # Compute Pearson correlation between the rank variables
+    rdm1_ranks, rdm2_ranks = _rank_data(rdm1), _rank_data(rdm2)
+    return _compare_rdm_correlation(rdm1_ranks, rdm2_ranks)
 
 
 def _compute_rdm_correlation(
@@ -290,43 +291,6 @@ def _compute_rdm_euclidean(
     return rdm
 
 
-def _cosine_similarity(
-        vec1: torch.Tensor,
-        vec2: torch.Tensor
-) -> torch.Tensor:
-    """Compute the cosine similarity between two vectors.
-
-    Args:
-        vec1: The first vector.
-        vec2: The second vector.
-
-    Returns:
-        The cosine similarity between the two vectors.
-
-    Raises:
-        ValueError: If one of the inputs is not a 1-D tensor or if the
-          two vectors do not have the same number of elements.
-    """
-
-    if not (_is_vector(vec1) and _is_vector(vec2)):
-        raise ValueError(
-            "Both 'vec1' and 'vec2' should be tensors of dimension 1."
-        )
-
-    if not vec1.numel() == vec2.numel():
-        raise ValueError(
-            "The two vectors should have the same number of elements."
-        )
-
-    norm1 = torch.linalg.vector_norm(vec1, ord=2)
-    norm2 = torch.linalg.vector_norm(vec2, ord=2)
-
-    if norm1 == 0 or norm2 == 0:
-        return torch.tensor([0.0])
-
-    return torch.dot(vec1, vec2) / (norm1 * norm2)
-
-
 def _get_upper_tri_matrix(sq_matrix: torch.Tensor) -> torch.Tensor:
     """Extract the upper triangular part of a square matrix.
 
@@ -350,6 +314,39 @@ def _is_vector(x: torch.Tensor) -> bool:
     return isinstance(x, torch.Tensor) and x.dim() == 1
 
 
+def _rank_data(data: torch.Tensor) -> torch.Tensor:
+    """Assign ranks to data, with ties resolved by averaging.
+
+    Args:
+        data: The data tensor for which to assign ranks.
+
+    Returns:
+        The ranks of the data tensor, with ties resolved by averaging.
+        Ranks are 1-based and have the same dtype and device as the
+        input tensor.
+    """
+
+    if not _is_vector(data):
+        raise ValueError("'data' should be a 1-D tensor.")
+
+    # Determine ordinal ranks
+    n = data.numel()
+    rank = torch.empty_like(data)
+    idx = data.argsort()
+    rank[idx[:n]] = torch.arange(1, n + 1, dtype=data.dtype, device=data.device)
+
+    # Identify duplicate entries in ``data`` tensor
+    unique_values, counts = torch.unique(data, return_counts=True)
+    duplicate_values = unique_values[counts > 1]
+
+    # Convert ordinal ranks to average ranks for duplicate entries
+    for value in duplicate_values:
+        mask = data == value
+        rank[mask] = rank[mask].float().mean()
+
+    return rank
+
+
 def _validate_rdms(
         rdm1: torch.Tensor,
         rdm2: torch.Tensor
@@ -367,7 +364,7 @@ def _validate_rdms(
 
     if not (_is_vector(rdm1) and _is_vector(rdm2)):
         raise ValueError(
-            "Both 'rdm1' and 'rdm2' should be tensors of dimension 1."
+            "Both 'rdm1' and 'rdm2' should be 1-D tensors."
         )
 
     if not rdm1.numel() == rdm2.numel():
