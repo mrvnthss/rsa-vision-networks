@@ -1,4 +1,2 @@
 name: correlation
-center_activations: False
-kwargs:
-  center_activations: ${repr_similarity.compute_rdm.center_activations}
+kwargs: {}

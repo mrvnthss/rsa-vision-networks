@@ -19,7 +19,6 @@ __all__ = [
 from typing import Any, Callable, Dict, Literal
 
 import torch
-from torch import linalg as LA
 from torchmetrics.functional.regression import spearman_corrcoef
 
 
@@ -155,17 +154,19 @@ def _compare_rdm_correlation(
 ) -> torch.Tensor:
     """Compare two RDMs using Pearson correlation.
 
-        Args:
-            rdm1: The first RDM in vectorized form.
-            rdm2: The second RDM in vectorized form.
+    Args:
+        rdm1: The first RDM in vectorized form.
+        rdm2: The second RDM in vectorized form.
 
-        Returns:
-            The Pearson correlation between the two RDMs.
-        """
+    Returns:
+        The Pearson correlation between the two RDMs.
+    """
 
-    rdms_stacked = torch.stack([rdm1, rdm2], dim=0)
-    pearson_correlation = torch.corrcoef(rdms_stacked)[0, 1]
-    return pearson_correlation
+    # NOTE: The Pearson correlation of two vectors x and y is the same as the cosine similarity
+    #       between the centered versions of x and y.
+    rdm1 = rdm1 - rdm1.mean()
+    rdm2 = rdm2 - rdm2.mean()
+    return _cosine_similarity(rdm1, rdm2)
 
 
 def _compare_rdm_cosine(
@@ -182,10 +183,7 @@ def _compare_rdm_cosine(
         The cosine similarity between the two RDMs.
     """
 
-    cosine_similarity = torch.dot(rdm1, rdm2) / (
-            LA.vector_norm(rdm1, ord=2) * LA.vector_norm(rdm2, ord=2)
-    )
-    return cosine_similarity
+    return _cosine_similarity(rdm1, rdm2)
 
 
 def _compare_rdm_spearman(
@@ -213,8 +211,7 @@ def _compare_rdm_spearman(
 
 
 def _compute_rdm_correlation(
-    activations: torch.Tensor,
-    center_activations: bool = True
+    activations: torch.Tensor
 ) -> torch.Tensor:
     """Compute an RDM using Pearson correlation distance.
 
@@ -227,16 +224,11 @@ def _compute_rdm_correlation(
           RDM.  Must be a 2-D tensor of size (N, M), where N >= 3 is the
           number of stimuli, and M >= 2 is the number of unit
           activations per stimulus.
-        center_activations: Whether to center the activations for each
-          stimulus before computing distances.
 
     Returns:
         The RDM (in vectorized form) computed from the data using
         Pearson correlation distance.
     """
-
-    if center_activations:
-        activations = activations - activations.mean(dim=1, keepdim=True)
 
     return 1 - _get_upper_tri_matrix(torch.corrcoef(activations))
 
@@ -296,6 +288,43 @@ def _compute_rdm_euclidean(
         rdm = torch.sqrt(rdm)
 
     return rdm
+
+
+def _cosine_similarity(
+        vec1: torch.Tensor,
+        vec2: torch.Tensor
+) -> torch.Tensor:
+    """Compute the cosine similarity between two vectors.
+
+    Args:
+        vec1: The first vector.
+        vec2: The second vector.
+
+    Returns:
+        The cosine similarity between the two vectors.
+
+    Raises:
+        ValueError: If one of the inputs is not a 1-D tensor or if the
+          two vectors do not have the same number of elements.
+    """
+
+    if not (_is_vector(vec1) and _is_vector(vec2)):
+        raise ValueError(
+            "Both 'vec1' and 'vec2' should be tensors of dimension 1."
+        )
+
+    if not vec1.numel() == vec2.numel():
+        raise ValueError(
+            "The two vectors should have the same number of elements."
+        )
+
+    norm1 = torch.linalg.vector_norm(vec1, ord=2)
+    norm2 = torch.linalg.vector_norm(vec2, ord=2)
+
+    if norm1 == 0 or norm2 == 0:
+        return torch.tensor([0.0])
+
+    return torch.dot(vec1, vec2) / (norm1 * norm2)
 
 
 def _get_upper_tri_matrix(sq_matrix: torch.Tensor) -> torch.Tensor:
