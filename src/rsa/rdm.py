@@ -46,6 +46,9 @@ def compare_rdm(
     Returns:
         The similarity between the two RDMs based on the specified
         method.
+
+    Raises:
+        If the ``method`` is not one of the available options.
     """
 
     methods: dict[str, Callable[..., torch.Tensor]] = {
@@ -59,6 +62,7 @@ def compare_rdm(
             f"'method' should be one of {list(methods.keys())}, but got {method}."
         )
 
+    _validate_rdms(rdm1, rdm2)
     return methods[method](rdm1, rdm2, **kwargs)
 
 
@@ -85,6 +89,9 @@ def compute_rdm(
     Returns:
         The RDM (in vectorized form) computed from the data using the
           specified method.
+
+    Raises:
+        If the ``method`` is not one of the available options.
     """
 
     methods: Dict[str, Callable[..., torch.Tensor]] = {
@@ -97,6 +104,7 @@ def compute_rdm(
             f"'method' should be one of {list(methods.keys())}, but got {method}."
         )
 
+    validate_activations(activations)
     return methods[method](activations, **kwargs)
 
 
@@ -153,16 +161,7 @@ def _compare_rdm_correlation(
 
         Returns:
             The Pearson correlation between the two RDMs.
-
-        Raises:
-            ValueError: If one (or both) of the RDMs are not passed in
-              vectorized form (i.e., as tensors of dimension 1).
         """
-
-    if not (_is_vector(rdm1) and _is_vector(rdm2)):
-        raise ValueError(
-            "Both 'rdm1' and 'rdm2' should be tensors of dimension 1."
-        )
 
     rdms_stacked = torch.stack([rdm1, rdm2], dim=0)
     pearson_correlation = torch.corrcoef(rdms_stacked)[0, 1]
@@ -181,16 +180,7 @@ def _compare_rdm_cosine(
 
     Returns:
         The cosine similarity between the two RDMs.
-
-    Raises:
-        ValueError: If one (or both) of the RDMs are not passed in
-          vectorized form (i.e., as tensors of dimension 1).
     """
-
-    if not (_is_vector(rdm1) and _is_vector(rdm2)):
-        raise ValueError(
-            "Both 'rdm1' and 'rdm2' should be tensors of dimension 1."
-        )
 
     cosine_similarity = torch.dot(rdm1, rdm2) / (
             LA.vector_norm(rdm1, ord=2) * LA.vector_norm(rdm2, ord=2)
@@ -216,16 +206,7 @@ def _compare_rdm_spearman(
 
     Returns:
         The Spearman rank correlation between the two RDMs.
-
-    Raises:
-        ValueError: If one (or both) of the RDMs are not passed in
-          vectorized form (i.e., as tensors of dimension 1).
     """
-
-    if not (_is_vector(rdm1) and _is_vector(rdm2)):
-        raise ValueError(
-            "Both 'rdm1' and 'rdm2' should be tensors of dimension 1."
-        )
 
     spearman_correlation = spearman_corrcoef(rdm1, rdm2)
     return spearman_correlation
@@ -254,14 +235,10 @@ def _compute_rdm_correlation(
         Pearson correlation distance.
     """
 
-    validate_activations(activations)
-
     if center_activations:
         activations = activations - activations.mean(dim=1, keepdim=True)
 
-    rdm = 1 - _get_upper_tri_matrix(torch.corrcoef(activations))
-
-    return rdm
+    return 1 - _get_upper_tri_matrix(torch.corrcoef(activations))
 
 
 def _compute_rdm_euclidean(
@@ -291,9 +268,10 @@ def _compute_rdm_euclidean(
     Returns:
         The RDM (in vectorized form) computed from the data using
         Euclidean distance.
-    """
 
-    validate_activations(activations)
+    Raises:
+        If the ``distance_type`` is neither "squared" nor "non-squared".
+    """
 
     if distance_type not in ["squared", "non-squared"]:
         raise ValueError(
@@ -341,3 +319,29 @@ def _is_vector(x: torch.Tensor) -> bool:
     """Check if the input is a ``torch.Tensor`` of dimension 1."""
 
     return isinstance(x, torch.Tensor) and x.dim() == 1
+
+
+def _validate_rdms(
+        rdm1: torch.Tensor,
+        rdm2: torch.Tensor
+) -> None:
+    """Validate RDMs from which to compute a similarity score.
+
+    Args:
+        rdm1: The first RDM in vectorized form.
+        rdm2: The second RDM in vectorized form.
+
+    Raises:
+        ValueError: If one of the RDMs is not in vectorized form or if
+          the two RDMs do not have the same number of elements.
+    """
+
+    if not (_is_vector(rdm1) and _is_vector(rdm2)):
+        raise ValueError(
+            "Both 'rdm1' and 'rdm2' should be tensors of dimension 1."
+        )
+
+    if not rdm1.numel() == rdm2.numel():
+        raise ValueError(
+            "The two RDMs should have the same number of elements."
+        )
