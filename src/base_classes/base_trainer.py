@@ -29,11 +29,11 @@ class BaseTrainer(ABC):
         epoch_idx: The current epoch index, starting from 1.
         experiment_tracker: The ExperimentTracker instance to log
           results to TensorBoard.
-        final_epoch_idx: The index of the final epoch.
         logger: The logger instance to record logs.
         lr_scheduler: The scheduler used to adjust the learning rate
           during training.
         model: The model to be trained.
+        num_epochs: The total number of epochs to train for.
         optimizer: The optimizer used during training.
         performance_tracker: The PerformanceTracker instance to monitor
           model performance and handle early stopping.
@@ -116,6 +116,8 @@ class BaseTrainer(ABC):
 
         self.logger = logging.getLogger(__name__)
 
+        self.num_epochs = cfg.training.num_epochs
+
         # CheckpointManager
         self.checkpoint_manager = CheckpointManager(
             cfg=cfg,
@@ -164,9 +166,13 @@ class BaseTrainer(ABC):
                 keep_previous_best_score=cfg.performance.keep_previous_best_score,
                 lr_scheduler=self.lr_scheduler
             )
+            if self.epoch_idx > self.num_epochs:
+                raise ValueError(
+                    "The total number of epochs to train for should be larger than the number of "
+                    "epochs the model has already been trained for!"
+                )
         else:
             self.epoch_idx = 1
-        self.final_epoch_idx = self.epoch_idx + cfg.training.num_epochs - 1
 
         # Update training sampler for deterministic shuffling
         self._update_training_sampler()
@@ -251,9 +257,9 @@ class BaseTrainer(ABC):
             raise ValueError(f"'mode' should be either 'train' or 'val', but got {mode}.")
 
         # Construct description for progress bar
-        num_digits = len(str(self.final_epoch_idx))
+        num_digits = len(str(self.num_epochs))
         desc = (
-            f"Epoch [{self.epoch_idx:0{num_digits}d}/{self.final_epoch_idx}]    "
+            f"Epoch [{self.epoch_idx:0{num_digits}d}/{self.num_epochs}]    "
             f"{mode.capitalize()}"
         )
 
@@ -300,7 +306,7 @@ class BaseTrainer(ABC):
         """Train the model for multiple epochs."""
 
         self.logger.info("Starting training loop ...")
-        while self.epoch_idx <= self.final_epoch_idx:
+        while self.epoch_idx <= self.num_epochs:
             # Train and validate the model, and update learning rate
             training_results = self.train_epoch()
             validation_results = self.eval_epoch()
@@ -511,9 +517,9 @@ class BaseTrainer(ABC):
         ]
         self.logger.info(
             "EPOCH [%0*d/%d]    TRAIN: %s    VAL: %s",
-            len(str(self.final_epoch_idx)),
+            len(str(self.num_epochs)),
             self.epoch_idx,
-            self.final_epoch_idx,
+            self.num_epochs,
             "  ".join(training_results_formatted),
             "  ".join(validation_results_formatted)
         )
