@@ -1,0 +1,51 @@
+# @package _global_
+
+# This configuration file can be used to run a control experiment on the
+# lower bound of the crop scale parameter used to train the LeNet-5
+# model on the FashionMNIST dataset.
+#
+# To run this experiment, execute the following command from the
+# "thesis-experiments/src/" directory:
+#
+#   >>> python train_classifier.py experiment=lenet_fashionmnist/data_augmentation/random_cropping_control/scale
+#
+
+
+# Multi-run configuration
+experiment:
+  name: lenet_fashionmnist/data_augmentation/random_cropping_control/scale
+  dir:  ../out/${experiment.name}/${now:%Y-%m-%d_%H-%M-%S}
+  sub_dir: crop_scale.lower=${dataset.transform_train.crop_scale.lower},b=${dataloader.batch_size},momentum=${optimizer.momentum}
+paths:
+  checkpoints: ${experiment.dir}/${experiment.sub_dir}/checkpoints
+  tensorboard: ${experiment.dir}/${experiment.sub_dir}/tensorboard
+hydra:
+  mode: MULTIRUN
+  sweep:
+    dir: ${experiment.dir}
+    subdir: ${experiment.sub_dir}/logs
+  sweeper:
+    params:
+      # Grid search parameters
+      dataset.transform_train.crop_scale.lower: 0.2, 0.4  # lower values than "random_cropping.yaml"
+      dataloader.batch_size: 64, 128  # same as "random_cropping.yaml"
+      optimizer.momentum: 0.8, 0.85  # same as "random_cropping.yaml"
+
+# Fixed training parameters
+reproducibility:
+  torch_seed: 89
+  shuffle_seed: 858
+dataset:
+  transform_train:
+    flip_prob: 0.5  # based on "horizontal_flipping.yaml" grid search
+  transform_val:
+    resize_size: ${model.input_size}  # matches the input size of the model
+dataloader:
+  num_workers: 4
+training:
+  num_epochs: 200  # same as "random_cropping.yaml"
+optimizer:
+  lr: 0.01  # based on "batch_size_lr.yaml" grid search
+  weight_decay: 1e-3  # based on "momentum_wd.yaml" & "horizontal_flipping.yaml" grid searches
+performance:
+  patience: 20

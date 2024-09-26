@@ -1,0 +1,52 @@
+# @package _global_
+
+# This configuration file can be used to run a control experiment on the
+# crop ratio parameter used to train the LeNet-5 model on the
+# FashionMNIST dataset.
+#
+# To run this experiment, execute the following command from the
+# "thesis-experiments/src/" directory:
+#
+#   >>> python train_classifier.py experiment=lenet_fashionmnist/data_augmentation/random_cropping_control/ratio
+#
+
+
+# Multi-run configuration
+experiment:
+  name: lenet_fashionmnist/data_augmentation/random_cropping_control/ratio
+  dir:  ../out/${experiment.name}/${now:%Y-%m-%d_%H-%M-%S}
+  sub_dir: crop_scale.lower=${dataset.transform_train.crop_scale.lower},crop_ratio.lower=${dataset.transform_train.crop_ratio.lower},b=${dataloader.batch_size},momentum=${optimizer.momentum}
+paths:
+  checkpoints: ${experiment.dir}/${experiment.sub_dir}/checkpoints
+  tensorboard: ${experiment.dir}/${experiment.sub_dir}/tensorboard
+hydra:
+  mode: MULTIRUN
+  sweep:
+    dir: ${experiment.dir}
+    subdir: ${experiment.sub_dir}/logs
+  sweeper:
+    params:
+      # Grid search parameters
+      dataset.transform_train.crop_scale.lower: 0.7, 0.8, 0.9, 1.0  # subset of values from "random_cropping.yaml"
+      dataset.transform_train.crop_ratio: "{lower: 0.666666666666667, upper: 1.5},{lower: 0.75, upper: 1.3333333333333333},{lower: 0.8, upper: 1.25}"  # introduces additional randomness
+      dataloader.batch_size: 64, 128  # based on "batch_size_lr.yaml" grid search
+      optimizer.momentum: 0.8, 0.85  # based on "momentum_wd.yaml" grid search
+
+# Fixed training parameters
+reproducibility:
+  torch_seed: 89
+  shuffle_seed: 858
+dataset:
+  transform_train:
+    flip_prob: 0.5  # based on "horizontal_flipping.yaml" grid search
+  transform_val:
+    resize_size: ${model.input_size}  # matches the input size of the model
+dataloader:
+  num_workers: 4
+training:
+  num_epochs: 200  # same as "random_cropping.yaml"
+optimizer:
+  lr: 0.01  # based on "batch_size_lr.yaml" grid search
+  weight_decay: 1e-3  # based on "momentum_wd.yaml" & "horizontal_flipping.yaml" grid searches
+performance:
+  patience: 20
