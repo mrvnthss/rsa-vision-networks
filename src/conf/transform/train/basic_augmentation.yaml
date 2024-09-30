@@ -1,0 +1,14 @@
+mean: ${dataset.stats.mean}
+std: ${dataset.stats.std}
+
+# https://pytorch.org/vision/0.19/generated/torchvision.transforms.v2.RandomResizedCrop.html
+crop_size: ${model.input_size}
+crop_scale:
+  lower: 0.08
+  upper: 1.0
+crop_ratio:
+  lower: 0.75
+  upper: 1.3333333333333333
+
+# https://pytorch.org/vision/0.19/generated/torchvision.transforms.v2.RandomHorizontalFlip.html
+flip_prob: 0.5

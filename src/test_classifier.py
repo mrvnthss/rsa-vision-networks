@@ -58,7 +58,7 @@ def main(cfg: TestClassifierConf) -> None:
     dataset = instantiate(
         cfg.dataset.test_set if cfg.model.evaluate_on == "test" else cfg.dataset.train_set
     )
-    transform = get_val_transform(cfg.dataset.transform_val)
+    transform = get_val_transform(cfg.transform.val)
     val_split = cfg.dataloader.val_split if cfg.model.evaluate_on in ["train", "val"] else None
     multiprocessing_context = None
     if device.type == "mps" and cfg.dataloader.num_workers > 0:

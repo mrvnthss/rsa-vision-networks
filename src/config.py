@@ -131,37 +131,9 @@ class ModelConf:
 # ----------------------
 
 @dataclass
-class CropScaleConf:
-    lower: float = 1.0
-    upper: float = 1.0
-
-
-@dataclass
-class CropRatioConf:
-    lower: float = 1.0
-    upper: float = 1.0
-
-
-@dataclass
-class TransformTrainConf:
+class DatasetStatsConf:
     mean: List[float] = MISSING
     std: List[float] = MISSING
-    crop_size: int = MISSING
-    crop_scale: CropScaleConf = MISSING
-    crop_ratio: CropRatioConf = MISSING
-    flip_prob: float = 0.0
-    ta_wide: bool = False
-    random_erase_prob: float = 0.0
-    mixup_alpha: float = 0.0
-    cutmix_alpha: float = 0.0
-
-
-@dataclass
-class TransformValConf:
-    mean: List[float] = MISSING
-    std: List[float] = MISSING
-    resize_size: int = MISSING
-    crop_size: int = MISSING
 
 
 @dataclass
@@ -177,10 +149,53 @@ class DatasetConf:
     name: DatasetName = MISSING
     num_classes: int = MISSING
     is_grayscale: bool = MISSING
-    transform_train: TransformTrainConf = MISSING
-    transform_val: TransformValConf = MISSING
+    stats: DatasetStatsConf = MISSING
     train_set: VisionDatasetConf = MISSING
     test_set: VisionDatasetConf = MISSING
+
+
+# ------------------------
+# TRANSFORM CONFIGURATIONS
+# ------------------------
+
+@dataclass
+class CropScaleConf:
+    lower: float = 0.08
+    upper: float = 1.0
+
+
+@dataclass
+class CropRatioConf:
+    lower: float = 0.75
+    upper: float = 1.3333333333333333
+
+
+@dataclass
+class TransformTrainConf:
+    mean: List[float] = MISSING
+    std: List[float] = MISSING
+    crop_size: Optional[int] = None
+    crop_scale: Optional[CropScaleConf] = MISSING
+    crop_ratio: Optional[CropRatioConf] = MISSING
+    flip_prob: Optional[float] = None
+    ta_wide: Optional[bool] = None
+    random_erase_prob: Optional[float] = None
+    mixup_alpha: Optional[float] = None
+    cutmix_alpha: Optional[float] = None
+
+
+@dataclass
+class TransformValConf:
+    mean: List[float] = MISSING
+    std: List[float] = MISSING
+    resize_size: int = MISSING
+    crop_size: int = MISSING
+
+
+@dataclass
+class TransformConf:
+    train: TransformTrainConf = MISSING
+    val: TransformValConf = MISSING
 
 
 # ------------------------
@@ -191,6 +206,7 @@ class DatasetConf:
 class CrossEntropyLossConf:
     _target_: str = "torch.nn.CrossEntropyLoss"
     label_smoothing: float = 0.0
+
 
 @dataclass
 class CriterionConf:
@@ -514,6 +530,7 @@ class ComputeStatsConf(DictConfig):
 class TestClassifierConf(DictConfig):
     model: ModelConf = MISSING
     dataset: DatasetConf = MISSING
+    transform: TransformConf = MISSING
     dataloader: DataloaderConf = MISSING
     criterion: CriterionConf = MISSING
     performance: PerformanceConf = MISSING
@@ -524,6 +541,7 @@ class TestClassifierConf(DictConfig):
 class TrainClassifierConf(DictConfig):
     model: ModelConf = MISSING
     dataset: DatasetConf = MISSING
+    transform: TransformConf = MISSING
     dataloader: DataloaderConf = MISSING
     criterion: CriterionConf = MISSING
     optimizer: OptimizerConf = MISSING
@@ -542,6 +560,7 @@ class TrainClassifierConf(DictConfig):
 class TrainSimilarityConf(DictConfig):
     model: ModelConf = MISSING
     dataset: DatasetConf = MISSING
+    transform: TransformConf = MISSING
     dataloader: DataloaderConf = MISSING
     repr_similarity: ReprSimilarityConf = MISSING
     optimizer: OptimizerConf = MISSING

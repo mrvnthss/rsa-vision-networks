@@ -78,10 +78,10 @@ class ClassificationTransformsTrain:
         ]
 
         if flip_prob > 0:
-            transforms.append(T.RandomHorizontalFlip(p=flip_prob))
+            transforms += [T.RandomHorizontalFlip(p=flip_prob)]
 
         if ta_wide:
-            transforms.append(T.TrivialAugmentWide(interpolation=interpolation))
+            transforms += [T.TrivialAugmentWide(interpolation=interpolation)]
 
         transforms += [
             T.PILToTensor(),

@@ -1,28 +1,9 @@
 name: CIFAR10
 num_classes: 10
 is_grayscale: false
-
-transform_train:
+stats:
   mean: [0.4914, 0.4822, 0.4465]
   std: [0.2023, 0.1994, 0.201]
-  crop_size: ${model.input_size}
-  crop_scale:
-    lower: 1.0  # PyTorch default (RandomResizedCrop): 0.08
-    upper: 1.0  # PyTorch default (RandomResizedCrop): 1.0
-  crop_ratio:
-    lower: 1.0  # PyTorch default (RandomResizedCrop): 0.75
-    upper: 1.0  # PyTorch default (RandomResizedCrop): 4/3
-  flip_prob: 0.0
-  ta_wide: false
-  random_erase_prob: 0.0  # PyTorch default (RandomErasing): 0.5
-  mixup_alpha: 0.0  # PyTorch default (MixUp): 1.0
-  cutmix_alpha: 0.0  # PyTorch default (CutMix): 1.0
-
-transform_val:
-  mean: ${dataset.transform_train.mean}
-  std: ${dataset.transform_train.std}
-  resize_size: ???
-  crop_size: ${model.input_size}
 
 train_set:
   _target_: datasets.cifar10.CIFAR10

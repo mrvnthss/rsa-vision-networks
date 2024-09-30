@@ -43,6 +43,7 @@ hydra:
 defaults:
   - override /model: lenet
   - override /dataset: fashionmnist
+  - override /transform/train: preprocessing
   - _self_
 
 reproducibility:
@@ -53,8 +54,8 @@ training:
   num_epochs: 30
   num_folds: 5
 
-dataset:
-  transform_val:
+transform:
+  val:
     resize_size: ${model.input_size}
 
 dataloader:

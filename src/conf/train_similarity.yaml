@@ -1,6 +1,8 @@
 defaults:
   - model: ???
   - dataset: ???
+  - transform/train: ???
+  - transform/val: preprocessing
   - repr_similarity/compute_rdm: ???
   - repr_similarity/compare_rdm: ???
   - optimizer: sgd
@@ -39,6 +41,10 @@ reproducibility:
 training:
   num_epochs: ???
   resume_from: null  # checkpoint to resume training from, null to start training from scratch
+
+transform:
+  val:
+    resize_size: ???
 
 dataloader:
   val_split: 0.20  # fraction of the dataset to use as validation set

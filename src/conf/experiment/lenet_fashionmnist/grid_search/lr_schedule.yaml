@@ -43,6 +43,7 @@ hydra:
 defaults:
   - override /model: lenet
   - override /dataset: fashionmnist
+  - override /transform/train: basic_augmentation
   - override /main_scheduler: step_lr
   - _self_
 
@@ -53,12 +54,15 @@ reproducibility:
 training:
   num_epochs: 200
 
-dataset:
-  transform_train:
+transform:
+  train:
     crop_scale:
       lower: 0.8  # based on "random_cropping.yaml"
-    flip_prob: 0.5  # based on "horizontal_flipping.yaml"
-  transform_val:
+      upper: 1.0
+    crop_ratio:
+      lower: 1.0
+      upper: 1.0
+  val:
     resize_size: ${model.input_size}
 
 dataloader:

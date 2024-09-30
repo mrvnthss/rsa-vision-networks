@@ -1,0 +1,8 @@
+mean: ${dataset.stats.mean}
+std: ${dataset.stats.std}
+
+# https://pytorch.org/vision/0.19/generated/torchvision.transforms.v2.Resize.html
+resize_size: ???
+
+# https://pytorch.org/vision/0.19/generated/torchvision.transforms.v2.CenterCrop.html
+crop_size: ${model.input_size}

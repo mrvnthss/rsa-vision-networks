@@ -66,8 +66,8 @@ def main(cfg: TrainClassifierConf) -> None:
 
     # Prepare transforms and dataset
     logger.info("Preparing transforms and dataset ...")
-    train_transform = get_train_transform(cfg.dataset.transform_train)
-    val_transform = get_val_transform(cfg.dataset.transform_val)
+    train_transform = get_train_transform(cfg.transform.train)
+    val_transform = get_val_transform(cfg.transform.val)
     dataset = instantiate(cfg.dataset.train_set)
 
     # Set up folds for stratified k-fold cross-validation
@@ -75,7 +75,10 @@ def main(cfg: TrainClassifierConf) -> None:
         "Preparing folds for stratified %s-fold cross-validation ...",
         cfg.training.num_folds
     )
-    collate_fn = get_collate_fn(cfg.dataset)
+    collate_fn = get_collate_fn(
+        transform_train_params=cfg.transform.train,
+        num_classes=cfg.dataset.num_classes
+    )
     multiprocessing_context = None
     if device.type == "mps" and cfg.dataloader.num_workers > 0:
         multiprocessing_context = "fork"

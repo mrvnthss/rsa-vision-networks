@@ -18,7 +18,7 @@
 experiment:
   name: lenet_fashionmnist/data_augmentation/random_cropping
   dir:  ../out/${experiment.name}/${now:%Y-%m-%d_%H-%M-%S}
-  sub_dir: crop_scale.lower=${dataset.transform_train.crop_scale.lower},b=${dataloader.batch_size},momentum=${optimizer.momentum}
+  sub_dir: crop_scale.lower=${transform.train.crop_scale.lower},b=${dataloader.batch_size},momentum=${optimizer.momentum}
 
 paths:
   checkpoints: ${experiment.dir}/${experiment.sub_dir}/checkpoints
@@ -31,7 +31,7 @@ hydra:
     subdir: ${experiment.sub_dir}/logs
   sweeper:
     params:
-      dataset.transform_train.crop_scale.lower: 0.6, 0.7, 0.8, 0.9
+      transform.train.crop_scale.lower: 0.6, 0.7, 0.8, 0.9
       dataloader.batch_size: 64, 128  # based on "batch_size_lr.yaml"
       optimizer.momentum: 0.8, 0.85  # based on "momentum_wd.yaml"
 
@@ -43,6 +43,7 @@ hydra:
 defaults:
   - override /model: lenet
   - override /dataset: fashionmnist
+  - override /transform/train: basic_augmentation
   - _self_
 
 reproducibility:
@@ -52,10 +53,14 @@ reproducibility:
 training:
   num_epochs: 200  # increased from previous experiments
 
-dataset:
-  transform_train:
-    flip_prob: 0.5  # based on "horizontal_flipping.yaml"
-  transform_val:
+transform:
+  train:
+    crop_scale:
+      upper: 1.0
+    crop_ratio:
+      lower: 1.0
+      upper: 1.0
+  val:
     resize_size: ${model.input_size}
 
 dataloader:

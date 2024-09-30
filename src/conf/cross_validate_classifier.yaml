@@ -1,6 +1,8 @@
 defaults:
   - model: ???
   - dataset: ???
+  - transform/train: ???
+  - transform/val: preprocessing
   - criterion: cross_entropy
   - optimizer: sgd
   - main_scheduler: null  # optional, null to disable
@@ -38,6 +40,10 @@ reproducibility:
 training:
   num_epochs: ???
   num_folds: 5  # number of folds for cross-validation
+
+transform:
+  val:
+    resize_size: ???
 
 dataloader:
   batch_size: ???

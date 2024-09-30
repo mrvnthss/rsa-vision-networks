@@ -1,0 +1,3 @@
+mean: ${dataset.stats.mean}
+std: ${dataset.stats.std}
+crop_size: ${model.input_size}

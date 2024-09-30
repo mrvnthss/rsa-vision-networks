@@ -18,7 +18,7 @@
 experiment:
   name: lenet_fashionmnist/grid_search/baseline_final
   dir:  ../out/${experiment.name}/${now:%Y-%m-%d_%H-%M-%S}
-  sub_dir: crop_scale.lower=${dataset.transform_train.crop_scale.lower},crop_ratio.lower=${dataset.transform_train.crop_ratio.lower},b=${dataloader.batch_size},lr=${optimizer.lr},momentum=${optimizer.momentum},wd=${optimizer.weight_decay},gamma=${main_scheduler.lr_gamma}
+  sub_dir: crop_scale.lower=${transform.train.crop_scale.lower},crop_ratio.lower=${transform.train.crop_ratio.lower},b=${dataloader.batch_size},lr=${optimizer.lr},momentum=${optimizer.momentum},wd=${optimizer.weight_decay},gamma=${main_scheduler.lr_gamma}
 
 paths:
   checkpoints: ${experiment.dir}/${experiment.sub_dir}/checkpoints
@@ -31,8 +31,8 @@ hydra:
     subdir: ${experiment.sub_dir}/logs
   sweeper:
     params:
-      dataset.transform_train.crop_scale.lower: 0.8, 0.9  # based on "random_cropping.yaml", "random_cropping_control/scale" & "random_cropping_control/ratio"
-      dataset.transform_train.crop_ratio: "{lower: 0.75, upper: 1.3333333333333333},{lower: 0.8, upper: 1.25}"  # based on "random_cropping_control/ratio"
+      transform.train.crop_scale.lower: 0.8, 0.9  # based on "random_cropping.yaml", "random_cropping_control/scale" & "random_cropping_control/ratio"
+      transform.train.crop_ratio: "{lower: 0.75, upper: 1.3333333333333333},{lower: 0.8, upper: 1.25}"  # based on "random_cropping_control/ratio"
       dataloader.batch_size: 64, 128, 256  # based on "batch_size_lr.yaml"
       optimizer.lr: 0.1, 0.01  # based on "batch_size_lr.yaml"
       optimizer.momentum: 0.8, 0.9  # based on "momentum_wd.yaml"
@@ -47,6 +47,7 @@ hydra:
 defaults:
   - override /model: lenet
   - override /dataset: fashionmnist
+  - override /transform/train: basic_augmentation
   - override /main_scheduler: step_lr
   - _self_
 
@@ -57,10 +58,11 @@ reproducibility:
 training:
   num_epochs: 500
 
-dataset:
-  transform_train:
-    flip_prob: 0.5  # based on "horizontal_flipping.yaml"
-  transform_val:
+transform:
+  train:
+    crop_scale:
+      upper: 1.0
+  val:
     resize_size: ${model.input_size}
 
 dataloader:

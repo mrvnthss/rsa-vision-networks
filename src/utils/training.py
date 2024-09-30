@@ -3,14 +3,14 @@
 Functions:
     * evaluate_classifier(model, test_loader, ...): Evaluate a
         classification model.
-    * get_collate_fn(dataset_params): Get a collate function
-        incorporating MixUp/CutMix transforms.
+    * get_collate_fn(transform_train_params, num_classes): Get a collate
+        function incorporating MixUp & CutMix transforms.
     * get_lr_scheduler(cfg, optimizer): Get the learning rate scheduler
         to use during training.
-    * get_train_transform(train_transform_params): Get the training
-        transforms for an image classification task.
-    * get_val_transform(val_transform_params): Get the validation
-        transforms for an image classification task.
+    * get_train_transform(transform_train_params): Get the transform for
+        an image classification task (training).
+    * get_val_transform(transform_val_params): Get the transform for an
+        image classification task (validation).
     * set_device(): Set the device to use for training.
     * set_seeds(repr_params): Set random seeds for reproducibility.
 """
@@ -39,8 +39,8 @@ from torch.utils.data import default_collate
 from torchmetrics import MetricCollection
 from tqdm import tqdm
 
-from src.config import DatasetConf, ReproducibilityConf, TrainClassifierConf, \
-    TrainSimilarityConf, TransformTrainConf, TransformValConf
+from src.config import ReproducibilityConf, TrainClassifierConf, TrainSimilarityConf, \
+    TransformTrainConf, TransformValConf, CropScaleConf, CropRatioConf
 from src.utils.classification_transforms import *
 from src.utils.sequential_lr import SequentialLR
 
@@ -105,22 +105,29 @@ def evaluate_classifier(
     return results
 
 
-def get_collate_fn(dataset_params: DatasetConf) -> Optional[Callable]:
-    """Get a collate function incorporating MixUp/CutMix transforms.
+def get_collate_fn(
+        transform_train_params: TransformTrainConf,
+        num_classes: int
+) -> Optional[Callable]:
+    """Get a collate function incorporating MixUp & CutMix transforms.
 
     Args:
-        dataset_params: The dataset configuration, specifying the number
-          of classes and the MixUp/CutMix parameters.
+        transform_train_params: The parameters of the transform to use
+          during training, specifying the MixUp & CutMix parameters.
+        num_classes: The number of classes in the dataset.
 
     Returns:
-        The collate function incorporating MixUp/CutMix transforms (if
+        The collate function incorporating MixUp & CutMix transforms (if
         specified).
     """
 
+    mixup_alpha = _get_transform_parameter(transform_train_params, "mixup_alpha", 0.0)
+    cutmix_alpha = _get_transform_parameter(transform_train_params, "cutmix_alpha", 0.0)
+
     mixup_cutmix = _get_mixup_cutmix(
-        mixup_alpha=dataset_params.transform_train.mixup_alpha,
-        cutmix_alpha=dataset_params.transform_train.cutmix_alpha,
-        num_classes=dataset_params.num_classes
+        mixup_alpha=mixup_alpha,
+        cutmix_alpha=cutmix_alpha,
+        num_classes=num_classes
     )
 
     if mixup_cutmix is not None:
@@ -178,49 +185,65 @@ def get_lr_scheduler(
 
 
 def get_train_transform(
-        train_transform_params: TransformTrainConf
+        transform_train_params: TransformTrainConf
 ) -> ClassificationTransformsTrain:
-    """Get the training transforms for an image classification task.
+    """Get the transform for an image classification task (training).
 
     Args:
-        train_transform_params: The parameters to use for the training
-          transforms.
+        transform_train_params: The parameters of the transform to use
+          during training.
 
     Returns:
-        The training transforms for an image classification task.
+        The transform to use during training.
     """
 
+    # Retrieve parameters from config, automatically handling missing values
+    crop_scale = _get_transform_parameter(
+        transform_train_params,
+        "crop_scale",
+        CropScaleConf(lower=1.0, upper=1.0)
+    )
+    crop_ratio = _get_transform_parameter(
+        transform_train_params,
+        "crop_ratio",
+        CropRatioConf(lower=1.0, upper=1.0)
+    )
+    flip_prob = _get_transform_parameter(transform_train_params, "flip_prob", 0.0)
+    ta_wide = _get_transform_parameter(transform_train_params, "ta_wide", False)
+    random_erase_prob = _get_transform_parameter(transform_train_params, "random_erase_prob", 0.0)
+
+    # Initialize transform
     transform = ClassificationTransformsTrain(
-        mean=train_transform_params.mean,
-        std=train_transform_params.std,
-        crop_size=train_transform_params.crop_size,
-        crop_scale=train_transform_params.crop_scale,
-        crop_ratio=train_transform_params.crop_ratio,
-        flip_prob=train_transform_params.flip_prob,
-        ta_wide=train_transform_params.ta_wide,
-        random_erase_prob=train_transform_params.random_erase_prob
+        mean=transform_train_params.mean,
+        std=transform_train_params.std,
+        crop_size=transform_train_params.crop_size,
+        crop_scale=crop_scale,
+        crop_ratio=crop_ratio,
+        flip_prob=flip_prob,
+        ta_wide=ta_wide,
+        random_erase_prob=random_erase_prob
     )
     return transform
 
 
 def get_val_transform(
-        val_transform_params: TransformValConf
+        transform_val_params: TransformValConf
 ) -> ClassificationTransformsVal:
-    """Get the validation transforms for an image classification task.
+    """Get the transform for an image classification task (validation).
 
     Args:
-        val_transform_params: The parameters to use for the validation
-          transforms.
+        transform_val_params: The parameters of the transform to use
+          during validation.
 
     Returns:
-        The validation transforms for an image classification task.
+        The transform to use during validation.
     """
 
     transform = ClassificationTransformsVal(
-        mean=val_transform_params.mean,
-        std=val_transform_params.std,
-        resize_size=val_transform_params.resize_size,
-        crop_size=val_transform_params.resize_size
+        mean=transform_val_params.mean,
+        std=transform_val_params.std,
+        resize_size=transform_val_params.resize_size,
+        crop_size=transform_val_params.crop_size
     )
     return transform
 
@@ -296,6 +319,29 @@ def _get_mixup_cutmix(
     if not mixup_cutmix:
         return None
     return T.RandomChoice(mixup_cutmix)
+
+
+def _get_transform_parameter(
+        cfg: TransformTrainConf,
+        parameter: str,
+        default_value: Any
+) -> Any:
+    """Retrieve a parameter from the transform configuration.
+
+    Args:
+        cfg: The transform configuration.
+        parameter: The parameter to retrieve.
+        default_value: The default value to return if the parameter is
+          not present in the configuration.
+
+    Returns:
+        The value of the parameter in the configuration, or the default
+        value if the parameter is not present.
+    """
+
+    if parameter not in cfg or getattr(cfg, parameter) is None:
+        return default_value
+    return getattr(cfg, parameter)
 
 
 def _get_warmup_epochs(
