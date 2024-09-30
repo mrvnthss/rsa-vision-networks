@@ -83,7 +83,7 @@ def main(cfg: TestClassifierConf) -> None:
 
     # Instantiate metrics
     metrics = MetricCollection({
-        name: instantiate(metric) for name, metric in cfg.metrics.items()
+        name: instantiate(metric) for name, metric in cfg.performance.metrics.items()
     })
 
     # Evaluate model performance

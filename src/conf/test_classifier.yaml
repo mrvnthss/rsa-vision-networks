@@ -2,6 +2,7 @@ defaults:
   - model: ???
   - dataset: ???
   - criterion: cross_entropy
+  - performance/metrics: classification
   - override hydra/job_logging: disabled
   - override hydra/hydra_logging: disabled
   - _self_
@@ -36,25 +37,6 @@ dataloader:
   val_split: 0.20  # fraction of the dataset to use as validation set
   batch_size: 32
   num_workers: 4
-
-
-# -------------------
-# PERFORMANCE METRICS
-# -------------------
-
-metrics:
-  Accuracy@1:
-    _target_: torchmetrics.classification.MulticlassAccuracy
-    num_classes: ${dataset.num_classes}
-    top_k: 1
-    average: micro
-    multidim_average: global
-  Accuracy@5:
-    _target_: torchmetrics.classification.MulticlassAccuracy
-    num_classes: ${dataset.num_classes}
-    top_k: 5
-    average: micro
-    multidim_average: global
 
 
 # --------------

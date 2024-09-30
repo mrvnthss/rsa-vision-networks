@@ -48,7 +48,7 @@ def main(cfg: TrainSimilarityConf) -> None:
     # Instantiate metrics to track during training
     logger.info("Instantiating metrics ...")
     prediction_metrics = MetricCollection({
-        name: instantiate(metric) for name, metric in cfg.metrics.items()
+        name: instantiate(metric) for name, metric in cfg.performance.metrics.items()
     })
 
     # Set up criterion

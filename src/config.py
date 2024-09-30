@@ -434,15 +434,26 @@ class DataloaderConf:
     num_workers: int = MISSING
 
 
-# ----------------------------------
-# PERFORMANCE METRICS CONFIGURATIONS
-# ----------------------------------
+# --------------------------
+# PERFORMANCE CONFIGURATIONS
+# --------------------------
 
 @dataclass
-class MulticlassAccuracyConf:
+class Top1AccuracyConf:
     _target_: str = "torchmetrics.classification.MulticlassAccuracy"
     num_classes: int = MISSING
-    top_k: int = MISSING
+    top_k: int = 1
+    average: str = "micro"
+    multidim_average: str = "global"
+    ignore_index: Optional[int] = None
+    validate_args: bool = True
+
+
+@dataclass
+class Top5AccuracyConf:
+    _target_: str = "torchmetrics.classification.MulticlassAccuracy"
+    num_classes: int = MISSING
+    top_k: int = 5
     average: str = "micro"
     multidim_average: str = "global"
     ignore_index: Optional[int] = None
@@ -451,7 +462,11 @@ class MulticlassAccuracyConf:
 
 @dataclass
 class PerformanceConf:
-    metric: str = MISSING
+    metrics: Dict[str, Union[
+        Top1AccuracyConf,
+        Top5AccuracyConf
+    ]] = MISSING
+    evaluation_metric: str = MISSING
     higher_is_better: bool = MISSING
     evaluate_on: DatasetSplitName = MISSING
     patience: Optional[int] = None
@@ -501,10 +516,8 @@ class TestClassifierConf(DictConfig):
     dataset: DatasetConf = MISSING
     dataloader: DataloaderConf = MISSING
     criterion: CriterionConf = MISSING
+    performance: PerformanceConf = MISSING
     reproducibility: ReproducibilityConf = MISSING
-    metrics: Dict[str, Union[
-        MulticlassAccuracyConf
-    ]] = MISSING
 
 
 @dataclass
@@ -519,9 +532,6 @@ class TrainClassifierConf(DictConfig):
     experiment: ExperimentConf = MISSING
     reproducibility: ReproducibilityConf = MISSING
     training: TrainingConf = MISSING
-    metrics: Dict[str, Union[
-        MulticlassAccuracyConf
-    ]] = MISSING
     performance: PerformanceConf = MISSING
     checkpoints: CheckpointsConf = MISSING
     tensorboard: TensorBoardConf = MISSING
@@ -540,9 +550,6 @@ class TrainSimilarityConf(DictConfig):
     experiment: ExperimentConf = MISSING
     reproducibility: ReproducibilityConf = MISSING
     training: TrainingConf = MISSING
-    metrics: Dict[str, Union[
-        MulticlassAccuracyConf
-    ]] = MISSING
     performance: PerformanceConf = MISSING
     checkpoints: CheckpointsConf = MISSING
     tensorboard: TensorBoardConf = MISSING

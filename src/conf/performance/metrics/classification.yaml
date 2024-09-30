@@ -1,0 +1,13 @@
+Accuracy@1:
+  _target_: torchmetrics.classification.MulticlassAccuracy
+  num_classes: ${dataset.num_classes}
+  top_k: 1
+  average: micro
+  multidim_average: global
+
+Accuracy@5:
+  _target_: torchmetrics.classification.MulticlassAccuracy
+  num_classes: ${dataset.num_classes}
+  top_k: 5
+  average: micro
+  multidim_average: global

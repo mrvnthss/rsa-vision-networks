@@ -61,7 +61,7 @@ class CheckpointManager:
               * checkpoints.save_frequency
               * paths.checkpoints
               * performance.evaluate_on
-              * performance.metric
+              * performance.evaluation_metric
 
         Args:
             cfg: The training configuration.
@@ -163,8 +163,8 @@ class CheckpointManager:
                 "Periodically saved checkpoints are "
                 f"{'continuously' if self.delete_previous else 'not'} overwritten."
             ),
-            f"Best model is saved during training, {self.cfg.performance.metric} on the {dataset} "
-            "determines performance."
+            f"Best model is saved during training, {self.cfg.performance.evaluation_metric} on "
+            f"the {dataset} determines performance."
         ]
 
         msgs_disabled = [
@@ -315,15 +315,17 @@ class CheckpointManager:
         """
 
         default_best_score = "-inf" if performance_tracker.higher_is_better else "inf"
-        if checkpoint["config"].performance.metric != self.cfg.performance.metric:
+        checkpoint_evaluation_metric = checkpoint["config"].performance.evaluation_metric
+        checkpoint_evaluate_on = checkpoint["config"].performance.evaluate_on
+        if checkpoint_evaluation_metric != self.cfg.performance.evaluation_metric:
             # NOTE: The best score is initialized to -inf or inf in the PerformanceTracker
-            #       class, so there is no need to set it here.
+            #       class, so there is no need to reset it here.
             self.logger.warning(
                 "Metric in training configuration determining performance does not match metric "
                 "found in checkpoint! Best score is reset to %s for tracking purposes.",
                 default_best_score
             )
-        elif checkpoint["config"].performance.evaluate_on != self.cfg.performance.evaluate_on:
+        elif checkpoint_evaluate_on != self.cfg.performance.evaluate_on:
             self.logger.warning(
                 "Dataset split in training configuration on which to evaluate performance does "
                 "not match split found in checkpoint! Best score is reset to %s for tracking "
@@ -343,7 +345,7 @@ class CheckpointManager:
             self.logger.info(
                 "Best score (%s on the %s set) set to %.4f (achieved after %d epochs) for "
                 "tracking purposes.",
-                self.cfg.performance.metric,
+                self.cfg.performance.evaluation_metric,
                 "training" if self.cfg.performance.evaluate_on == "train" else "validation",
                 performance_tracker.best_score,
                 performance_tracker.best_epoch_idx

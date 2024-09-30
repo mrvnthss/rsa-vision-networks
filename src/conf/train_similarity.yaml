@@ -6,6 +6,7 @@ defaults:
   - optimizer: sgd
   - main_scheduler: null  # optional, null to disable
   - warmup_scheduler: null  # optional, null to disable
+  - performance/metrics: classification
   - _self_
   - experiment: ???
 
@@ -57,26 +58,12 @@ repr_similarity:
   rsa_transform: null  # optional, null to disable
 
 
-# -------------------
-# PERFORMANCE METRICS
-# -------------------
-
-metrics:
-  Accuracy@1:
-    _target_: torchmetrics.classification.MulticlassAccuracy
-    num_classes: ${dataset.num_classes}
-    top_k: 1
-    average: micro
-    multidim_average: global
-  Accuracy@5:
-    _target_: torchmetrics.classification.MulticlassAccuracy
-    num_classes: ${dataset.num_classes}
-    top_k: 5
-    average: micro
-    multidim_average: global
+# -----------
+# PERFORMANCE
+# -----------
 
 performance:
-  metric: Loss  # either "Loss", "RSAScore", or one of the keys in the ``metrics`` dict
+  evaluation_metric: Loss  # either "Loss", "RSAScore", or one of the keys in the ``metrics`` dict
   higher_is_better: false
   evaluate_on: val  # either "train" or "val"
   patience: 20  # patience for early stopping, null to disable

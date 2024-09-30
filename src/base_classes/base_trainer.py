@@ -85,9 +85,9 @@ class BaseTrainer(ABC):
               * dataloader.batch_size
               * paths.tensorboard
               * performance.evaluate_on
+              * performance.evaluation_metric
               * performance.higher_is_better
               * performance.keep_previous_best_score
-              * performance.metric
               * performance.patience
               * tensorboard.updates_per_epoch
               * training.num_epochs
@@ -132,7 +132,7 @@ class BaseTrainer(ABC):
                 f"or 'val', but got {cfg.performance.evaluate_on}."
             )
         self.performance_metric = {
-            "metric": cfg.performance.metric,
+            "evaluation_metric": cfg.performance.evaluation_metric,
             "evaluate_on": cfg.performance.evaluate_on
         }
         self.performance_tracker = PerformanceTracker(
@@ -318,15 +318,15 @@ class BaseTrainer(ABC):
                 results = training_results if self.performance_metric["evaluate_on"] == "train" \
                     else validation_results
 
-                if self.performance_metric["metric"] not in results:
+                if self.performance_metric["evaluation_metric"] not in results:
                     raise ValueError(
-                        f"Performance metric '{self.performance_metric['metric']}' not found in "
-                        "training results. Please ensure that the performance metric is included "
-                        "in the dictionary returned by the 'train_epoch' and 'eval_epoch' methods."
+                        f"Metric '{self.performance_metric['evaluation_metric']}' not found in "
+                        f"training results. Please ensure that the metric is included in the "
+                        f"dictionary returned by the 'train_epoch' and 'eval_epoch' methods."
                     )
 
                 self.performance_tracker.update(
-                    latest_score=results[self.performance_metric["metric"]],
+                    latest_score=results[self.performance_metric["evaluation_metric"]],
                     epoch_idx=self.epoch_idx
                 )
 
@@ -533,7 +533,7 @@ class BaseTrainer(ABC):
             "Best performing model achieved a score of %.3f (%s) on the %s set after %d epochs of "
             "training.",
             self.performance_tracker.best_score,
-            self.performance_metric["metric"],
+            self.performance_metric["evaluation_metric"],
             dataset_str,
             self.performance_tracker.best_epoch_idx
         )
