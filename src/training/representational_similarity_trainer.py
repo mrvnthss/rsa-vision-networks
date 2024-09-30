@@ -28,7 +28,6 @@ class RepresentationalSimilarityTrainer(BaseTrainer):
         epoch_idx: The current epoch index, starting from 1.
         experiment_tracker: The ExperimentTracker instance to log
           results to TensorBoard.
-        final_epoch_idx: The index of the final epoch.
         hooks: A dictionary storing the handles that can be used to
           remove the forward hooks attached to the two models (to
           extract intermediate activations).
@@ -40,6 +39,7 @@ class RepresentationalSimilarityTrainer(BaseTrainer):
         model: The model to be trained.
         model_ref: The model that serves as a reference to compare
           against when assessing representational similarity.
+        num_epochs: The total number of epochs to train for.
         optimizer: The optimizer used during training.
         performance_tracker: The PerformanceTracker instance to monitor
           model performance and handle early stopping.

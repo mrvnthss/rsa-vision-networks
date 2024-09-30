@@ -24,13 +24,13 @@ class ClassificationTrainer(BaseTrainer):
         epoch_idx: The current epoch index, starting from 1.
         experiment_tracker: The ExperimentTracker instance to log
           results to TensorBoard.
-        final_epoch_idx: The index of the final epoch.
         logger: The logger instance to record logs.
         lr_scheduler: The scheduler used to adjust the learning rate
           during training.
         metric_tracker: The MetricTracker instance to track performance
           metrics during training.
         model: The model to be trained.
+        num_epochs: The total number of epochs to train for.
         optimizer: The optimizer used during training.
         performance_tracker: The PerformanceTracker instance to monitor
           model performance and handle early stopping.
