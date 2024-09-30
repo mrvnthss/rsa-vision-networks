@@ -9,9 +9,9 @@ Passes *DictConfig* ``cfg`` to the [``CheckpointManager``](#checkpointmanager) c
 * dataloader.batch_size
 * paths.tensorboard
 * performance.evaluate_on
+* performance.evaluation_metric
 * performance.higher_is_better
 * performance.keep_previous_best_score
-* performance.metric
 * performance.patience
 * tensorboard.updates_per_epoch
 * training.num_epochs
@@ -25,7 +25,7 @@ Passes *DictConfig* ``cfg`` to the [``CheckpointManager``](#checkpointmanager) c
 * checkpoints.save_frequency
 * paths.checkpoints
 * performance.evaluate_on
-* performance.metric
+* performance.evaluation_metric
 
 
 ### ``ClassificationTrainer``
@@ -37,5 +37,5 @@ Passes *DictConfig* ``cfg`` to the [``BaseTrainer``](#basetrainer) class.
 
 Passes *DictConfig* ``cfg`` to the [``BaseTrainer``](#basetrainer) class.
 
-* hooks.ref
-* hooks.train
+* repr_similarity.hooks.ref
+* repr_similarity.hooks.train
