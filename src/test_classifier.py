@@ -60,7 +60,9 @@ def main(cfg: TestClassifierConf) -> None:
     )
     transform = get_val_transform(cfg.dataset.transform_val)
     val_split = cfg.dataloader.val_split if cfg.model.evaluate_on in ["train", "val"] else None
-    multiprocessing_context = "fork" if cfg.dataloader.num_workers > 0 else None
+    multiprocessing_context = None
+    if device.type == "mps" and cfg.dataloader.num_workers > 0:
+        multiprocessing_context = "fork"
     test_loader = BaseLoader(
         dataset=dataset,
         main_transform=transform,

@@ -49,7 +49,9 @@ def main(cfg: TrainClassifierConf) -> None:
     # Set up dataloaders
     logger.info("Preparing dataloaders ...")
     collate_fn = get_collate_fn(cfg.dataset)
-    multiprocessing_context = "fork" if cfg.dataloader.num_workers > 0 else None
+    multiprocessing_context = None
+    if device.type == "mps" and cfg.dataloader.num_workers > 0:
+        multiprocessing_context = "fork"
     base_loader = BaseLoader(
         dataset=dataset,
         main_transform=train_transform,

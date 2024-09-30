@@ -76,7 +76,9 @@ def main(cfg: TrainClassifierConf) -> None:
         cfg.training.num_folds
     )
     collate_fn = get_collate_fn(cfg.dataset)
-    multiprocessing_context = "fork" if cfg.dataloader.num_workers > 0 else None
+    multiprocessing_context = None
+    if device.type == "mps" and cfg.dataloader.num_workers > 0:
+        multiprocessing_context = "fork"
     stratified_k_fold_loader = StratifiedKFoldLoader(
         dataset=dataset,
         train_transform=train_transform,
