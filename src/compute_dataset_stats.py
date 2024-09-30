@@ -40,7 +40,7 @@ def compute_dataset_stats(
     """
 
     # Prepare dataloader
-    # NOTE: We use a batch size of 1 to allow for varying image sizes within the dataset
+    # NOTE: We use a batch size of 1 to allow for varying image sizes within the dataset.
     dataloader = torch.utils.data.DataLoader(dataset)
 
     with torch.no_grad():
@@ -58,11 +58,10 @@ def compute_dataset_stats(
 
         for image, _ in dataloader:
             # Compute mean and standard deviation (across pixels) for each channel
-            image.squeeze_(0)  # --> (C, H, W)
+            image.squeeze_(dim=0)  # --> (C, H, W)
             running_mean += torch.mean(image, dim=(1, 2))
             running_std += torch.std(image, dim=(1, 2))
 
-            # Update progress bar, i.e., increment by 1
             pbar.update()
 
         # Close progress bar

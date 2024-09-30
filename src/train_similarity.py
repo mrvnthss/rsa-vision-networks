@@ -6,7 +6,7 @@ associated with this script is named "train_similarity.yaml".
 
 Typical usage example:
 
-  >>> python train_similarity.py experiment=lenet_fashionmnist/representational_similarity/test_run
+  >>> python train_similarity.py experiment=lenet_fashionmnist/representational_similarity/weight_transform
 """
 
 
@@ -53,15 +53,7 @@ def main(cfg: TrainSimilarityConf) -> None:
 
     # Set up criterion
     logger.info("Setting up criterion ...")
-    criterion = get_rsa_loss(
-        label_smoothing=cfg.repr_similarity.label_smoothing,
-        compute_name=cfg.repr_similarity.compute_rdm.name,
-        compute_kwargs=cfg.repr_similarity.compute_rdm.kwargs,
-        compare_name=cfg.repr_similarity.compare_rdm.name,
-        compare_kwargs=cfg.repr_similarity.compare_rdm.kwargs,
-        weight_rsa_score=cfg.repr_similarity.weight_rsa_score,
-        rsa_transform_str=cfg.repr_similarity.rsa_transform
-    )
+    criterion = get_rsa_loss(repr_similarity_params=cfg.repr_similarity)
 
     # Set up dataloaders
     logger.info("Preparing dataloaders ...")

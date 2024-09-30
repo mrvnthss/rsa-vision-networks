@@ -2,6 +2,7 @@
 name: StepLR
 lr_step_size: ???
 lr_gamma: ???
+
 kwargs:
   _target_: torch.optim.lr_scheduler.StepLR
   step_size: ${main_scheduler.lr_step_size}

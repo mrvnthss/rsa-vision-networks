@@ -1,8 +1,8 @@
 # @package _global_
 
 # This configuration file can be used to run a grid search on a total of
-# 4 parameters (flip probability, batch size, momentum, weight decay)
-# used to train the LeNet-5 model on the FashionMNIST dataset.
+# 4 parameters (flip probability, batch size, momentum, and weight
+# decay) used to train the LeNet-5 model on the FashionMNIST dataset.
 #
 # To run this experiment, execute the following command from the
 # "thesis-experiments/src/" directory:
@@ -11,14 +11,19 @@
 #
 
 
-# Multi-run configuration
+# -----------------------
+# MULTI-RUN CONFIGURATION
+# -----------------------
+
 experiment:
   name: lenet_fashionmnist/data_augmentation/horizontal_flipping
   dir:  ../out/${experiment.name}/${now:%Y-%m-%d_%H-%M-%S}
   sub_dir: flip_p=${dataset.transform_train.flip_prob},b=${dataloader.batch_size},momentum=${optimizer.momentum},wd=${optimizer.weight_decay}
+
 paths:
   checkpoints: ${experiment.dir}/${experiment.sub_dir}/checkpoints
   tensorboard: ${experiment.dir}/${experiment.sub_dir}/tensorboard
+
 hydra:
   mode: MULTIRUN
   sweep:
@@ -26,24 +31,37 @@ hydra:
     subdir: ${experiment.sub_dir}/logs
   sweeper:
     params:
-      # Grid search parameters
       dataset.transform_train.flip_prob: 0.0, 0.5
-      dataloader.batch_size: 64, 128  # based on "batch_size_lr.yaml" grid search
-      optimizer.momentum: 0.8, 0.85  # based on "momentum_wd.yaml" grid search
-      optimizer.weight_decay: 0.001, 1e-4  # based on "momentum_wd.yaml" grid search
+      dataloader.batch_size: 64, 128  # based on "batch_size_lr.yaml"
+      optimizer.momentum: 0.8, 0.85  # based on "momentum_wd.yaml"
+      optimizer.weight_decay: 1e-3, 1e-4  # based on "momentum_wd.yaml"
 
-# Fixed training parameters
+
+# ---------------------
+# GENERAL CONFIGURATION
+# ---------------------
+
+defaults:
+  - override /model: lenet
+  - override /dataset: fashionmnist
+  - _self_
+
 reproducibility:
   torch_seed: 89
   shuffle_seed: 858
-dataset:
-  transform_val:
-    resize_size: ${model.input_size}  # matches the input size of the model
-dataloader:
-  num_workers: 4
+
 training:
   num_epochs: 100
+
+dataset:
+  transform_val:
+    resize_size: ${model.input_size}
+
+dataloader:
+  num_workers: 4
+
 optimizer:
-  lr: 0.01  # based on "batch_size_lr.yaml" grid search
+  lr: 0.01  # based on "batch_size_lr.yaml"
+
 performance:
   patience: 20

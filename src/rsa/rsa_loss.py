@@ -14,7 +14,6 @@ def rsa_loss(
         targets: torch.Tensor,
         activations1: torch.Tensor,
         activations2: torch.Tensor,
-        label_smoothing: float,
         method_compute: Callable[[torch.Tensor], torch.Tensor],
         method_compare: Callable[[torch.Tensor, torch.Tensor], torch.Tensor],
         weight_rsa_score: float,
@@ -38,8 +37,6 @@ def rsa_loss(
         activations2: Second set of activations.  Must be a 2-D tensor
           of size (N, K), where N >= 3 is the number of stimuli and
           K >= 2 is the number of unit activations per stimulus.
-        label_smoothing: The amount of smoothing when computing the
-          cross-entropy loss.
         method_compute: The method used to compute the RDMs from the
           activations.
         method_compare: The method used to compare RDMs.
@@ -74,8 +71,7 @@ def rsa_loss(
     # Compute cross-entropy loss
     loss = F.cross_entropy(
         input=predictions,
-        target=targets,
-        label_smoothing=label_smoothing
+        target=targets
     )
 
     # Compute RSA score

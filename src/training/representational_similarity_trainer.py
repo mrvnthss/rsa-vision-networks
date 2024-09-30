@@ -89,8 +89,8 @@ class RepresentationalSimilarityTrainer(BaseTrainer):
             training configuration ``cfg`` to the BaseTrainer class
             during initialization.  Additionally, it makes direct use
             of the following entries of the configuration ``cfg``:
-              * hooks.ref
-              * hooks.train
+              * repr_similarity.hooks.ref
+              * repr_similarity.hooks.train
 
         Args:
             model_train: The model to be trained.
@@ -143,13 +143,13 @@ class RepresentationalSimilarityTrainer(BaseTrainer):
         self.hooks["train"] = self._register_hook(
             model=self.model,
             activations=self.activations,
-            layer=cfg.hooks.train,
+            layer=cfg.repr_similarity.hooks.train,
             activations_key="train"
         )
         self.hooks["ref"] = self._register_hook(
             model=self.model_ref,
             activations=self.activations,
-            layer=cfg.hooks.ref,
+            layer=cfg.repr_similarity.hooks.ref,
             activations_key="ref"
         )
 

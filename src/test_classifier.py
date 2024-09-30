@@ -6,8 +6,9 @@ associated with this script is named "test_classifier.yaml".
 
 Typical usage example:
 
-  >>> python test_classifier.py model=lenet dataset=fashionmnist evaluate_on=test
+  >>> python test_classifier.py model=lenet dataset=fashionmnist
   ...                           model.load_weights_from=<path_to_checkpoint>
+  ...                           model.evaluate_on=test
 """
 
 
@@ -31,7 +32,7 @@ cs.store(name="test_classifier_conf", node=TestClassifierConf)
 def main(cfg: TestClassifierConf) -> None:
     """Evaluate a trained classification model on a dataset."""
 
-    if cfg.evaluate_on in ["train", "val"]:
+    if cfg.model.evaluate_on in ["train", "val"]:
         if (cfg.dataloader.val_split is None
                 or cfg.dataloader.val_split <= 0
                 or cfg.dataloader.val_split >= 1):
@@ -55,10 +56,10 @@ def main(cfg: TestClassifierConf) -> None:
 
     # Initialize dataloader providing test samples
     dataset = instantiate(
-        cfg.dataset.test_set if cfg.evaluate_on == "test" else cfg.dataset.train_set
+        cfg.dataset.test_set if cfg.model.evaluate_on == "test" else cfg.dataset.train_set
     )
     transform = get_val_transform(cfg.dataset.transform_val)
-    val_split = cfg.dataloader.val_split if cfg.evaluate_on in ["train", "val"] else None
+    val_split = cfg.dataloader.val_split if cfg.model.evaluate_on in ["train", "val"] else None
     multiprocessing_context = "fork" if cfg.dataloader.num_workers > 0 else None
     test_loader = BaseLoader(
         dataset=dataset,
@@ -72,7 +73,7 @@ def main(cfg: TestClassifierConf) -> None:
         multiprocessing_context=multiprocessing_context,
         seeds=cfg.reproducibility
     )
-    mode: Literal["main", "val"] = "val" if cfg.evaluate_on == "val" else "main"
+    mode: Literal["main", "val"] = "val" if cfg.model.evaluate_on == "val" else "main"
     test_loader = test_loader.get_dataloader(mode=mode)
 
     # Instantiate criterion
@@ -97,11 +98,11 @@ def main(cfg: TestClassifierConf) -> None:
         "train": "training",
         "val": "validation",
         "test": "test"
-    }[cfg.evaluate_on]
+    }[cfg.model.evaluate_on]
     output = [f"Results on {split_str} set:"]
     for metric_name, metric_value in results.items():
         if isinstance(metric_value, torch.Tensor):
-            # NOTE: Here, we assume that all metrics return scalar values!
+            # NOTE: Here we assume that all metrics return scalar values!
             metric_value = metric_value.item()
         output.append(f"{metric_name}: {metric_value:.3f}")
     print("\n  ".join(output))

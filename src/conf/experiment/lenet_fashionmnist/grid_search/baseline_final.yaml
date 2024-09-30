@@ -11,14 +11,19 @@
 #
 
 
-# Multi-run configuration
+# -----------------------
+# MULTI-RUN CONFIGURATION
+# -----------------------
+
 experiment:
   name: lenet_fashionmnist/grid_search/baseline_final
   dir:  ../out/${experiment.name}/${now:%Y-%m-%d_%H-%M-%S}
   sub_dir: crop_scale.lower=${dataset.transform_train.crop_scale.lower},crop_ratio.lower=${dataset.transform_train.crop_ratio.lower},b=${dataloader.batch_size},lr=${optimizer.lr},momentum=${optimizer.momentum},wd=${optimizer.weight_decay},gamma=${main_scheduler.lr_gamma}
+
 paths:
   checkpoints: ${experiment.dir}/${experiment.sub_dir}/checkpoints
   tensorboard: ${experiment.dir}/${experiment.sub_dir}/tensorboard
+
 hydra:
   mode: MULTIRUN
   sweep:
@@ -26,7 +31,6 @@ hydra:
     subdir: ${experiment.sub_dir}/logs
   sweeper:
     params:
-      # Grid search parameters
       dataset.transform_train.crop_scale.lower: 0.8, 0.9  # based on "random_cropping.yaml", "random_cropping_control/scale" & "random_cropping_control/ratio"
       dataset.transform_train.crop_ratio: "{lower: 0.75, upper: 1.3333333333333333},{lower: 0.8, upper: 1.25}"  # based on "random_cropping_control/ratio"
       dataloader.batch_size: 64, 128, 256  # based on "batch_size_lr.yaml"
@@ -35,23 +39,35 @@ hydra:
       optimizer.weight_decay: 1e-3, 1e-4  # based on "momentum_wd.yaml"
       main_scheduler.lr_gamma: 0.1, 0.5  # based on "lr_schedule.yaml"
 
-# Fixed training parameters
+
+# ---------------------
+# GENERAL CONFIGURATION
+# ---------------------
+
 defaults:
+  - override /model: lenet
+  - override /dataset: fashionmnist
   - override /main_scheduler: step_lr
   - _self_
+
 reproducibility:
   torch_seed: 89
   shuffle_seed: 858
+
+training:
+  num_epochs: 500
+
 dataset:
   transform_train:
     flip_prob: 0.5  # based on "horizontal_flipping.yaml"
   transform_val:
-    resize_size: ${model.input_size}  # matches the input size of the model
+    resize_size: ${model.input_size}
+
 dataloader:
   num_workers: 4
-training:
-  num_epochs: 500
+
 main_scheduler:
   lr_step_size: 30  # based on "lr_schedule.yaml"
+
 performance:
   patience: 20

@@ -1,36 +1,54 @@
 defaults:
+  - model: ???
+  - dataset: ???
   - criterion: cross_entropy
-  - dataset: fashionmnist
-  - model: lenet
   - optimizer: sgd
-  - main_scheduler: null
-  - warmup_scheduler: null
+  - main_scheduler: null  # optional, null to disable
+  - warmup_scheduler: null  # optional, null to disable
   - _self_
   - experiment: ???
-paths:
-  checkpoints: ${experiment.dir}/checkpoints
-  data: ../data
-  tensorboard: ${experiment.dir}/tensorboard
-hydra:
-  run:
-    dir: ${experiment.dir}/logs
+
+
+# ----------
+# EXPERIMENT
+# ----------
+
 experiment:
   name: ???
-  dir: ../out/${experiment.name}/${now:%Y-%m_%d-%H-%M-%S}
+  dir: ../out/${experiment.name}/${now:%Y-%m-%d_%H-%M-%S}
+
+
+# ---------------
+# REPRODUCIBILITY
+# ---------------
+
 reproducibility:
   torch_seed: ???
   shuffle_seed: ???  # controls shuffling of the training set
-  split_seed: 42  # controls random splitting of the dataset into training and validation sets
-  cudnn_deterministic: True
-  cudnn_benchmark: False
+  split_seed: 42  # controls split of the dataset into training and validation sets
+  cudnn_deterministic: true
+  cudnn_benchmark: false
+
+
+# -----------------------
+# TRAINING & DATA LOADING
+# -----------------------
+
+training:
+  num_epochs: ???
+  resume_from: null  # checkpoint to resume training from, null to start training from scratch
+
 dataloader:
   val_split: 0.20  # fraction of the dataset to use as validation set
   batch_size: ???
   num_workers: ???
-training:
-  num_epochs: 100
-  resume_from: null  # checkpoint to resume training from, null to start training from scratch
-metrics:  # pass empty dict ``{}`` to disable tracking of additional metrics
+
+
+# -------------------
+# PERFORMANCE METRICS
+# -------------------
+
+metrics:
   Accuracy@1:
     _target_: torchmetrics.classification.MulticlassAccuracy
     num_classes: ${dataset.num_classes}
@@ -43,17 +61,33 @@ metrics:  # pass empty dict ``{}`` to disable tracking of additional metrics
     top_k: 5
     average: micro
     multidim_average: global
+
 performance:
   metric: Loss  # either "Loss" or one of the keys in the ``metrics`` dict
-  higher_is_better: False
+  higher_is_better: false
   evaluate_on: val  # either "train" or "val"
-  patience: 20  # null to disable early stopping
-  keep_previous_best_score: True
+  patience: 20  # patience for early stopping, null to disable
+  keep_previous_best_score: true  # whether to load previous best score from checkpoint when resuming training
+
+
+# ----------------
+# LOGGING & SAVING
+# ----------------
+
 checkpoints:
-  save_frequency: 5  # null to disable regular checkpoint saves
-  save_best_model: True
-  delete_previous: True
+  save_frequency: 5  # null to disable regular saves
+  save_best_model: true
+  delete_previous: true
+
 tensorboard:
   updates_per_epoch:
-    train: 10  # null to disable TensorBoard logging during training
-    val: 10  # null to disable TensorBoard logging during validation
+    train: 10  # number of TensorBoard updates per epoch during training, null to disable
+    val: 10  # number of TensorBoard updates per epoch during validation, null to disable
+
+paths:
+  checkpoints: ${experiment.dir}/checkpoints
+  tensorboard: ${experiment.dir}/tensorboard
+
+hydra:
+  run:
+    dir: ${experiment.dir}/logs

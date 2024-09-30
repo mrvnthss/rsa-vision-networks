@@ -1,8 +1,9 @@
 # https://pytorch.org/docs/2.4/generated/torch.optim.Adam.html
 name: Adam
-lr: 0.001
+lr: ???
 betas: [0.9, 0.999]
 weight_decay: 0
+
 kwargs:
   _target_: torch.optim.adam.Adam
   lr: ${optimizer.lr}

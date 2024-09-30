@@ -8,18 +8,23 @@
 # To run this experiment, execute the following command from the
 # "thesis-experiments/src/" directory:
 #
-#   >>> python train_classifier_cv.py experiment=lenet_fashionmnist/grid_search/overfitting
+#   >>> python cross_validate_classifier.py experiment=lenet_fashionmnist/grid_search/overfitting
 #
 
 
-# Multi-run configuration
+# -----------------------
+# MULTI-RUN CONFIGURATION
+# -----------------------
+
 experiment:
   name: lenet_fashionmnist/grid_search/overfitting
   dir:  ../out/${experiment.name}/${now:%Y-%m-%d_%H-%M-%S}
   sub_dir: b=${dataloader.batch_size},wd=${optimizer.weight_decay}
+
 paths:
   checkpoints: ${experiment.dir}/${experiment.sub_dir}/checkpoints
   tensorboard: ${experiment.dir}/${experiment.sub_dir}/tensorboard
+
 hydra:
   mode: MULTIRUN
   sweep:
@@ -27,24 +32,37 @@ hydra:
     subdir: ${experiment.sub_dir}/logs
   sweeper:
     params:
-      # Grid search parameters
       dataloader.batch_size: 64, 128
-      optimizer.weight_decay: 1e-4, 1e-3
+      optimizer.weight_decay: 1e-3, 1e-4
 
-# Fixed training parameters
+
+# ---------------------
+# GENERAL CONFIGURATION
+# ---------------------
+
+defaults:
+  - override /model: lenet
+  - override /dataset: fashionmnist
+  - _self_
+
 reproducibility:
   torch_seed: 89
   shuffle_seed: 858
-dataset:
-  transform_val:
-    resize_size: ${model.input_size}  # matches the input size of the model
-dataloader:
-  num_workers: 4
+
 training:
   num_epochs: 30
-  num_folds: 5  # 5-fold cross-validation
+  num_folds: 5
+
+dataset:
+  transform_val:
+    resize_size: ${model.input_size}
+
+dataloader:
+  num_workers: 4
+
 optimizer:
-  lr: 0.01
+  lr: 0.01  # based on "batch_size_lr.yaml"
   momentum: 0.9
+
 performance:
-  patience: null  # no early stopping
+  patience: null  # disable early stopping

@@ -1,8 +1,7 @@
 defaults:
   - model: ???
   - dataset: ???
-  - repr_similarity/compute_rdm: ???
-  - repr_similarity/compare_rdm: ???
+  - criterion: cross_entropy
   - optimizer: sgd
   - main_scheduler: null  # optional, null to disable
   - warmup_scheduler: null  # optional, null to disable
@@ -16,7 +15,7 @@ defaults:
 
 experiment:
   name: ???
-  dir: ../out/${experiment.name}/${now:%Y-%m-%d_%H-%M-%S}
+  dir: ../out/${experiment.name}/${now:%Y-%m_%d-%H-%M-%S}
 
 
 # ---------------
@@ -37,24 +36,11 @@ reproducibility:
 
 training:
   num_epochs: ???
-  resume_from: null  # checkpoint to resume training from, null to start training from scratch
+  num_folds: 5  # number of folds for cross-validation
 
 dataloader:
-  val_split: 0.20  # fraction of the dataset to use as validation set
   batch_size: ???
   num_workers: ???
-
-
-# ---
-# RSA
-# ---
-
-repr_similarity:
-  hooks:
-    train: ???
-    ref: ???
-  weight_rsa_score: ???
-  rsa_transform: null  # optional, null to disable
 
 
 # -------------------
@@ -76,7 +62,7 @@ metrics:
     multidim_average: global
 
 performance:
-  metric: Loss  # either "Loss", "RSAScore", or one of the keys in the ``metrics`` dict
+  metric: Loss  # either "Loss" or one of the keys in the ``metrics`` dict
   higher_is_better: false
   evaluate_on: val  # either "train" or "val"
   patience: 20  # patience for early stopping, null to disable

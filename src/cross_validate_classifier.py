@@ -2,11 +2,11 @@
 
 This script is configured using the Hydra framework, with configuration
 details specified in the "src/conf/" directory.  The configuration file
-associated with this script is named "train_classifier_cv.yaml".
+associated with this script is named "cross_validate_classifier.yaml".
 
 Typical usage example:
 
-  >>> python train_classifier_cv.py experiment=lenet_fashionmnist/grid_search/overfitting
+  >>> python cross_validate_classifier.py experiment=lenet_fashionmnist/grid_search/overfitting
 """
 
 
@@ -32,14 +32,14 @@ cs = ConfigStore.instance()
 cs.store(name="train_classifier_conf", node=TrainClassifierConf)
 
 
-@hydra.main(version_base=None, config_path="conf", config_name="train_classifier_cv")
+@hydra.main(version_base=None, config_path="conf", config_name="cross_validate_classifier")
 def main(cfg: TrainClassifierConf) -> None:
     """Train a classification model in PyTorch w/ cross-validation."""
 
     if "num_folds" not in cfg.training or cfg.training.num_folds is None:
         raise ValueError(
             "The number 'cfg.training.num_folds' of folds for cross-validation must be specified, "
-            "to run the 'train_classifier_cv.py' script. To train a model without"
+            "to run the 'cross_validate_classifier.py' script. To train a model without "
             "cross-validation, use the 'train_classifier.py' script."
         )
 

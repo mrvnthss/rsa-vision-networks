@@ -78,7 +78,7 @@ def compute_rdm(
 
     Args:
         activations: The matrix of activations from which to compute the
-        RDM.  Must be a 2-D tensor of size (N, M), where N >= 3 is the
+          RDM.  Must be a 2-D tensor of size (N, M), where N >= 3 is the
           number of stimuli, and M >= 2 is the number of unit
           activations per stimulus.
         method: The method to use for computing the RDM.

@@ -1,24 +1,47 @@
 defaults:
+  - model: ???
+  - dataset: ???
   - criterion: cross_entropy
-  - dataset: fashionmnist
-  - model: lenet
-  - override hydra/hydra_logging: disabled
   - override hydra/job_logging: disabled
+  - override hydra/hydra_logging: disabled
   - _self_
-paths:
-  data: ../data
+
+
+# ---------------
+# REPRODUCIBILITY
+# ---------------
+
 reproducibility:
-  split_seed: 42  # controls random split of the dataset into training and validation sets
+  split_seed: 42  # controls split of the dataset into training and validation sets
+
+
+# ----------------
+# MODEL EVALUATION
+# ----------------
+
 model:
-  load_weights_from: ???  # path to model checkpoint
+  load_weights_from: ???
+  evaluate_on: test  # either "train", "val", or "test"
+
+
+# ------------
+# DATA LOADING
+# ------------
+
 dataset:
   transform_val:
     resize_size: ${model.input_size}
+
 dataloader:
   val_split: 0.20  # fraction of the dataset to use as validation set
   batch_size: 32
   num_workers: 4
-evaluate_on: val  # either "train", "val", or "test"
+
+
+# -------------------
+# PERFORMANCE METRICS
+# -------------------
+
 metrics:
   Accuracy@1:
     _target_: torchmetrics.classification.MulticlassAccuracy
@@ -32,8 +55,12 @@ metrics:
     top_k: 5
     average: micro
     multidim_average: global
-# NOTE: The following "hydra" settings disable logging, as this is irrelevant for the task at hand.
-#       Do not change these settings.
+
+
+# --------------
+# HYDRA SETTINGS
+# --------------
+
 hydra:
   output_subdir: null
   run:

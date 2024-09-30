@@ -1,17 +1,14 @@
 defaults:
-  - dataset: fashionmnist
+  - dataset: ???
   - override hydra/hydra_logging: disabled
   - override hydra/job_logging: disabled
   - _self_
-paths:
-  data: ../data
-dataset:
-  train_set:
-    load_into_memory: False
-  test_set:
-    load_into_memory: False
-# NOTE: The following "hydra" settings disable logging, as this is irrelevant for the task at hand.
-#       Do not change these settings.
+
+
+# --------------
+# HYDRA SETTINGS
+# --------------
+
 hydra:
   output_subdir: null
   run:

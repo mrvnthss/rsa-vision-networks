@@ -1,8 +1,10 @@
 name: VGG
 input_size: 224
 num_layers: ???
-pretrained: False
+pretrained: ???
 load_weights_from: null
+evaluate_on: null
+
 kwargs:
   _target_: models.vgg.VGG
   num_layers: ${model.num_layers}

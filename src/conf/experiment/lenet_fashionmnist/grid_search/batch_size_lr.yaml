@@ -11,14 +11,19 @@
 #
 
 
-# Multi-run configuration
+# -----------------------
+# MULTI-RUN CONFIGURATION
+# -----------------------
+
 experiment:
   name: lenet_fashionmnist/grid_search/batch_size_lr
   dir:  ../out/${experiment.name}/${now:%Y-%m-%d_%H-%M-%S}
   sub_dir: b=${dataloader.batch_size},lr=${optimizer.lr}
+
 paths:
   checkpoints: ${experiment.dir}/${experiment.sub_dir}/checkpoints
   tensorboard: ${experiment.dir}/${experiment.sub_dir}/tensorboard
+
 hydra:
   mode: MULTIRUN
   sweep:
@@ -26,23 +31,36 @@ hydra:
     subdir: ${experiment.sub_dir}/logs
   sweeper:
     params:
-      # Grid search parameters
       dataloader.batch_size: 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096
       optimizer.lr: 0.1, 0.01, 0.001
 
-# Fixed training parameters
+
+# ---------------------
+# GENERAL CONFIGURATION
+# ---------------------
+
+defaults:
+  - override /model: lenet
+  - override /dataset: fashionmnist
+  - _self_
+
 reproducibility:
   torch_seed: 89
   shuffle_seed: 858
-dataset:
-  transform_val:
-    resize_size: ${model.input_size}  # matches the input size of the model
-dataloader:
-  num_workers: 0
+
 training:
   num_epochs: 100
+
+dataset:
+  transform_val:
+    resize_size: ${model.input_size}
+
+dataloader:
+  num_workers: 4
+
 optimizer:
   momentum: 0.9
   weight_decay: 1e-4
+
 performance:
   patience: 5

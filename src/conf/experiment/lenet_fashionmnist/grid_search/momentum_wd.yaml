@@ -11,14 +11,19 @@
 #
 
 
-# Multi-run configuration
+# -----------------------
+# MULTI-RUN CONFIGURATION
+# -----------------------
+
 experiment:
   name: lenet_fashionmnist/grid_search/momentum_wd
   dir:  ../out/${experiment.name}/${now:%Y-%m-%d_%H-%M-%S}
   sub_dir: momentum=${optimizer.momentum},wd=${optimizer.weight_decay}
+
 paths:
   checkpoints: ${experiment.dir}/${experiment.sub_dir}/checkpoints
   tensorboard: ${experiment.dir}/${experiment.sub_dir}/tensorboard
+
 hydra:
   mode: MULTIRUN
   sweep:
@@ -26,23 +31,36 @@ hydra:
     subdir: ${experiment.sub_dir}/logs
   sweeper:
     params:
-      # Grid search parameters
       optimizer.momentum: 0.7, 0.8, 0.85, 0.9, 0.95, 0.99
-      optimizer.weight_decay: 0.01, 0.001, 1e-4, 1e-5, 1e-6
+      optimizer.weight_decay: 1e-2, 1e-3, 1e-4, 1e-5, 1e-6
 
-# Fixed training parameters
+
+# ---------------------
+# GENERAL CONFIGURATION
+# ---------------------
+
+defaults:
+  - override /model: lenet
+  - override /dataset: fashionmnist
+  - _self_
+
 reproducibility:
   torch_seed: 89
   shuffle_seed: 858
-dataset:
-  transform_val:
-    resize_size: ${model.input_size}  # matches the input size of the model
-dataloader:
-  batch_size: 64  # based on "batch_size_lr.yaml" grid search
-  num_workers: 4
+
 training:
   num_epochs: 100
+
+dataset:
+  transform_val:
+    resize_size: ${model.input_size}
+
+dataloader:
+  batch_size: 64  # based on "batch_size_lr.yaml"
+  num_workers: 4
+
 optimizer:
-  lr: 0.01  # based on "batch_size_lr.yaml" grid search
+  lr: 0.01  # based on "batch_size_lr.yaml"
+
 performance:
   patience: 20

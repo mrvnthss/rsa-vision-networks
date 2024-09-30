@@ -12,14 +12,19 @@
 #
 
 
-# Multi-run configuration
+# -----------------------
+# MULTI-RUN CONFIGURATION
+# -----------------------
+
 experiment:
   name: lenet_fashionmnist/grid_search/lr_schedule
   dir:  ../out/${experiment.name}/${now:%Y-%m-%d_%H-%M-%S}
-  sub_dir: gamma=${main_scheduler.lr_gamma},step_size=${main_scheduler.lr_step_size}
+  sub_dir: step_size=${main_scheduler.lr_step_size},gamma=${main_scheduler.lr_gamma}
+
 paths:
   checkpoints: ${experiment.dir}/${experiment.sub_dir}/checkpoints
   tensorboard: ${experiment.dir}/${experiment.sub_dir}/tensorboard
+
 hydra:
   mode: MULTIRUN
   sweep:
@@ -27,31 +32,43 @@ hydra:
     subdir: ${experiment.sub_dir}/logs
   sweeper:
     params:
-      # Grid search parameters
-      main_scheduler.lr_gamma: 0.1, 0.5, 0.9
       main_scheduler.lr_step_size: 10, 20, 30, 40, 50
+      main_scheduler.lr_gamma: 0.1, 0.5, 0.9
 
-# Fixed training parameters
+
+# ---------------------
+# GENERAL CONFIGURATION
+# ---------------------
+
 defaults:
+  - override /model: lenet
+  - override /dataset: fashionmnist
   - override /main_scheduler: step_lr
+  - _self_
+
 reproducibility:
   torch_seed: 89
   shuffle_seed: 858
+
+training:
+  num_epochs: 200
+
 dataset:
   transform_train:
     crop_scale:
-      lower: 0.8  # based on "random_cropping.yaml" grid search
-    flip_prob: 0.5  # based on "horizontal_flipping.yaml" grid search
+      lower: 0.8  # based on "random_cropping.yaml"
+    flip_prob: 0.5  # based on "horizontal_flipping.yaml"
   transform_val:
-    resize_size: ${model.input_size}  # matches the input size of the model
+    resize_size: ${model.input_size}
+
 dataloader:
-  batch_size: 64  # based on "batch_size_lr.yaml" grid search
+  batch_size: 64  # based on "batch_size_lr.yaml"
   num_workers: 4
-training:
-  num_epochs: 200
+
 optimizer:
-  lr: 0.01  # based on "batch_size_lr.yaml" grid search
-  momentum: 0.8  # based on "momentum_wd.yaml" grid search
-  weight_decay: 1e-3  # based on "momentum_wd.yaml" & "horizontal_flipping.yaml" grid searches
+  lr: 0.01  # based on "batch_size_lr.yaml"
+  momentum: 0.8  # based on "momentum_wd.yaml"
+  weight_decay: 1e-3  # based on "momentum_wd.yaml" & "horizontal_flipping.yaml"
+
 performance:
   patience: 20

@@ -1,22 +1,18 @@
+# pylint: disable=invalid-name,missing-class-docstring
+
 """Configuration file to be used by the Hydra framework."""
 
 
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Dict, List, Optional, Tuple, Union
 
 from omegaconf import DictConfig, MISSING
 
 
-class CriterionName(Enum):
-    CrossEntropyLoss = "CrossEntropyLoss"
-
-
-class DatasetName(Enum):
-    CIFAR10 = "CIFAR10"
-    FashionMNIST = "FashionMNIST"
-    ImageNet = "ImageNet"
-
+# -------------
+# MODEL CHOICES
+# -------------
 
 class ModelName(Enum):
     LeNet = "LeNet"
@@ -30,21 +26,33 @@ class VGGNumLayers(Enum):
     L19 = 19
 
 
-class OptimizerName(Enum):
-    Adam = "Adam"
-    SGD = "SGD"
+# ---------------
+# DATASET CHOICES
+# ---------------
+
+class DatasetName(Enum):
+    CIFAR10 = "CIFAR10"
+    FashionMNIST = "FashionMNIST"
+    ImageNet = "ImageNet"
 
 
-class MainSchedulerName(Enum):
-    CosineAnnealingLR = "CosineAnnealingLR"
-    ExponentialLR = "ExponentialLR"
-    StepLR = "StepLR"
+class DatasetSplitName(Enum):
+    train = "train"
+    val = "val"
+    test = "test"
 
 
-class WarmupSchedulerName(Enum):
-    ConstantLR = "ConstantLR"
-    LinearLR = "LinearLR"
+# -----------------
+# CRITERION CHOICES
+# -----------------
 
+class CriterionName(Enum):
+    CrossEntropyLoss = "CrossEntropyLoss"
+
+
+# -----------
+# RSA CHOICES
+# -----------
 
 class ComputeRDMName(Enum):
     correlation = "correlation"
@@ -62,18 +70,65 @@ class RSATransformName(Enum):
     square = "square"
 
 
+# -----------------
+# OPTIMIZER CHOICES
+# -----------------
+
+class OptimizerName(Enum):
+    Adam = "Adam"
+    SGD = "SGD"
+
+
+# --------------------
+# LR SCHEDULER CHOICES
+# --------------------
+
+class MainSchedulerName(Enum):
+    CosineAnnealingLR = "CosineAnnealingLR"
+    ExponentialLR = "ExponentialLR"
+    StepLR = "StepLR"
+
+
+class WarmupSchedulerName(Enum):
+    ConstantLR = "ConstantLR"
+    LinearLR = "LinearLR"
+
+
+# --------------------
+# MODEL CONFIGURATIONS
+# --------------------
+
 @dataclass
-class CrossEntropyLossConf:
-    _target_: str = "torch.nn.CrossEntropyLoss"
-    label_smoothing: float = 0.0
+class LeNetConf:
+    _target_: str = "models.lenet.LeNet"
+    num_classes: int = MISSING
 
 
 @dataclass
-class CriterionConf:
-    name: CriterionName = MISSING
-    label_smoothing: float = 0.0
-    kwargs: Union[CrossEntropyLossConf] = MISSING
+class VGGConf:
+    _target_: str = "models.vgg.VGG"
+    num_layers: VGGNumLayers = MISSING
+    num_classes: int = MISSING
+    pretrained: bool = MISSING
 
+
+@dataclass
+class ModelConf:
+    name: ModelName = MISSING
+    input_size: int = MISSING
+    num_layers: Optional[int] = None
+    pretrained: Optional[bool] = None
+    load_weights_from: Optional[str] = None
+    evaluate_on: Optional[DatasetSplitName] = None
+    kwargs: Union[
+        LeNetConf,
+        VGGConf
+    ] = MISSING
+
+
+# ----------------------
+# DATASET CONFIGURATIONS
+# ----------------------
 
 @dataclass
 class CropScaleConf:
@@ -114,7 +169,7 @@ class VisionDatasetConf:
     _target_: str = MISSING
     data_dir: str = MISSING
     train: bool = MISSING
-    load_into_memory: bool = MISSING
+    load_into_memory: Optional[bool] = None
 
 
 @dataclass
@@ -128,35 +183,101 @@ class DatasetConf:
     test_set: VisionDatasetConf = MISSING
 
 
-@dataclass
-class LeNetConf:
-    _target_: str = "models.lenet.LeNet"
-    num_classes: int = MISSING
-
+# ------------------------
+# CRITERION CONFIGURATIONS
+# ------------------------
 
 @dataclass
-class VGGConf:
-    _target_: str = "models.vgg.VGG"
-    num_layers: VGGNumLayers = MISSING
-    num_classes: int = MISSING
-    pretrained: bool = False
+class CrossEntropyLossConf:
+    _target_: str = "torch.nn.CrossEntropyLoss"
+    label_smoothing: float = 0.0
+
+@dataclass
+class CriterionConf:
+    name: CriterionName = MISSING
+    label_smoothing: float = 0.0
+    kwargs: Union[
+        CrossEntropyLossConf
+    ] = MISSING
+
+
+# ------------------
+# RSA CONFIGURATIONS
+# ------------------
+
+@dataclass
+class HooksConf:
+    train: str = MISSING
+    ref: str = MISSING
 
 
 @dataclass
-class ModelConf:
-    name: ModelName = MISSING
-    input_size: int = MISSING
-    load_weights_from: Optional[str] = None
-    num_layers: Optional[int] = None
-    pretrained: Optional[bool] = None
-    kwargs: Union[LeNetConf, VGGConf] = MISSING
+class ComputeRDMCorrelationConf:
+    pass
 
+
+@dataclass
+class ComputeRDMEuclideanConf:
+    center_activations: bool = False
+    normalize_distances: bool = True
+    distance_type: Optional[str] = "squared"
+
+
+@dataclass
+class ComputeRDMConf:
+    name: ComputeRDMName = MISSING
+    center_activations: Optional[bool] = None
+    normalize_distances: Optional[bool] = None
+    distance_type: Optional[str] = None
+    kwargs: Union[
+        ComputeRDMCorrelationConf,
+        ComputeRDMEuclideanConf
+    ] = MISSING
+
+
+@dataclass
+class CompareRDMCorrelationConf:
+    pass
+
+
+@dataclass
+class CompareRDMCosineConf:
+    pass
+
+
+@dataclass
+class CompareRDMSpearmanConf:
+    pass
+
+
+@dataclass
+class CompareRDMConf:
+    name: CompareRDMName = MISSING
+    kwargs: Union[
+        CompareRDMCorrelationConf,
+        CompareRDMCosineConf,
+        CompareRDMSpearmanConf
+    ] = MISSING
+
+
+@dataclass
+class ReprSimilarityConf:
+    hooks: HooksConf = MISSING
+    compute_rdm: ComputeRDMConf = MISSING
+    compare_rdm: CompareRDMConf = MISSING
+    weight_rsa_score: float = MISSING
+    rsa_transform: RSATransformName = None
+
+
+# ------------------------
+# OPTIMIZER CONFIGURATIONS
+# ------------------------
 
 @dataclass
 class AdamConf:
     _target_: str = "torch.optim.adam.Adam"
-    lr: float = 1e-3
-    betas: List[float] = (0.9, 0.999)
+    lr: float = MISSING
+    betas: Tuple[float] = (0.9, 0.999)
     eps: float = 1e-8
     weight_decay: float = 0
     amsgrad: bool = False
@@ -170,7 +291,7 @@ class AdamConf:
 @dataclass
 class SGDConf:
     _target_: str = "torch.optim.sgd.SGD"
-    lr: float = 1e-3
+    lr: float = MISSING
     momentum: float = 0
     dampening: float = 0
     weight_decay: float = 0
@@ -185,26 +306,25 @@ class SGDConf:
 class OptimizerConf:
     name: OptimizerName = MISSING
     lr: float = MISSING
-    weight_decay: float = MISSING
     betas: Optional[Tuple[float]] = None
     momentum: Optional[float] = None
     dampening: Optional[float] = None
-    kwargs: Union[AdamConf, SGDConf] = MISSING
+    weight_decay: float = 0
+    kwargs: Union[
+        AdamConf,
+        SGDConf
+    ] = MISSING
 
 
-@dataclass
-class ConstantLRConf:
-    _target_: str = "torch.optim.lr_scheduler.ConstantLR"
-    factor: float = 0.3333333333333333
-    total_iters: int = 5
-    last_epoch: int = -1
-
+# -----------------------------
+# MAIN SCHEDULER CONFIGURATIONS
+# -----------------------------
 
 @dataclass
 class CosineAnnealingLRConf:
     _target_: str = "torch.optim.lr_scheduler.CosineAnnealingLR"
     T_max: int = MISSING
-    eta_min: float = 0
+    eta_min: float = MISSING
     last_epoch: int = -1
 
 
@@ -216,19 +336,10 @@ class ExponentialLRConf:
 
 
 @dataclass
-class LinearLRConf:
-    _target_: str = "torch.optim.lr_scheduler.LinearLR"
-    start_factor: float = 0.3333333333333333
-    end_factor: float = 1.0
-    total_iters: int = 5
-    last_epoch: int = -1
-
-
-@dataclass
 class StepLRConf:
     _target_: str = "torch.optim.lr_scheduler.StepLR"
     step_size: int = MISSING
-    gamma: float = 0.1
+    gamma: float = MISSING
     last_epoch: int = -1
 
 
@@ -236,13 +347,34 @@ class StepLRConf:
 class MainSchedulerConf:
     name: MainSchedulerName = MISSING
     lr_min: Optional[float] = None
-    lr_gamma: Optional[float] = None
     lr_step_size: Optional[float] = None
+    lr_gamma: Optional[float] = None
     kwargs: Union[
         CosineAnnealingLRConf,
         ExponentialLRConf,
         StepLRConf
     ] = MISSING
+
+
+# -------------------------------
+# WARMUP SCHEDULER CONFIGURATIONS
+# -------------------------------
+
+@dataclass
+class ConstantLRConf:
+    _target_: str = "torch.optim.lr_scheduler.ConstantLR"
+    factor: float = MISSING
+    total_iters: int = MISSING
+    last_epoch: int = -1
+
+
+@dataclass
+class LinearLRConf:
+    _target_: str = "torch.optim.lr_scheduler.LinearLR"
+    start_factor: float = MISSING
+    end_factor: float = 1.0
+    total_iters: int = MISSING
+    last_epoch: int = -1
 
 
 @dataclass
@@ -256,19 +388,20 @@ class WarmupSchedulerConf:
     ] = MISSING
 
 
-@dataclass
-class PathsConf:
-    checkpoints: str = MISSING
-    data: str = MISSING
-    tensorboard: str = MISSING
-
+# -------------------------
+# EXPERIMENT CONFIGURATIONS
+# -------------------------
 
 @dataclass
 class ExperimentConf:
     name: str = MISSING
     dir: str = MISSING
-    sub_dir: str = MISSING
+    sub_dir: Optional[str] = None
 
+
+# ------------------------------
+# REPRODUCIBILITY CONFIGURATIONS
+# ------------------------------
 
 @dataclass
 class ReproducibilityConf:
@@ -279,26 +412,38 @@ class ReproducibilityConf:
     cudnn_benchmark: bool = MISSING
 
 
-@dataclass
-class DataloaderConf:
-    val_split: float = MISSING
-    batch_size: int = MISSING
-    num_workers: int = MISSING
-
+# -----------------------
+# TRAINING CONFIGURATIONS
+# -----------------------
 
 @dataclass
 class TrainingConf:
     num_epochs: int = MISSING
-    resume_from: Optional[str] = None
     num_folds: Optional[int] = None
+    resume_from: Optional[str] = None
 
+
+# -------------------------
+# DATALOADER CONFIGURATIONS
+# -------------------------
+
+@dataclass
+class DataloaderConf:
+    val_split: Optional[float] = None
+    batch_size: int = MISSING
+    num_workers: int = MISSING
+
+
+# ----------------------------------
+# PERFORMANCE METRICS CONFIGURATIONS
+# ----------------------------------
 
 @dataclass
 class MulticlassAccuracyConf:
     _target_: str = "torchmetrics.classification.MulticlassAccuracy"
     num_classes: int = MISSING
-    top_k: int = 1
-    average: str = "macro"
+    top_k: int = MISSING
+    average: str = "micro"
     multidim_average: str = "global"
     ignore_index: Optional[int] = None
     validate_args: bool = True
@@ -308,10 +453,14 @@ class MulticlassAccuracyConf:
 class PerformanceConf:
     metric: str = MISSING
     higher_is_better: bool = MISSING
-    evaluate_on: str = MISSING
+    evaluate_on: DatasetSplitName = MISSING
     patience: Optional[int] = None
     keep_previous_best_score: bool = MISSING
 
+
+# -------------------------------
+# LOGGING & SAVING CONFIGURATIONS
+# -------------------------------
 
 @dataclass
 class CheckpointsConf:
@@ -322,8 +471,8 @@ class CheckpointsConf:
 
 @dataclass
 class NumUpdatesConf:
-    Train: Optional[int] = 10
-    Val: Optional[int] = 10
+    train: Optional[int] = None
+    val: Optional[int] = None
 
 
 @dataclass
@@ -332,87 +481,69 @@ class TensorBoardConf:
 
 
 @dataclass
+class PathsConf:
+    checkpoints: str = MISSING
+    tensorboard: str = MISSING
+
+
+# ------------------
+# EXECUTABLE SCRIPTS
+# ------------------
+
+@dataclass
 class ComputeStatsConf(DictConfig):
     dataset: DatasetConf = MISSING
-    paths: PathsConf = MISSING
 
 
 @dataclass
 class TestClassifierConf(DictConfig):
-    criterion: CriterionConf = MISSING
-    dataset: DatasetConf = MISSING
     model: ModelConf = MISSING
-    paths: PathsConf = MISSING
-    reproducibility: ReproducibilityConf = MISSING
+    dataset: DatasetConf = MISSING
     dataloader: DataloaderConf = MISSING
-    evaluate_on: str = MISSING
-    metrics: Dict[str, Union[MulticlassAccuracyConf]] = MISSING
+    criterion: CriterionConf = MISSING
+    reproducibility: ReproducibilityConf = MISSING
+    metrics: Dict[str, Union[
+        MulticlassAccuracyConf
+    ]] = MISSING
 
 
 @dataclass
 class TrainClassifierConf(DictConfig):
-    criterion: CriterionConf = MISSING
-    dataset: DatasetConf = MISSING
     model: ModelConf = MISSING
+    dataset: DatasetConf = MISSING
+    dataloader: DataloaderConf = MISSING
+    criterion: CriterionConf = MISSING
     optimizer: OptimizerConf = MISSING
     main_scheduler: Optional[MainSchedulerConf] = None
     warmup_scheduler: Optional[WarmupSchedulerConf] = None
     experiment: ExperimentConf = MISSING
-    paths: PathsConf = MISSING
     reproducibility: ReproducibilityConf = MISSING
-    dataloader: DataloaderConf = MISSING
     training: TrainingConf = MISSING
-    metrics: Dict[str, Union[MulticlassAccuracyConf]] = MISSING
+    metrics: Dict[str, Union[
+        MulticlassAccuracyConf
+    ]] = MISSING
     performance: PerformanceConf = MISSING
     checkpoints: CheckpointsConf = MISSING
     tensorboard: TensorBoardConf = MISSING
-
-
-@dataclass
-class ComputeRDMConf:
-    name: ComputeRDMName = MISSING
-    center_activations: bool = False
-    normalize_distances: Optional[bool] = None
-    distance_type: Optional[str] = None
-    kwargs: Dict[str, Any] = MISSING
-
-
-@dataclass
-class CompareRDMConf:
-    name: CompareRDMName = MISSING
-    kwargs: Dict[str, Any] = MISSING
-
-
-@dataclass
-class ReprSimilarityConf:
-    label_smoothing: float = 0.0
-    compute_rdm: ComputeRDMConf = MISSING
-    compare_rdm: CompareRDMConf = MISSING
-    weight_rsa_score: float = MISSING
-    rsa_transform: RSATransformName = None
-
-
-@dataclass
-class HooksConf:
-    train: str = MISSING
-    ref: str = MISSING
+    paths: PathsConf = MISSING
 
 
 @dataclass
 class TrainSimilarityConf(DictConfig):
-    dataset: DatasetConf = MISSING
     model: ModelConf = MISSING
+    dataset: DatasetConf = MISSING
+    dataloader: DataloaderConf = MISSING
+    repr_similarity: ReprSimilarityConf = MISSING
     optimizer: OptimizerConf = MISSING
     main_scheduler: Optional[MainSchedulerConf] = None
     warmup_scheduler: Optional[WarmupSchedulerConf] = None
-    repr_similarity: ReprSimilarityConf = MISSING
     experiment: ExperimentConf = MISSING
-    paths: PathsConf = MISSING
     reproducibility: ReproducibilityConf = MISSING
-    dataloader: DataloaderConf = MISSING
     training: TrainingConf = MISSING
-    metrics: Dict[str, Union[MulticlassAccuracyConf]] = MISSING
+    metrics: Dict[str, Union[
+        MulticlassAccuracyConf
+    ]] = MISSING
     performance: PerformanceConf = MISSING
     checkpoints: CheckpointsConf = MISSING
     tensorboard: TensorBoardConf = MISSING
-    hooks: HooksConf = MISSING
+    paths: PathsConf = MISSING
