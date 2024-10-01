@@ -1,2 +1,9 @@
 name: spearman
-kwargs: {}
+differentiable: false
+regularization: null
+regularization_strength: null
+
+kwargs:
+  differentiable: ${repr_similarity.compare_rdm.differentiable}
+  regularization: ${repr_similarity.compare_rdm.regularization}
+  regularization_strength: ${repr_similarity.compare_rdm.regularization_strength}

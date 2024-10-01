@@ -16,9 +16,10 @@ __all__ = [
     "validate_activations"
 ]
 
-from typing import Any, Callable, Dict, Literal
+from typing import Any, Callable, Dict, Literal, Optional
 
 import torch
+from fast_soft_sort.pytorch_ops import soft_rank
 from torch.nn import functional as F
 
 
@@ -188,26 +189,64 @@ def _compare_rdm_cosine(
 
 def _compare_rdm_spearman(
         rdm1: torch.Tensor,
-        rdm2: torch.Tensor
+        rdm2: torch.Tensor,
+        differentiable: bool = False,
+        regularization_strength: Optional[float] = None,
+        regularization: Optional[Literal["l2", "kl"]] = None
 ) -> torch.Tensor:
     """Compare two RDMs using Spearman rank correlation.
 
     Note:
-        When computing ranks of the dissimilarities for each RDM, ties
-        are assigned the average of the ranks that would have been
-        assigned to each value.  This mimics the default behavior of the
-        ``scipy.stats.rankdata`` function.
+        When computing (true) ranks of the dissimilarities for each RDM,
+        ties are assigned the average of the ranks that would have been
+        assigned to each value.
 
     Args:
         rdm1: The first RDM in vectorized form.
         rdm2: The second RDM in vectorized form.
+        differentiable: Whether to use soft ranks instead of true ranks.
+        regularization_strength: The regularization strength to be used.
+          The smaller this number, the closer the values are to the true
+          ranks.  Must be specified when ``differentiable`` is True.
+        regularization: The regularization method to be used.  Must be
+          specified when ``differentiable`` is True.
 
     Returns:
-        The Spearman rank correlation between the two RDMs.
+        The Spearman rank correlation between the two RDMs (possibly
+        computed using soft ranks).
     """
 
-    # Compute Pearson correlation between the rank variables
-    rdm1_ranks, rdm2_ranks = _rank_data(rdm1), _rank_data(rdm2)
+    if differentiable:
+        if regularization_strength is None:
+            raise ValueError(
+                "'regularization_strength' must not be None when 'differentiable' is True."
+            )
+        if regularization is None:
+            raise ValueError(
+                "'regularization' must not be None when 'differentiable' is True."
+            )
+        if regularization not in ["l2", "kl"]:
+            raise ValueError(
+                f"'regularization' should be either 'l2' or 'kl', but got {regularization}."
+            )
+
+        # NOTE: The ``soft_rank`` function expects and outputs 2-D tensors, hence the (un-)squeezing operations.
+        rdm1_ranks = soft_rank(
+            rdm1.unsqueeze(dim=0),
+            regularization_strength=regularization_strength,
+            regularization=regularization
+        )
+        rdm2_ranks = soft_rank(
+            rdm2.unsqueeze(dim=0),
+            regularization_strength=regularization_strength,
+            regularization=regularization
+        )
+        rdm1_ranks = rdm1_ranks.squeeze(dim=0)
+        rdm2_ranks = rdm2_ranks.squeeze(dim=0)
+    else:
+        rdm1_ranks = _rank_data(rdm1)
+        rdm2_ranks = _rank_data(rdm2)
+
     return _compare_rdm_correlation(rdm1_ranks, rdm2_ranks)
 
 

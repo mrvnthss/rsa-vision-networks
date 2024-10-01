@@ -236,7 +236,7 @@ class ComputeRDMCorrelationConf:
 class ComputeRDMEuclideanConf:
     center_activations: bool = False
     normalize_distances: bool = True
-    distance_type: Optional[str] = "squared"
+    distance_type: str = "squared"
 
 
 @dataclass
@@ -263,12 +263,17 @@ class CompareRDMCosineConf:
 
 @dataclass
 class CompareRDMSpearmanConf:
-    pass
+    differentiable: bool = False
+    regularization: Optional[str] = None
+    regularization_strength: Optional[float] = None
 
 
 @dataclass
 class CompareRDMConf:
     name: CompareRDMName = MISSING
+    differentiable: Optional[bool] = None
+    regularization: Optional[str] = None
+    regularization_strength: Optional[float] = None
     kwargs: Union[
         CompareRDMCorrelationConf,
         CompareRDMCosineConf,
