@@ -230,17 +230,20 @@ def _compare_rdm_spearman(
                 f"'regularization' should be either 'l2' or 'kl', but got {regularization}."
             )
 
-        # NOTE: The ``soft_rank`` function expects and outputs 2-D tensors, hence the (un-)squeezing operations.
+        # NOTE: The ``soft_rank`` function expects and outputs 2-D tensors, hence the
+        #       (un-)squeezing operations.  Also, the ``soft_rank`` function only accepts tensors
+        #       on the CPU, a TypeError is raised for tensors on cuda/mps.
+        _device = rdm1.device
         rdm1_ranks = soft_rank(
-            rdm1.unsqueeze(dim=0),
+            rdm1.unsqueeze(dim=0).cpu(),
             regularization_strength=regularization_strength,
             regularization=regularization
-        )
+        ).to(_device)
         rdm2_ranks = soft_rank(
-            rdm2.unsqueeze(dim=0),
+            rdm2.unsqueeze(dim=0).cpu(),
             regularization_strength=regularization_strength,
             regularization=regularization
-        )
+        ).to(_device)
         rdm1_ranks = rdm1_ranks.squeeze(dim=0)
         rdm2_ranks = rdm2_ranks.squeeze(dim=0)
     else:
