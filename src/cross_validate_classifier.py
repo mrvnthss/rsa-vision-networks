@@ -192,6 +192,8 @@ def main(cfg: TrainClassifierConf) -> None:
     # Remove initial model and optimizer state dicts after last fold
     init_model_state_dict_path.unlink(missing_ok=True)
     init_optimizer_state_dict_path.unlink(missing_ok=True)
+    if init_scheduler_state_dict_path is not None:
+        init_scheduler_state_dict_path.unlink(missing_ok=True)
 
 
 if __name__ == "__main__":
