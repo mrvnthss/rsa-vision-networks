@@ -1,0 +1,95 @@
+# @package _global_
+
+# This configuration file can be used to cross-validate the performance
+# results of the top-5 configurations from the grid search specified in
+# experiments/lenet_fashionmnist/grid_search/baseline_final.yaml.
+#
+# To run this experiment, execute the following command from the
+# "thesis-experiments/src/" directory:
+#
+#   >>> python cross_validate_classifier.py experiment=lenet_fashionmnist/grid_search/baseline_final_cv
+#
+
+
+# -----------------------
+# MULTI-RUN CONFIGURATION
+# -----------------------
+
+experiment:
+  name: lenet_fashionmnist/grid_search/baseline_final_cv
+  dir:  ../out/${experiment.name}/${now:%Y-%m-%d_%H-%M-%S}
+  sub_dir: crop_scale.lower=${transform.train.crop_scale.lower},crop_ratio.lower=${transform.train.crop_ratio.lower},b=${dataloader.batch_size},lr=${optimizer.lr},momentum=${optimizer.momentum},wd=${optimizer.weight_decay},gamma=${main_scheduler.lr_gamma}
+
+paths:
+  checkpoints: ${experiment.dir}/${experiment.sub_dir}/checkpoints
+  tensorboard: ${experiment.dir}/${experiment.sub_dir}/tensorboard
+
+top:
+  scale_lower: ???
+  ratio_lower: ???
+  ratio_upper: ???
+  batch_size: ???
+  lr: ???
+  momentum: ???
+  weight_decay: ???
+  lr_gamma: ???
+
+hydra:
+  mode: MULTIRUN
+  sweep:
+    dir: ${experiment.dir}
+    subdir: ${experiment.sub_dir}/logs
+  sweeper:
+    params:
+      top: "{scale_lower: 0.8, ratio_lower: 0.8, ratio_upper: 1.25, batch_size: 64, lr: 0.1, momentum: 0.8, weight_decay: 1e-3, lr_gamma: 0.5},\
+            {scale_lower: 0.9, ratio_lower: 0.75, ratio_upper: 1.3333333333333333, batch_size: 64, lr: 0.1, momentum: 0.8, weight_decay: 1e-3, lr_gamma: 0.1},\
+            {scale_lower: 0.9, ratio_lower: 0.8, ratio_upper: 1.25, batch_size: 128, lr: 0.1, momentum: 0.8, weight_decay: 1e-3, lr_gamma: 0.1},\
+            {scale_lower: 0.8, ratio_lower: 0.8, ratio_upper: 1.25, batch_size: 64, lr: 0.1, momentum: 0.8, weight_decay: 1e-3, lr_gamma: 0.1},\
+            {scale_lower: 0.9, ratio_lower: 0.75, ratio_upper: 1.3333333333333333, batch_size: 128, lr: 0.1, momentum: 0.9, weight_decay: 1e-3, lr_gamma: 0.1}"
+
+
+# ---------------------
+# GENERAL CONFIGURATION
+# ---------------------
+
+defaults:
+  - override /model: lenet
+  - override /dataset: fashionmnist
+  - override /transform/train: basic_augmentation
+  - override /main_scheduler: step_lr
+  - _self_
+
+reproducibility:
+  torch_seed: 89
+  shuffle_seed: 858
+
+training:
+  num_epochs: 500
+  num_folds: 10
+
+transform:
+  train:
+    crop_scale:
+      lower: ${top.scale_lower}
+      upper: 1.0
+    crop_ratio:
+      lower: ${top.ratio_lower}
+      upper: ${top.ratio_upper}
+  val:
+    resize_size: ${model.input_size}
+
+dataloader:
+  batch_size: ${top.batch_size}
+  num_workers: 4
+
+optimizer:
+  lr: ${top.lr}
+  momentum: ${top.momentum}
+  weight_decay: ${top.weight_decay}
+
+main_scheduler:
+  lr_step_size: 30
+  lr_gamma: ${top.lr_gamma}
+
+performance:
+  patience: 20
