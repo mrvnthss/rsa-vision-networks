@@ -1,0 +1,10 @@
+name: LeNetModified
+input_size: 32
+layer_widths: [6, 16, 120]
+load_weights_from: null
+evaluate_on: null
+
+kwargs:
+  _target_: models.lenet_modified.LeNetModified
+  layer_widths: ${model.layer_widths}
+  num_classes: ${dataset.num_classes}

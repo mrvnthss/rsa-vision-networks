@@ -61,13 +61,30 @@ class LeNet(nn.Module):
             nn.Conv2d(6, 16, 5),                                 # C3
             nn.MaxPool2d(2),                                     # S4
             nn.ReLU(),
-            nn.Conv2d(16, 120, 5),                               # C5 (equiv. to full connection)
+            nn.Conv2d(16, 120, 5),                               # C5
             nn.ReLU(),
             Rearrange("b c h w -> b (c h w)", c=120, h=1, w=1),
             nn.Linear(120, 84),                                  # F6
             nn.ReLU(),
             nn.Linear(84, num_classes)                           # Output
         )
+
+        # NOTE: The implementation of ``self.net`` above is equivalent to the following, as long as
+        #       the input shape is 32x32:
+        # self.net = nn.Sequential(
+        #     nn.Conv2d(1, 6, 5),
+        #     nn.MaxPool2d(2),
+        #     nn.ReLU(),
+        #     nn.Conv2d(6, 16, 5),
+        #     nn.MaxPool2d(2),
+        #     nn.ReLU(),
+        #     Rearrange("b c h w -> b (c h w)", c=16, h=5, w=5),
+        #     nn.Linear(16 * 5 * 5, 120),
+        #     nn.ReLU(),
+        #     nn.Linear(120, 84),
+        #     nn.ReLU(),
+        #     nn.Linear(84, num_classes)
+        # )
 
     def forward(
             self,
