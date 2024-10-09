@@ -21,6 +21,8 @@ class PerformanceTracker:
         latest_is_best: A flag to indicate whether the latest score of
           the metric being tracked is the best observed so far.
         logger: The logger instance to record logs.
+        min_delta: The minimum change in the performance measure to
+          qualify as an improvement.
         patience: The number of consecutive epochs without a new best
           performance to wait before stopping the training process
           early.
@@ -44,6 +46,7 @@ class PerformanceTracker:
             self,
             higher_is_better: bool,
             track_for_checkpointing: bool,
+            min_delta: float = 0.0,
             patience: Optional[int] = None
     ) -> None:
         """Initialize the PerformanceTracker instance.
@@ -53,6 +56,10 @@ class PerformanceTracker:
               of the metric being tracked reflect better performance.
             track_for_checkpointing: A flag to indicate whether model
               performance should be tracked for checkpointing.
+            min_delta: The minimum change in the performance measure to
+              qualify as an improvement, i.e., an absolute change of
+              less than or equal to ``min_delta`` will not count as a
+              new best score.
             patience: The number of consecutive epochs without a new
               best performance to wait before stopping the training
               process early.  Set to None to disable early stopping.
@@ -64,6 +71,7 @@ class PerformanceTracker:
 
         self.higher_is_better = higher_is_better
         self.track_for_checkpointing = track_for_checkpointing
+        self.min_delta = min_delta
 
         if patience is None:
             self.patience = inf
@@ -103,29 +111,35 @@ class PerformanceTracker:
             )
             return
 
-        best_score = f"{self.best_score:.4f}" if isfinite(self.best_score) else self.best_score
+        best_score = f"{self.best_score:.3f}" if isfinite(self.best_score) else self.best_score
+        min_delta = f"{self.min_delta:.3f}"
 
         if self.track_for_early_stopping:
             patience_counter = f"{self.patience_counter}/{self.patience}"
             if self.track_for_checkpointing:
                 self.logger.info(
                     "Performance tracking is enabled for both checkpointing and early stopping. "
-                    "Current best score is %s, patience counter is at %s.",
+                    "Current best score is %s, patience counter is at %s, improvement threshold "
+                    "is set to %s.",
                     best_score,
-                    patience_counter
+                    patience_counter,
+                    min_delta
                 )
             else:
                 self.logger.info(
                     "Performance tracking is enabled for early stopping only. "
-                    "Current best score is %s, patience counter is at %s.",
+                    "Current best score is %s, patience counter is at %s, improvement threshold "
+                    "is set to %s.",
                     best_score,
-                    patience_counter
+                    patience_counter,
+                    min_delta
                 )
         else:
             self.logger.info(
                 "Performance tracking is enabled for checkpointing only. "
-                "Current best score is %s.",
-                best_score
+                "Current best score is %s, improvement threshold is set to %s.",
+                best_score,
+                min_delta
             )
 
     def update(
@@ -148,9 +162,9 @@ class PerformanceTracker:
         """
 
         if self.higher_is_better:
-            self.latest_is_best = latest_score > self.best_score
+            self.latest_is_best = latest_score > self.best_score + self.min_delta
         else:
-            self.latest_is_best = latest_score < self.best_score
+            self.latest_is_best = latest_score < self.best_score - self.min_delta
 
         if self.latest_is_best:
             self.best_score = latest_score

@@ -58,6 +58,7 @@ dataloader:
 performance:
   evaluation_metric: Loss  # either "Loss" or one of the keys in the ``metrics`` dict
   higher_is_better: false
+  min_delta: 0.0
   evaluate_on: val  # either "train" or "val"
   patience: 20  # patience for early stopping, null to disable
   keep_previous_best_score: true  # whether to load previous best score from checkpoint when resuming training

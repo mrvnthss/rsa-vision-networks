@@ -498,6 +498,7 @@ class PerformanceConf:
     ]] = MISSING
     evaluation_metric: str = MISSING
     higher_is_better: bool = MISSING
+    min_delta: float = 0.0
     evaluate_on: DatasetSplitName = MISSING
     patience: Optional[int] = None
     keep_previous_best_score: bool = MISSING

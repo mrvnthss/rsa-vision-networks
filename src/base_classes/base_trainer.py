@@ -88,6 +88,7 @@ class BaseTrainer(ABC):
               * performance.evaluation_metric
               * performance.higher_is_better
               * performance.keep_previous_best_score
+              * performance.min_delta
               * performance.patience
               * tensorboard.updates_per_epoch
               * training.num_epochs
@@ -138,6 +139,7 @@ class BaseTrainer(ABC):
         self.performance_tracker = PerformanceTracker(
             higher_is_better=cfg.performance.higher_is_better,
             track_for_checkpointing=cfg.checkpoints.save_best_model,
+            min_delta=cfg.performance.min_delta,
             patience=cfg.performance.patience
         )
         self.performance_tracker.report_status()
