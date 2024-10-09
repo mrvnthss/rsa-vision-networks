@@ -1,10 +1,10 @@
 """Utility functions related to data handling.
 
 Functions:
-    * get_training_durations(log_file_path, drop_run_id=True): Parse a
+    * get_training_durations(log_file_path, drop_run_id, ...): Parse a
         single log file to determine training durations.
-    * get_training_results(log_file_path, mode, drop_run_id=True):
-        Parse a single log file to determine training results.
+    * get_training_results(log_file_path, mode, ...): Parse a single log
+        file to determine training results.
     * parse_log_dir(log_dir, parse_fn, ...): Parse a (parent) directory
         of log files.
     * parse_tb_data(log_dir, extract_hparams=True, drop_run_id=True):
@@ -32,7 +32,8 @@ from tbparse import SummaryReader
 
 def get_training_durations(
         log_file_path: str,
-        drop_run_id: Optional[bool] = True
+        drop_run_id: bool = True,
+        extract_hparams: bool = False
 ) -> pd.DataFrame:
     """Parse a single log file to determine training durations.
 
@@ -46,6 +47,8 @@ def get_training_durations(
         log_file_path: The full path to the log file.
         drop_run_id: Whether to drop the run ID from the DataFrame if
           the log file only contains information about a single run.
+        extract_hparams: Whether to extract hyperparameters from the
+          full path to the log file.
 
     Returns:
         A DataFrame containing the duration of each epoch of all runs
@@ -86,13 +89,17 @@ def get_training_durations(
     # Index epochs per run
     df["epoch"] = df.groupby("run_id").cumcount() + 1
 
-    # Add hyperparameter settings to DataFrame
-    hparams = _extract_hparams(_extract_run_dir(log_file_path))
-    for k, v in hparams.items():
-        df[k] = v
+    # Extract hyperparameters from directory and add to DataFrame, reorder columns
+    if extract_hparams:
+        hparams = _extract_hparams(_extract_run_dir(log_file_path))
+        for k, v in hparams.items():
+            df[k] = v
+        col_order = [*hparams, "run_id", "epoch", "duration"]
+    else:
+        col_order = ["run_id", "epoch", "duration"]
+    df = df[col_order]
 
-    # Reorder columns and possibly drop run ID, if requested
-    df = df[["run_id", *hparams.keys(), "epoch", "duration"]]
+    # Drop run ID, if requested
     if len(training_runs) == 1 and drop_run_id:
         df = df.drop(columns="run_id")
 
@@ -102,7 +109,8 @@ def get_training_durations(
 def get_training_results(
         log_file_path: str,
         mode: Literal["train", "val"],
-        drop_run_id: Optional[bool] = True
+        drop_run_id: bool = True,
+        extract_hparams: bool = False
 ) -> pd.DataFrame:
     """Parse a single log file to determine training results.
 
@@ -118,6 +126,8 @@ def get_training_results(
           set.
         drop_run_id: Whether to drop the run ID from the DataFrame if
           the log file only contains information about a single run.
+        extract_hparams: Whether to extract hyperparameters from the
+          full path to the log file.
 
     Returns:
         A DataFrame containing the results of the best performing model
@@ -158,16 +168,21 @@ def get_training_results(
     # Convert to DataFrame
     df = pd.DataFrame(data)
 
-    # Add hyperparameter settings to DataFrame
-    hparams = _extract_hparams(_extract_run_dir(log_file_path))
-    for k, v in hparams.items():
-        df[k] = v
+    # Extract hyperparameters from directory and add to DataFrame, set column order
+    if extract_hparams:
+        hparams = _extract_hparams(_extract_run_dir(log_file_path))
+        for k, v in hparams.items():
+            df[k] = v
+        hparam_names = list(hparams.keys()) + ["run_id"]
+        remaining_columns = [col for col in df.columns if col not in hparam_names]
+        col_order = [*hparam_names, *remaining_columns]
+    else:
+        col_order = ["run_id", *[col for col in df.columns if col != "run_id"]]
 
-    # Reorder columns of DataFrame
-    hparam_names = list(hparams.keys())
-    hparam_names.append("run_id")
-    remaining_columns = [col for col in df.columns if col not in hparam_names]
-    df = df[[*hparam_names, *remaining_columns]]
+    # Move "Epochs" to the very end, reorder columns
+    col_order.remove("Epochs")
+    col_order.append("Epochs")
+    df = df[col_order]
 
     # Drop run ID, if requested
     if len(training_runs) == 1 and drop_run_id:
@@ -180,14 +195,14 @@ def parse_log_dir(
         log_dir: str,
         parse_fn: Callable,
         mode: Optional[Literal["train", "val"]] = None,
-        drop_run_id: Optional[bool] = True
+        drop_run_id: bool = True
 ) -> pd.DataFrame:
     """Parse a (parent) directory of log files.
 
     Note:
         The ``parse_fn`` can be one of the following functions:
-          * get_training_durations(log_file_path, drop_run_id=False)
-          * get_training_results(log_file_path, mode, drop_run_id=False)
+          * get_training_durations
+          * get_training_results
 
     Args:
         log_dir: The path of the (parent) directory storing the log
@@ -212,9 +227,18 @@ def parse_log_dir(
     hparam_names = set()
 
     if mode is not None and "mode" in inspect.signature(parse_fn).parameters:
-        parse_fn = partial(parse_fn, mode=mode, drop_run_id=drop_run_id)
+        parse_fn = partial(
+            parse_fn,
+            mode=mode,
+            drop_run_id=drop_run_id,
+            extract_hparams=True
+        )
     else:
-        parse_fn = partial(parse_fn, drop_run_id=drop_run_id)
+        parse_fn = partial(
+            parse_fn,
+            drop_run_id=drop_run_id,
+            extract_hparams=True
+        )
 
     # Parse individual log files
     for root, _, files in os.walk(log_dir):
@@ -289,7 +313,7 @@ def parse_tb_data(
     # Extract name of metric and mode of training (training vs. validation)
     df[["metric", "mode"]] = df["tag"].str.split("/", expand=True)
 
-    # Extract hyperparameters from subdirectories and add to DataFrame
+    # Extract hyperparameters from subdirectories and add to DataFrame, reorder columns
     if extract_hparams:
         # NOTE: Here we assume that the ``log_dir`` is the immediate parent directory of the
         #       subdirectories specifying the hyperparameter configurations.
@@ -297,9 +321,6 @@ def parse_tb_data(
         hparams = subdir_names.apply(_extract_hparams)
         df = pd.concat([df, pd.DataFrame(hparams.tolist())], axis=1)
         hparam_names = hparams.apply(lambda x: list(x.keys())).explode().unique()
-
-    # Reorder columns
-    if extract_hparams:
         col_order = ["global_id", "run_id", *hparam_names, "mode", "metric", "step", "value"]
     else:
         col_order = ["global_id", "run_id", "mode", "metric", "step", "value"]
