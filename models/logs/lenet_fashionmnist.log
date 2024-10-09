@@ -1,0 +1,110 @@
+[2024-10-08 16:41:58,804][__main__][INFO] - Target device is set to: MPS.
+[2024-10-08 16:41:58,805][__main__][INFO] - Preparing transforms and dataset ...
+[2024-10-08 16:41:59,028][__main__][INFO] - Preparing dataloaders ...
+[2024-10-08 16:41:59,147][__main__][INFO] - Setting up criterion ...
+[2024-10-08 16:41:59,147][__main__][INFO] - Instantiating metrics ...
+[2024-10-08 16:41:59,150][__main__][INFO] - Instantiating model and optimizer ...
+[2024-10-08 16:41:59,164][__main__][INFO] - Setting up learning rate scheduler (if specified) ...
+[2024-10-08 16:41:59,165][__main__][INFO] - Setting up trainer ...
+[2024-10-08 16:41:59,171][src.training.helpers.metric_tracker][INFO] - Metrics being tracked during training are: Loss, Accuracy@1, Accuracy@5.
+[2024-10-08 16:41:59,173][src.training.helpers.checkpoint_manager][INFO] - Regular saving is enabled, checkpoints are saved every 5 epochs. Periodically saved checkpoints are continuously overwritten.
+[2024-10-08 16:41:59,173][src.training.helpers.checkpoint_manager][INFO] - Best model is saved during training, Loss on the validation set determines performance.
+[2024-10-08 16:41:59,173][src.training.helpers.performance_tracker][INFO] - Performance tracking is enabled for both checkpointing and early stopping. Current best score is inf, patience counter is at 0/20.
+[2024-10-08 16:41:59,174][src.training.helpers.experiment_tracker][INFO] - Experiment tracking is enabled. Updates will be logged to TensorBoard 10 times per epoch during training. Updates will be logged to TensorBoard 10 times per epoch during validation.
+[2024-10-08 16:41:59,174][src.base_classes.base_trainer][INFO] - Starting training loop ...
+[2024-10-08 16:42:08,683][src.base_classes.base_trainer][INFO] - EPOCH [001/500]    TRAIN: Loss: 0.697  Accuracy@1: 0.738  Accuracy@5: 0.982    VAL: Loss: 0.510  Accuracy@1: 0.810  Accuracy@5: 0.996
+[2024-10-08 16:42:17,749][src.base_classes.base_trainer][INFO] - EPOCH [002/500]    TRAIN: Loss: 0.479  Accuracy@1: 0.823  Accuracy@5: 0.996    VAL: Loss: 0.413  Accuracy@1: 0.850  Accuracy@5: 0.997
+[2024-10-08 16:42:26,779][src.base_classes.base_trainer][INFO] - EPOCH [003/500]    TRAIN: Loss: 0.437  Accuracy@1: 0.839  Accuracy@5: 0.997    VAL: Loss: 0.485  Accuracy@1: 0.811  Accuracy@5: 0.997
+[2024-10-08 16:42:35,758][src.base_classes.base_trainer][INFO] - EPOCH [004/500]    TRAIN: Loss: 0.420  Accuracy@1: 0.844  Accuracy@5: 0.997    VAL: Loss: 0.377  Accuracy@1: 0.854  Accuracy@5: 0.998
+[2024-10-08 16:42:44,771][src.base_classes.base_trainer][INFO] - EPOCH [005/500]    TRAIN: Loss: 0.406  Accuracy@1: 0.849  Accuracy@5: 0.997    VAL: Loss: 0.419  Accuracy@1: 0.840  Accuracy@5: 0.998
+[2024-10-08 16:42:53,777][src.base_classes.base_trainer][INFO] - EPOCH [006/500]    TRAIN: Loss: 0.402  Accuracy@1: 0.851  Accuracy@5: 0.997    VAL: Loss: 0.396  Accuracy@1: 0.854  Accuracy@5: 0.998
+[2024-10-08 16:43:02,763][src.base_classes.base_trainer][INFO] - EPOCH [007/500]    TRAIN: Loss: 0.391  Accuracy@1: 0.857  Accuracy@5: 0.997    VAL: Loss: 0.405  Accuracy@1: 0.855  Accuracy@5: 0.995
+[2024-10-08 16:43:11,743][src.base_classes.base_trainer][INFO] - EPOCH [008/500]    TRAIN: Loss: 0.384  Accuracy@1: 0.858  Accuracy@5: 0.997    VAL: Loss: 0.388  Accuracy@1: 0.855  Accuracy@5: 0.998
+[2024-10-08 16:43:20,701][src.base_classes.base_trainer][INFO] - EPOCH [009/500]    TRAIN: Loss: 0.382  Accuracy@1: 0.861  Accuracy@5: 0.997    VAL: Loss: 0.393  Accuracy@1: 0.858  Accuracy@5: 0.997
+[2024-10-08 16:43:29,684][src.base_classes.base_trainer][INFO] - EPOCH [010/500]    TRAIN: Loss: 0.374  Accuracy@1: 0.862  Accuracy@5: 0.998    VAL: Loss: 0.376  Accuracy@1: 0.860  Accuracy@5: 0.997
+[2024-10-08 16:43:38,729][src.base_classes.base_trainer][INFO] - EPOCH [011/500]    TRAIN: Loss: 0.373  Accuracy@1: 0.863  Accuracy@5: 0.998    VAL: Loss: 0.349  Accuracy@1: 0.871  Accuracy@5: 0.998
+[2024-10-08 16:43:47,696][src.base_classes.base_trainer][INFO] - EPOCH [012/500]    TRAIN: Loss: 0.377  Accuracy@1: 0.862  Accuracy@5: 0.998    VAL: Loss: 0.361  Accuracy@1: 0.867  Accuracy@5: 0.998
+[2024-10-08 16:43:56,709][src.base_classes.base_trainer][INFO] - EPOCH [013/500]    TRAIN: Loss: 0.372  Accuracy@1: 0.863  Accuracy@5: 0.998    VAL: Loss: 0.354  Accuracy@1: 0.873  Accuracy@5: 0.998
+[2024-10-08 16:44:05,716][src.base_classes.base_trainer][INFO] - EPOCH [014/500]    TRAIN: Loss: 0.370  Accuracy@1: 0.865  Accuracy@5: 0.998    VAL: Loss: 0.360  Accuracy@1: 0.868  Accuracy@5: 0.998
+[2024-10-08 16:44:14,726][src.base_classes.base_trainer][INFO] - EPOCH [015/500]    TRAIN: Loss: 0.375  Accuracy@1: 0.863  Accuracy@5: 0.998    VAL: Loss: 0.374  Accuracy@1: 0.864  Accuracy@5: 0.997
+[2024-10-08 16:44:23,732][src.base_classes.base_trainer][INFO] - EPOCH [016/500]    TRAIN: Loss: 0.372  Accuracy@1: 0.863  Accuracy@5: 0.998    VAL: Loss: 0.347  Accuracy@1: 0.871  Accuracy@5: 0.998
+[2024-10-08 16:44:32,760][src.base_classes.base_trainer][INFO] - EPOCH [017/500]    TRAIN: Loss: 0.367  Accuracy@1: 0.864  Accuracy@5: 0.998    VAL: Loss: 0.333  Accuracy@1: 0.877  Accuracy@5: 0.999
+[2024-10-08 16:44:41,787][src.base_classes.base_trainer][INFO] - EPOCH [018/500]    TRAIN: Loss: 0.369  Accuracy@1: 0.864  Accuracy@5: 0.998    VAL: Loss: 0.382  Accuracy@1: 0.857  Accuracy@5: 0.998
+[2024-10-08 16:44:50,809][src.base_classes.base_trainer][INFO] - EPOCH [019/500]    TRAIN: Loss: 0.367  Accuracy@1: 0.865  Accuracy@5: 0.998    VAL: Loss: 0.382  Accuracy@1: 0.865  Accuracy@5: 0.998
+[2024-10-08 16:44:59,849][src.base_classes.base_trainer][INFO] - EPOCH [020/500]    TRAIN: Loss: 0.360  Accuracy@1: 0.867  Accuracy@5: 0.998    VAL: Loss: 0.326  Accuracy@1: 0.881  Accuracy@5: 0.999
+[2024-10-08 16:45:08,892][src.base_classes.base_trainer][INFO] - EPOCH [021/500]    TRAIN: Loss: 0.362  Accuracy@1: 0.868  Accuracy@5: 0.998    VAL: Loss: 0.367  Accuracy@1: 0.868  Accuracy@5: 0.998
+[2024-10-08 16:45:17,880][src.base_classes.base_trainer][INFO] - EPOCH [022/500]    TRAIN: Loss: 0.364  Accuracy@1: 0.866  Accuracy@5: 0.998    VAL: Loss: 0.355  Accuracy@1: 0.867  Accuracy@5: 0.998
+[2024-10-08 16:45:26,893][src.base_classes.base_trainer][INFO] - EPOCH [023/500]    TRAIN: Loss: 0.361  Accuracy@1: 0.867  Accuracy@5: 0.998    VAL: Loss: 0.417  Accuracy@1: 0.844  Accuracy@5: 0.997
+[2024-10-08 16:45:35,927][src.base_classes.base_trainer][INFO] - EPOCH [024/500]    TRAIN: Loss: 0.358  Accuracy@1: 0.868  Accuracy@5: 0.998    VAL: Loss: 0.336  Accuracy@1: 0.875  Accuracy@5: 0.999
+[2024-10-08 16:45:44,961][src.base_classes.base_trainer][INFO] - EPOCH [025/500]    TRAIN: Loss: 0.359  Accuracy@1: 0.868  Accuracy@5: 0.998    VAL: Loss: 0.380  Accuracy@1: 0.864  Accuracy@5: 0.998
+[2024-10-08 16:45:53,992][src.base_classes.base_trainer][INFO] - EPOCH [026/500]    TRAIN: Loss: 0.364  Accuracy@1: 0.866  Accuracy@5: 0.998    VAL: Loss: 0.387  Accuracy@1: 0.862  Accuracy@5: 0.998
+[2024-10-08 16:46:02,990][src.base_classes.base_trainer][INFO] - EPOCH [027/500]    TRAIN: Loss: 0.359  Accuracy@1: 0.867  Accuracy@5: 0.998    VAL: Loss: 0.351  Accuracy@1: 0.873  Accuracy@5: 0.999
+[2024-10-08 16:46:12,024][src.base_classes.base_trainer][INFO] - EPOCH [028/500]    TRAIN: Loss: 0.363  Accuracy@1: 0.867  Accuracy@5: 0.998    VAL: Loss: 0.387  Accuracy@1: 0.842  Accuracy@5: 0.998
+[2024-10-08 16:46:21,234][src.base_classes.base_trainer][INFO] - EPOCH [029/500]    TRAIN: Loss: 0.359  Accuracy@1: 0.868  Accuracy@5: 0.998    VAL: Loss: 0.338  Accuracy@1: 0.879  Accuracy@5: 0.998
+[2024-10-08 16:46:30,413][src.base_classes.base_trainer][INFO] - EPOCH [030/500]    TRAIN: Loss: 0.359  Accuracy@1: 0.868  Accuracy@5: 0.998    VAL: Loss: 0.369  Accuracy@1: 0.862  Accuracy@5: 0.997
+[2024-10-08 16:46:39,553][src.base_classes.base_trainer][INFO] - EPOCH [031/500]    TRAIN: Loss: 0.273  Accuracy@1: 0.899  Accuracy@5: 0.999    VAL: Loss: 0.275  Accuracy@1: 0.897  Accuracy@5: 0.999
+[2024-10-08 16:46:48,725][src.base_classes.base_trainer][INFO] - EPOCH [032/500]    TRAIN: Loss: 0.255  Accuracy@1: 0.905  Accuracy@5: 0.999    VAL: Loss: 0.274  Accuracy@1: 0.897  Accuracy@5: 0.999
+[2024-10-08 16:46:57,876][src.base_classes.base_trainer][INFO] - EPOCH [033/500]    TRAIN: Loss: 0.248  Accuracy@1: 0.906  Accuracy@5: 0.999    VAL: Loss: 0.267  Accuracy@1: 0.897  Accuracy@5: 0.999
+[2024-10-08 16:47:07,140][src.base_classes.base_trainer][INFO] - EPOCH [034/500]    TRAIN: Loss: 0.243  Accuracy@1: 0.908  Accuracy@5: 0.999    VAL: Loss: 0.282  Accuracy@1: 0.893  Accuracy@5: 0.999
+[2024-10-08 16:47:16,274][src.base_classes.base_trainer][INFO] - EPOCH [035/500]    TRAIN: Loss: 0.240  Accuracy@1: 0.909  Accuracy@5: 0.999    VAL: Loss: 0.262  Accuracy@1: 0.899  Accuracy@5: 0.999
+[2024-10-08 16:47:25,240][src.base_classes.base_trainer][INFO] - EPOCH [036/500]    TRAIN: Loss: 0.238  Accuracy@1: 0.909  Accuracy@5: 1.000    VAL: Loss: 0.263  Accuracy@1: 0.901  Accuracy@5: 0.999
+[2024-10-08 16:47:34,327][src.base_classes.base_trainer][INFO] - EPOCH [037/500]    TRAIN: Loss: 0.232  Accuracy@1: 0.911  Accuracy@5: 1.000    VAL: Loss: 0.267  Accuracy@1: 0.898  Accuracy@5: 0.999
+[2024-10-08 16:47:43,572][src.base_classes.base_trainer][INFO] - EPOCH [038/500]    TRAIN: Loss: 0.232  Accuracy@1: 0.913  Accuracy@5: 1.000    VAL: Loss: 0.253  Accuracy@1: 0.904  Accuracy@5: 0.999
+[2024-10-08 16:47:52,557][src.base_classes.base_trainer][INFO] - EPOCH [039/500]    TRAIN: Loss: 0.232  Accuracy@1: 0.913  Accuracy@5: 0.999    VAL: Loss: 0.255  Accuracy@1: 0.904  Accuracy@5: 0.999
+[2024-10-08 16:48:01,572][src.base_classes.base_trainer][INFO] - EPOCH [040/500]    TRAIN: Loss: 0.230  Accuracy@1: 0.914  Accuracy@5: 1.000    VAL: Loss: 0.260  Accuracy@1: 0.901  Accuracy@5: 0.999
+[2024-10-08 16:48:10,373][src.base_classes.base_trainer][INFO] - EPOCH [041/500]    TRAIN: Loss: 0.227  Accuracy@1: 0.914  Accuracy@5: 0.999    VAL: Loss: 0.260  Accuracy@1: 0.906  Accuracy@5: 0.999
+[2024-10-08 16:48:19,301][src.base_classes.base_trainer][INFO] - EPOCH [042/500]    TRAIN: Loss: 0.227  Accuracy@1: 0.915  Accuracy@5: 1.000    VAL: Loss: 0.263  Accuracy@1: 0.902  Accuracy@5: 0.999
+[2024-10-08 16:48:28,261][src.base_classes.base_trainer][INFO] - EPOCH [043/500]    TRAIN: Loss: 0.223  Accuracy@1: 0.917  Accuracy@5: 0.999    VAL: Loss: 0.260  Accuracy@1: 0.902  Accuracy@5: 0.999
+[2024-10-08 16:48:37,244][src.base_classes.base_trainer][INFO] - EPOCH [044/500]    TRAIN: Loss: 0.222  Accuracy@1: 0.916  Accuracy@5: 1.000    VAL: Loss: 0.255  Accuracy@1: 0.904  Accuracy@5: 0.999
+[2024-10-08 16:48:46,147][src.base_classes.base_trainer][INFO] - EPOCH [045/500]    TRAIN: Loss: 0.222  Accuracy@1: 0.917  Accuracy@5: 1.000    VAL: Loss: 0.264  Accuracy@1: 0.900  Accuracy@5: 0.999
+[2024-10-08 16:48:55,099][src.base_classes.base_trainer][INFO] - EPOCH [046/500]    TRAIN: Loss: 0.223  Accuracy@1: 0.916  Accuracy@5: 1.000    VAL: Loss: 0.260  Accuracy@1: 0.904  Accuracy@5: 0.999
+[2024-10-08 16:49:04,110][src.base_classes.base_trainer][INFO] - EPOCH [047/500]    TRAIN: Loss: 0.224  Accuracy@1: 0.916  Accuracy@5: 1.000    VAL: Loss: 0.253  Accuracy@1: 0.905  Accuracy@5: 0.999
+[2024-10-08 16:49:13,085][src.base_classes.base_trainer][INFO] - EPOCH [048/500]    TRAIN: Loss: 0.220  Accuracy@1: 0.917  Accuracy@5: 0.999    VAL: Loss: 0.256  Accuracy@1: 0.905  Accuracy@5: 0.999
+[2024-10-08 16:49:22,015][src.base_classes.base_trainer][INFO] - EPOCH [049/500]    TRAIN: Loss: 0.220  Accuracy@1: 0.917  Accuracy@5: 1.000    VAL: Loss: 0.256  Accuracy@1: 0.905  Accuracy@5: 0.999
+[2024-10-08 16:49:31,020][src.base_classes.base_trainer][INFO] - EPOCH [050/500]    TRAIN: Loss: 0.219  Accuracy@1: 0.916  Accuracy@5: 1.000    VAL: Loss: 0.250  Accuracy@1: 0.908  Accuracy@5: 0.999
+[2024-10-08 16:49:39,985][src.base_classes.base_trainer][INFO] - EPOCH [051/500]    TRAIN: Loss: 0.215  Accuracy@1: 0.919  Accuracy@5: 1.000    VAL: Loss: 0.248  Accuracy@1: 0.909  Accuracy@5: 0.999
+[2024-10-08 16:49:49,095][src.base_classes.base_trainer][INFO] - EPOCH [052/500]    TRAIN: Loss: 0.216  Accuracy@1: 0.918  Accuracy@5: 1.000    VAL: Loss: 0.262  Accuracy@1: 0.902  Accuracy@5: 0.999
+[2024-10-08 16:49:58,310][src.base_classes.base_trainer][INFO] - EPOCH [053/500]    TRAIN: Loss: 0.216  Accuracy@1: 0.919  Accuracy@5: 1.000    VAL: Loss: 0.260  Accuracy@1: 0.903  Accuracy@5: 0.999
+[2024-10-08 16:50:07,529][src.base_classes.base_trainer][INFO] - EPOCH [054/500]    TRAIN: Loss: 0.216  Accuracy@1: 0.919  Accuracy@5: 1.000    VAL: Loss: 0.249  Accuracy@1: 0.911  Accuracy@5: 0.999
+[2024-10-08 16:50:16,556][src.base_classes.base_trainer][INFO] - EPOCH [055/500]    TRAIN: Loss: 0.214  Accuracy@1: 0.919  Accuracy@5: 1.000    VAL: Loss: 0.252  Accuracy@1: 0.907  Accuracy@5: 0.999
+[2024-10-08 16:50:25,480][src.base_classes.base_trainer][INFO] - EPOCH [056/500]    TRAIN: Loss: 0.213  Accuracy@1: 0.920  Accuracy@5: 1.000    VAL: Loss: 0.281  Accuracy@1: 0.896  Accuracy@5: 0.999
+[2024-10-08 16:50:34,405][src.base_classes.base_trainer][INFO] - EPOCH [057/500]    TRAIN: Loss: 0.214  Accuracy@1: 0.919  Accuracy@5: 1.000    VAL: Loss: 0.249  Accuracy@1: 0.911  Accuracy@5: 0.999
+[2024-10-08 16:50:43,200][src.base_classes.base_trainer][INFO] - EPOCH [058/500]    TRAIN: Loss: 0.215  Accuracy@1: 0.919  Accuracy@5: 1.000    VAL: Loss: 0.253  Accuracy@1: 0.908  Accuracy@5: 0.999
+[2024-10-08 16:50:52,117][src.base_classes.base_trainer][INFO] - EPOCH [059/500]    TRAIN: Loss: 0.212  Accuracy@1: 0.920  Accuracy@5: 1.000    VAL: Loss: 0.266  Accuracy@1: 0.902  Accuracy@5: 0.999
+[2024-10-08 16:51:01,217][src.base_classes.base_trainer][INFO] - EPOCH [060/500]    TRAIN: Loss: 0.212  Accuracy@1: 0.920  Accuracy@5: 1.000    VAL: Loss: 0.273  Accuracy@1: 0.897  Accuracy@5: 0.999
+[2024-10-08 16:51:10,139][src.base_classes.base_trainer][INFO] - EPOCH [061/500]    TRAIN: Loss: 0.187  Accuracy@1: 0.931  Accuracy@5: 1.000    VAL: Loss: 0.238  Accuracy@1: 0.913  Accuracy@5: 0.999
+[2024-10-08 16:51:19,065][src.base_classes.base_trainer][INFO] - EPOCH [062/500]    TRAIN: Loss: 0.182  Accuracy@1: 0.933  Accuracy@5: 1.000    VAL: Loss: 0.235  Accuracy@1: 0.913  Accuracy@5: 0.999
+[2024-10-08 16:51:28,044][src.base_classes.base_trainer][INFO] - EPOCH [063/500]    TRAIN: Loss: 0.179  Accuracy@1: 0.934  Accuracy@5: 1.000    VAL: Loss: 0.237  Accuracy@1: 0.913  Accuracy@5: 0.999
+[2024-10-08 16:51:36,979][src.base_classes.base_trainer][INFO] - EPOCH [064/500]    TRAIN: Loss: 0.178  Accuracy@1: 0.933  Accuracy@5: 1.000    VAL: Loss: 0.234  Accuracy@1: 0.914  Accuracy@5: 0.999
+[2024-10-08 16:51:45,894][src.base_classes.base_trainer][INFO] - EPOCH [065/500]    TRAIN: Loss: 0.177  Accuracy@1: 0.933  Accuracy@5: 1.000    VAL: Loss: 0.239  Accuracy@1: 0.912  Accuracy@5: 0.999
+[2024-10-08 16:51:54,929][src.base_classes.base_trainer][INFO] - EPOCH [066/500]    TRAIN: Loss: 0.176  Accuracy@1: 0.935  Accuracy@5: 1.000    VAL: Loss: 0.235  Accuracy@1: 0.913  Accuracy@5: 0.999
+[2024-10-08 16:52:04,059][src.base_classes.base_trainer][INFO] - EPOCH [067/500]    TRAIN: Loss: 0.176  Accuracy@1: 0.935  Accuracy@5: 1.000    VAL: Loss: 0.234  Accuracy@1: 0.915  Accuracy@5: 0.999
+[2024-10-08 16:52:13,249][src.base_classes.base_trainer][INFO] - EPOCH [068/500]    TRAIN: Loss: 0.176  Accuracy@1: 0.934  Accuracy@5: 1.000    VAL: Loss: 0.234  Accuracy@1: 0.914  Accuracy@5: 0.999
+[2024-10-08 16:52:22,444][src.base_classes.base_trainer][INFO] - EPOCH [069/500]    TRAIN: Loss: 0.173  Accuracy@1: 0.936  Accuracy@5: 1.000    VAL: Loss: 0.235  Accuracy@1: 0.913  Accuracy@5: 0.999
+[2024-10-08 16:52:31,507][src.base_classes.base_trainer][INFO] - EPOCH [070/500]    TRAIN: Loss: 0.173  Accuracy@1: 0.935  Accuracy@5: 1.000    VAL: Loss: 0.233  Accuracy@1: 0.915  Accuracy@5: 0.999
+[2024-10-08 16:52:40,576][src.base_classes.base_trainer][INFO] - EPOCH [071/500]    TRAIN: Loss: 0.173  Accuracy@1: 0.935  Accuracy@5: 1.000    VAL: Loss: 0.233  Accuracy@1: 0.914  Accuracy@5: 0.999
+[2024-10-08 16:52:49,783][src.base_classes.base_trainer][INFO] - EPOCH [072/500]    TRAIN: Loss: 0.172  Accuracy@1: 0.936  Accuracy@5: 1.000    VAL: Loss: 0.237  Accuracy@1: 0.914  Accuracy@5: 0.999
+[2024-10-08 16:52:58,996][src.base_classes.base_trainer][INFO] - EPOCH [073/500]    TRAIN: Loss: 0.172  Accuracy@1: 0.936  Accuracy@5: 1.000    VAL: Loss: 0.232  Accuracy@1: 0.915  Accuracy@5: 0.999
+[2024-10-08 16:53:08,165][src.base_classes.base_trainer][INFO] - EPOCH [074/500]    TRAIN: Loss: 0.173  Accuracy@1: 0.936  Accuracy@5: 1.000    VAL: Loss: 0.232  Accuracy@1: 0.916  Accuracy@5: 0.999
+[2024-10-08 16:53:17,068][src.base_classes.base_trainer][INFO] - EPOCH [075/500]    TRAIN: Loss: 0.170  Accuracy@1: 0.938  Accuracy@5: 1.000    VAL: Loss: 0.232  Accuracy@1: 0.915  Accuracy@5: 0.999
+[2024-10-08 16:53:26,050][src.base_classes.base_trainer][INFO] - EPOCH [076/500]    TRAIN: Loss: 0.170  Accuracy@1: 0.937  Accuracy@5: 1.000    VAL: Loss: 0.233  Accuracy@1: 0.915  Accuracy@5: 0.999
+[2024-10-08 16:53:35,254][src.base_classes.base_trainer][INFO] - EPOCH [077/500]    TRAIN: Loss: 0.171  Accuracy@1: 0.937  Accuracy@5: 1.000    VAL: Loss: 0.238  Accuracy@1: 0.913  Accuracy@5: 0.999
+[2024-10-08 16:53:44,358][src.base_classes.base_trainer][INFO] - EPOCH [078/500]    TRAIN: Loss: 0.171  Accuracy@1: 0.936  Accuracy@5: 1.000    VAL: Loss: 0.234  Accuracy@1: 0.914  Accuracy@5: 0.999
+[2024-10-08 16:53:53,466][src.base_classes.base_trainer][INFO] - EPOCH [079/500]    TRAIN: Loss: 0.171  Accuracy@1: 0.937  Accuracy@5: 1.000    VAL: Loss: 0.233  Accuracy@1: 0.916  Accuracy@5: 0.999
+[2024-10-08 16:54:02,478][src.base_classes.base_trainer][INFO] - EPOCH [080/500]    TRAIN: Loss: 0.170  Accuracy@1: 0.937  Accuracy@5: 1.000    VAL: Loss: 0.233  Accuracy@1: 0.914  Accuracy@5: 0.999
+[2024-10-08 16:54:11,467][src.base_classes.base_trainer][INFO] - EPOCH [081/500]    TRAIN: Loss: 0.171  Accuracy@1: 0.937  Accuracy@5: 1.000    VAL: Loss: 0.235  Accuracy@1: 0.915  Accuracy@5: 0.999
+[2024-10-08 16:54:20,410][src.base_classes.base_trainer][INFO] - EPOCH [082/500]    TRAIN: Loss: 0.170  Accuracy@1: 0.936  Accuracy@5: 1.000    VAL: Loss: 0.233  Accuracy@1: 0.914  Accuracy@5: 0.999
+[2024-10-08 16:54:29,440][src.base_classes.base_trainer][INFO] - EPOCH [083/500]    TRAIN: Loss: 0.169  Accuracy@1: 0.937  Accuracy@5: 1.000    VAL: Loss: 0.235  Accuracy@1: 0.914  Accuracy@5: 0.999
+[2024-10-08 16:54:38,344][src.base_classes.base_trainer][INFO] - EPOCH [084/500]    TRAIN: Loss: 0.168  Accuracy@1: 0.936  Accuracy@5: 1.000    VAL: Loss: 0.234  Accuracy@1: 0.916  Accuracy@5: 0.999
+[2024-10-08 16:54:47,323][src.base_classes.base_trainer][INFO] - EPOCH [085/500]    TRAIN: Loss: 0.167  Accuracy@1: 0.938  Accuracy@5: 1.000    VAL: Loss: 0.235  Accuracy@1: 0.915  Accuracy@5: 0.999
+[2024-10-08 16:54:56,267][src.base_classes.base_trainer][INFO] - EPOCH [086/500]    TRAIN: Loss: 0.167  Accuracy@1: 0.939  Accuracy@5: 1.000    VAL: Loss: 0.232  Accuracy@1: 0.915  Accuracy@5: 0.999
+[2024-10-08 16:55:05,179][src.base_classes.base_trainer][INFO] - EPOCH [087/500]    TRAIN: Loss: 0.168  Accuracy@1: 0.939  Accuracy@5: 1.000    VAL: Loss: 0.232  Accuracy@1: 0.916  Accuracy@5: 0.999
+[2024-10-08 16:55:14,209][src.base_classes.base_trainer][INFO] - EPOCH [088/500]    TRAIN: Loss: 0.167  Accuracy@1: 0.938  Accuracy@5: 1.000    VAL: Loss: 0.232  Accuracy@1: 0.915  Accuracy@5: 0.999
+[2024-10-08 16:55:23,151][src.base_classes.base_trainer][INFO] - EPOCH [089/500]    TRAIN: Loss: 0.167  Accuracy@1: 0.939  Accuracy@5: 1.000    VAL: Loss: 0.233  Accuracy@1: 0.915  Accuracy@5: 0.999
+[2024-10-08 16:55:32,110][src.base_classes.base_trainer][INFO] - EPOCH [090/500]    TRAIN: Loss: 0.167  Accuracy@1: 0.938  Accuracy@5: 1.000    VAL: Loss: 0.232  Accuracy@1: 0.916  Accuracy@5: 0.999
+[2024-10-08 16:55:41,009][src.base_classes.base_trainer][INFO] - EPOCH [091/500]    TRAIN: Loss: 0.164  Accuracy@1: 0.940  Accuracy@5: 1.000    VAL: Loss: 0.233  Accuracy@1: 0.915  Accuracy@5: 0.999
+[2024-10-08 16:55:50,019][src.base_classes.base_trainer][INFO] - EPOCH [092/500]    TRAIN: Loss: 0.164  Accuracy@1: 0.940  Accuracy@5: 1.000    VAL: Loss: 0.233  Accuracy@1: 0.915  Accuracy@5: 0.999
+[2024-10-08 16:55:59,010][src.base_classes.base_trainer][INFO] - EPOCH [093/500]    TRAIN: Loss: 0.162  Accuracy@1: 0.939  Accuracy@5: 1.000    VAL: Loss: 0.233  Accuracy@1: 0.915  Accuracy@5: 0.999
+[2024-10-08 16:56:08,093][src.base_classes.base_trainer][INFO] - EPOCH [094/500]    TRAIN: Loss: 0.163  Accuracy@1: 0.941  Accuracy@5: 1.000    VAL: Loss: 0.232  Accuracy@1: 0.916  Accuracy@5: 0.999
+[2024-10-08 16:56:08,093][src.base_classes.base_trainer][INFO] - No new best performance over the last 20 consecutive epochs, stopping training now.
+[2024-10-08 16:56:08,093][src.base_classes.base_trainer][INFO] - Best performing model achieved a score of 0.232 (Loss) on the validation set after 74 epochs of training.

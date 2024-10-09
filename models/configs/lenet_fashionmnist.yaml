@@ -1,0 +1,122 @@
+model:
+  name: LeNet
+  input_size: 32
+  load_weights_from: null
+  evaluate_on: null
+  kwargs:
+    _target_: models.lenet.LeNet
+    num_classes: ${dataset.num_classes}
+dataset:
+  name: FashionMNIST
+  num_classes: 10
+  is_grayscale: true
+  stats:
+    mean:
+    - 0.286
+    std:
+    - 0.3205
+  train_set:
+    _target_: datasets.fashionmnist.FashionMNIST
+    data_dir: ../data
+    train: true
+    load_into_memory: false
+  test_set:
+    _target_: datasets.fashionmnist.FashionMNIST
+    data_dir: ../data
+    train: false
+    load_into_memory: false
+transform:
+  train:
+    mean: ${dataset.stats.mean}
+    std: ${dataset.stats.std}
+    crop_size: ${model.input_size}
+    crop_scale:
+      lower: 0.9
+      upper: 1.0
+    crop_ratio:
+      lower: 0.75
+      upper: 1.3333333333333333
+    flip_prob: 0.5
+  val:
+    mean: ${dataset.stats.mean}
+    std: ${dataset.stats.std}
+    resize_size: ${model.input_size}
+    crop_size: ${model.input_size}
+criterion:
+  name: CrossEntropyLoss
+  label_smoothing: 0.0
+  kwargs:
+    _target_: torch.nn.CrossEntropyLoss
+    label_smoothing: ${criterion.label_smoothing}
+optimizer:
+  name: SGD
+  lr: 0.1
+  momentum: 0.8
+  dampening: 0
+  weight_decay: 0.001
+  kwargs:
+    _target_: torch.optim.sgd.SGD
+    lr: ${optimizer.lr}
+    momentum: ${optimizer.momentum}
+    dampening: ${optimizer.dampening}
+    weight_decay: ${optimizer.weight_decay}
+    nesterov: false
+    maximize: false
+    foreach: null
+    differentiable: false
+    fused: null
+main_scheduler:
+  name: StepLR
+  lr_step_size: 30
+  lr_gamma: 0.1
+  kwargs:
+    _target_: torch.optim.lr_scheduler.StepLR
+    step_size: ${main_scheduler.lr_step_size}
+    gamma: ${main_scheduler.lr_gamma}
+    last_epoch: -1
+performance:
+  metrics:
+    Accuracy@1:
+      _target_: torchmetrics.classification.MulticlassAccuracy
+      num_classes: ${dataset.num_classes}
+      top_k: 1
+      average: micro
+      multidim_average: global
+    Accuracy@5:
+      _target_: torchmetrics.classification.MulticlassAccuracy
+      num_classes: ${dataset.num_classes}
+      top_k: 5
+      average: micro
+      multidim_average: global
+  evaluation_metric: Loss
+  higher_is_better: false
+  evaluate_on: val
+  patience: 20
+  keep_previous_best_score: true
+experiment:
+  name: lenet_fashionmnist/training/standard_recipe
+  dir: ../out/${experiment.name}/${now:%Y-%m-%d_%H-%M-%S}
+reproducibility:
+  torch_seed: 89
+  shuffle_seed: 858
+  split_seed: 42
+  cudnn_deterministic: true
+  cudnn_benchmark: false
+training:
+  num_epochs: 500
+  resume_from: null
+dataloader:
+  val_split: 0.2
+  batch_size: 64
+  num_workers: 4
+checkpoints:
+  save_frequency: 5
+  save_best_model: true
+  delete_previous: true
+tensorboard:
+  updates_per_epoch:
+    train: 10
+    val: 10
+paths:
+  checkpoints: ${experiment.dir}/checkpoints
+  tensorboard: ${experiment.dir}/tensorboard
