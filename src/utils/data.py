@@ -57,6 +57,8 @@ def get_training_durations(
 
     # Extract individual training runs from log file
     training_runs = _extract_training_runs(log_file_path)
+    if not training_runs:
+        return pd.DataFrame()
 
     # Define patterns to match against
     epoch_pattern = r"EPOCH \[\d+/\d+\]"
@@ -136,6 +138,8 @@ def get_training_results(
 
     # Extract individual training runs from log file
     training_runs = _extract_training_runs(log_file_path)
+    if not training_runs:
+        return pd.DataFrame()
 
     # Define patterns to match against
     epoch_pattern = r"EPOCH \[(\d+)/\d+\]\s+TRAIN: (.+?)\s+VAL: (.+)"
