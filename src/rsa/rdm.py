@@ -293,8 +293,8 @@ def _compute_rdm_euclidean(
           RDM.  Must be a 2-D tensor of size (N, M), where N >= 3 is the
           number of stimuli, and M >= 2 is the number of unit
           activations per stimulus.
-        center_activations: Whether to center the activations for each
-          stimulus before computing distances.
+        center_activations: Whether to center the activations across
+          units per stimulus before computing distances.
         normalize_distances: Whether to normalize the squared pairwise
           distances by the number M of unit activations per stimulus.
         distance_type: Whether to return squared or non-squared
