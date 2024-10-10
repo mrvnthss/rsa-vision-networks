@@ -57,6 +57,7 @@ class CriterionName(Enum):
 
 class ComputeRDMName(Enum):
     correlation = "correlation"
+    cosine = "cosine"
     euclidean = "euclidean"
 
 
@@ -242,6 +243,11 @@ class ComputeRDMCorrelationConf:
 
 
 @dataclass
+class ComputeRDMCosineConf:
+    pass
+
+
+@dataclass
 class ComputeRDMEuclideanConf:
     center_activations: bool = False
     normalize_distances: bool = True
@@ -256,6 +262,7 @@ class ComputeRDMConf:
     distance_type: Optional[str] = None
     kwargs: Union[
         ComputeRDMCorrelationConf,
+        ComputeRDMCosineConf,
         ComputeRDMEuclideanConf
     ] = MISSING
 

@@ -75,6 +75,7 @@ def compute_rdm(
 
     Available methods:
         * "euclidean": Euclidean distance.
+        * "cosine": Cosine similarity.
         * "correlation": Pearson correlation distance.
 
     Args:
@@ -96,6 +97,7 @@ def compute_rdm(
 
     methods: Dict[str, Callable[..., torch.Tensor]] = {
         "euclidean": _compute_rdm_euclidean,
+        "cosine": _compute_rdm_cosine,
         "correlation": _compute_rdm_correlation,
     }
 
@@ -274,6 +276,35 @@ def _compute_rdm_correlation(
     """
 
     return 1 - _get_upper_tri_matrix(torch.corrcoef(activations))
+
+
+def _compute_rdm_cosine(
+        activations: torch.Tensor
+) -> torch.Tensor:
+    """Compute an RDM using cosine similarity.
+
+    Note:
+        This function returns only the upper triangular matrix of the
+        computed RDM in vectorized form (row-major order).
+
+    Args:
+        activations: The matrix of activations from which to compute the
+          RDM.  Must be a 2-D tensor of size (N, M), where N >= 3 is the
+          number of stimuli, and M >= 2 is the number of unit
+          activations per stimulus.
+
+    Returns:
+        The RDM (in vectorized form) computed from the data using
+        cosine similarity.
+    """
+
+    normalized_activations = F.normalize(activations, p=2, dim=1)
+    rdm = torch.mm(
+        normalized_activations,
+        normalized_activations.T
+    )
+
+    return _get_upper_tri_matrix(rdm)
 
 
 def _compute_rdm_euclidean(
