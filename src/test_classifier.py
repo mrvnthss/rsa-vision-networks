@@ -9,6 +9,7 @@ Typical usage example:
   >>> python test_classifier.py model=lenet dataset=fashionmnist
   ...                           model.load_weights_from=<path_to_checkpoint>
   ...                           model.evaluate_on=test
+  ...                           transform.val.resize_size=32
 """
 
 
