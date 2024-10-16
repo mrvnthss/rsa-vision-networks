@@ -6,7 +6,7 @@ associated with this script is named "train_similarity.yaml".
 
 Typical usage example:
 
-  >>> python train_similarity.py experiment=lenet_fashionmnist/representational_similarity/weight_transform
+  >>> python train_similarity.py experiment=lenet_fashionmnist/size_modifications/representational_similarity/standard_model
 """
 
 
@@ -39,21 +39,14 @@ def main(cfg: TrainSimilarityConf) -> None:
     device = set_device()
     logger.info("Target device is set to: %s.", device.type.upper())
 
+    # Set seeds for reproducibility
+    set_seeds(cfg.reproducibility)
+
     # Prepare transforms and dataset
     logger.info("Preparing transforms and dataset ...")
     train_transform = get_train_transform(cfg.transform.train)
     val_transform = get_val_transform(cfg.transform.val)
     dataset = instantiate(cfg.dataset.train_set)
-
-    # Instantiate metrics to track during training
-    logger.info("Instantiating metrics ...")
-    prediction_metrics = MetricCollection({
-        name: instantiate(metric) for name, metric in cfg.performance.metrics.items()
-    })
-
-    # Set up criterion
-    logger.info("Setting up criterion ...")
-    criterion = get_rsa_loss(repr_similarity_params=cfg.repr_similarity)
 
     # Set up dataloaders
     logger.info("Preparing dataloaders ...")
@@ -80,8 +73,15 @@ def main(cfg: TrainSimilarityConf) -> None:
     train_loader = base_loader.get_dataloader(mode="main")
     val_loader = base_loader.get_dataloader(mode="val")
 
-    # Set seeds for reproducibility
-    set_seeds(cfg.reproducibility)
+    # Set up criterion
+    logger.info("Setting up criterion ...")
+    criterion = get_rsa_loss(repr_similarity_params=cfg.repr_similarity)
+
+    # Instantiate metrics to track during training
+    logger.info("Instantiating metrics ...")
+    prediction_metrics = MetricCollection({
+        name: instantiate(metric) for name, metric in cfg.performance.metrics.items()
+    })
 
     # Instantiate both models (training and reference) and optimizer
     logger.info("Instantiating models and optimizer ...")
