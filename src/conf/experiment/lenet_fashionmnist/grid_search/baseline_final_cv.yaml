@@ -7,7 +7,7 @@
 # To run this experiment, execute the following command from the
 # "thesis-experiments/src/" directory:
 #
-#   >>> python cross_validate_classifier.py experiment=lenet_fashionmnist/grid_search/baseline_final_cv
+#   >>> python train_classifier_cv.py experiment=lenet_fashionmnist/grid_search/baseline_final_cv
 #
 
 
