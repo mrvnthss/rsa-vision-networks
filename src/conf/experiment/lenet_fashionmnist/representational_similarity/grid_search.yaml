@@ -1,0 +1,93 @@
+# @package _global_
+
+# To run this experiment, execute the following command from the
+# "thesis-experiments/src/" directory:
+#
+#   >>> python train_similarity_cv.py experiment=lenet_fashionmnist/representational_similarity/grid_search
+#
+
+
+# -----------------------
+# MULTI-RUN CONFIGURATION
+# -----------------------
+
+experiment:
+  name: lenet_fashionmnist/representational_similarity/grid_search
+  dir:  ../out/${experiment.name}/${now:%Y-%m-%d_%H-%M-%S}
+  sub_dir: rsa_transform=${repr_similarity.rsa_transform},weight_rsa=${repr_similarity.weight_rsa_score}
+
+paths:
+  checkpoints: ${experiment.dir}/${experiment.sub_dir}/checkpoints
+  tensorboard: ${experiment.dir}/${experiment.sub_dir}/tensorboard
+
+hydra:
+  mode: MULTIRUN
+  sweep:
+    dir: ${experiment.dir}
+    subdir: ${experiment.sub_dir}/logs
+  sweeper:
+    params:
+      repr_similarity.rsa_transform: square, abs
+      repr_similarity.weight_rsa_score: 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 0.95
+
+
+# ---------------------
+# GENERAL CONFIGURATION
+# ---------------------
+
+defaults:
+  - override /model: lenet
+  - override /dataset: fashionmnist
+  - override /transform/train: basic_augmentation
+  - override /main_scheduler: step_lr
+  - override /repr_similarity/compute_rdm: euclidean
+  - override /repr_similarity/compare_rdm: cosine
+  - _self_
+
+model:
+  load_weights_from: ../models/checkpoints/lenet_fashionmnist.pt
+
+reproducibility:
+  torch_seed: 89
+  shuffle_seed: 858
+
+training:
+  num_epochs: 120
+  num_folds: 5
+
+transform:
+  train:
+    crop_scale:
+      lower: 0.9
+      upper: 1.0
+    crop_ratio:
+      lower: 0.75
+      upper: 1.3333333333333333
+  val:
+    resize_size: ${model.input_size}
+
+dataloader:
+  val_split: 0.20
+  batch_size: 64
+  num_workers: 4
+
+repr_similarity:
+  hooks:
+    train: net.10  # penultimate layer (after ReLU)
+    ref: net.10  # penultimate layer (after ReLU)
+  compute_rdm:
+    center_activations: False
+    normalize_distances: True
+    distance_type: squared  # use squared Euclidean distances to compute RDMs
+
+optimizer:
+  lr: 0.01
+  momentum: 0.8
+  weight_decay: 1e-3
+
+main_scheduler:
+  lr_step_size: 30
+  lr_gamma: 0.1
+
+performance:
+  patience: null
