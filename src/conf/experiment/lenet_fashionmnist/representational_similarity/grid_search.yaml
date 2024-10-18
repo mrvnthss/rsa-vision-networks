@@ -67,7 +67,6 @@ transform:
     resize_size: ${model.input_size}
 
 dataloader:
-  val_split: 0.20
   batch_size: 64
   num_workers: 4
 
