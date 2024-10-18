@@ -24,16 +24,6 @@ paths:
   checkpoints: ${experiment.dir}/${experiment.sub_dir}/checkpoints
   tensorboard: ${experiment.dir}/${experiment.sub_dir}/tensorboard
 
-top:
-  scale_lower: ???
-  ratio_lower: ???
-  ratio_upper: ???
-  batch_size: ???
-  lr: ???
-  momentum: ???
-  weight_decay: ???
-  lr_gamma: ???
-
 hydra:
   mode: MULTIRUN
   sweep:
@@ -41,11 +31,11 @@ hydra:
     subdir: ${experiment.sub_dir}/logs
   sweeper:
     params:
-      top: "{scale_lower: 0.8, ratio_lower: 0.8, ratio_upper: 1.25, batch_size: 64, lr: 0.1, momentum: 0.8, weight_decay: 1e-3, lr_gamma: 0.5},\
-            {scale_lower: 0.9, ratio_lower: 0.75, ratio_upper: 1.3333333333333333, batch_size: 64, lr: 0.1, momentum: 0.8, weight_decay: 1e-3, lr_gamma: 0.1},\
-            {scale_lower: 0.9, ratio_lower: 0.8, ratio_upper: 1.25, batch_size: 128, lr: 0.1, momentum: 0.8, weight_decay: 1e-3, lr_gamma: 0.1},\
-            {scale_lower: 0.8, ratio_lower: 0.8, ratio_upper: 1.25, batch_size: 64, lr: 0.1, momentum: 0.8, weight_decay: 1e-3, lr_gamma: 0.1},\
-            {scale_lower: 0.9, ratio_lower: 0.75, ratio_upper: 1.3333333333333333, batch_size: 128, lr: 0.1, momentum: 0.9, weight_decay: 1e-3, lr_gamma: 0.1}"
+      +top: "{scale_lower: 0.8, ratio_lower: 0.8, ratio_upper: 1.25, batch_size: 64, lr: 0.1, momentum: 0.8, weight_decay: 1e-3, lr_gamma: 0.5},\
+             {scale_lower: 0.9, ratio_lower: 0.75, ratio_upper: 1.3333333333333333, batch_size: 64, lr: 0.1, momentum: 0.8, weight_decay: 1e-3, lr_gamma: 0.1},\
+             {scale_lower: 0.9, ratio_lower: 0.8, ratio_upper: 1.25, batch_size: 128, lr: 0.1, momentum: 0.8, weight_decay: 1e-3, lr_gamma: 0.1},\
+             {scale_lower: 0.8, ratio_lower: 0.8, ratio_upper: 1.25, batch_size: 64, lr: 0.1, momentum: 0.8, weight_decay: 1e-3, lr_gamma: 0.1},\
+             {scale_lower: 0.9, ratio_lower: 0.75, ratio_upper: 1.3333333333333333, batch_size: 128, lr: 0.1, momentum: 0.9, weight_decay: 1e-3, lr_gamma: 0.1}"
 
 
 # ---------------------

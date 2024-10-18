@@ -20,11 +20,6 @@ paths:
   checkpoints: ${experiment.dir}/${experiment.sub_dir}/checkpoints
   tensorboard: ${experiment.dir}/${experiment.sub_dir}/tensorboard
 
-widths:
-  conv_1: ???
-  conv_2: ???
-  fc: ???
-
 hydra:
   mode: MULTIRUN
   sweep:
@@ -32,9 +27,9 @@ hydra:
     subdir: ${experiment.sub_dir}/logs
   sweeper:
     params:
-      widths.conv_1: 6, 5, 4, 3, 2
-      widths.conv_2: 16, 12, 8, 4, 2
-      widths.fc: 120, 64, 32, 16, 8, 4, 2
+      +widths.conv_1: 6, 5, 4, 3, 2
+      +widths.conv_2: 16, 12, 8, 4, 2
+      +widths.fc: 120, 64, 32, 16, 8, 4, 2
 
 
 # ---------------------
