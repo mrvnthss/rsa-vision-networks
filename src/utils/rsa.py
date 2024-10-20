@@ -45,17 +45,23 @@ def get_rsa_loss(
     else:
         rsa_transform = None
 
+    # Remove null entries from config groups
+    compute_rdm_kwargs = repr_similarity_params.compute_rdm.kwargs
+    compare_rdm_kwargs = repr_similarity_params.compare_rdm.kwargs
+    compute_rdm_kwargs = {k: v for k, v in compute_rdm_kwargs.items() if v is not None}
+    compare_rdm_kwargs = {k: v for k, v in compare_rdm_kwargs.items() if v is not None}
+
     rsa_loss_fn = partial(
         rsa_loss,
         method_compute=partial(
             compute_rdm,
             method=repr_similarity_params.compute_rdm.name,
-            **repr_similarity_params.compute_rdm.kwargs
+            **compute_rdm_kwargs
         ),
         method_compare=partial(
             compare_rdm,
             method=repr_similarity_params.compare_rdm.name,
-            **repr_similarity_params.compare_rdm.kwargs
+            **compare_rdm_kwargs
         ),
         weight_rsa_score=repr_similarity_params.weight_rsa_score,
         rsa_transform=rsa_transform
