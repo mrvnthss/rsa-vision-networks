@@ -194,4 +194,3 @@ data/
 
 # Exclude logs and checkpoints directories
 out/
-notebooks/logs/
