@@ -353,17 +353,18 @@ def _extract_hparams(run_dir: str) -> Dict[str, Union[int, float, str]]:
     """
 
     params_dict = {}
-    for param in run_dir.split(","):
-        k, v = param.split("=")
-        # Convert to numeric, if possible
-        try:
-            v = int(v)
-        except ValueError:
+    for subdir in run_dir.split("/"):
+        for param in subdir.split(","):
+            k, v = param.split("=")
+            # Convert to numeric, if possible
             try:
-                v = float(v)
+                v = int(v)
             except ValueError:
-                pass
-        params_dict[k] = v
+                try:
+                    v = float(v)
+                except ValueError:
+                    pass
+            params_dict[k] = v
     return params_dict
 
 
@@ -383,7 +384,7 @@ def _extract_run_dir(log_file_path: str) -> str:
     """
 
     match = re.search(
-        r"\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2}/([^/]+)/logs",
+        r"\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2}/(.+)/logs",
         log_file_path
     )
 
