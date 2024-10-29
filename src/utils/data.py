@@ -26,6 +26,7 @@ from datetime import datetime
 from functools import partial
 from typing import Callable, Dict, List, Literal, Optional, Union
 
+import numpy as np
 import pandas as pd
 from tbparse import SummaryReader
 
@@ -138,8 +139,6 @@ def get_training_results(
 
     # Extract individual training runs from log file
     training_runs = _extract_training_runs(log_file_path)
-    if not training_runs:
-        return pd.DataFrame()
 
     # Define patterns to match against
     epoch_pattern = r"EPOCH \[(\d+)/\d+\]\s+TRAIN: (.+?)\s+VAL: (.+)"
@@ -168,6 +167,13 @@ def get_training_results(
                         run_dict[k] = float(v)
 
         data.append(run_dict)
+
+    # Handle the case in which no results could be extracted from log file
+    if not data:
+        data = [{
+            "run_id": np.nan,
+            "Epochs": np.nan
+        }]
 
     # Convert to DataFrame
     df = pd.DataFrame(data)
