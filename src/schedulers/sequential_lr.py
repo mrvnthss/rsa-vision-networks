@@ -25,13 +25,13 @@ class SequentialLR(_SequentialLR):
             milestones: List[int],
             last_epoch: int = -1,
             verbose: str = "deprecated",
-    ):
+    ) -> None:
         super().__init__(
-            optimizer,
-            schedulers,
-            milestones,
-            last_epoch,
-            verbose
+            optimizer=optimizer,
+            schedulers=schedulers,
+            milestones=milestones,
+            last_epoch=last_epoch,
+            verbose=verbose
         )
 
     @override
