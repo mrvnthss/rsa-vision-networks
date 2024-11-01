@@ -1,7 +1,7 @@
 # https://pytorch.org/docs/2.4/generated/torch.optim.lr_scheduler.StepLR.html
 name: StepLR
 lr_step_size: ???
-lr_gamma: ???
+lr_gamma: 0.1
 
 kwargs:
   _target_: torch.optim.lr_scheduler.StepLR

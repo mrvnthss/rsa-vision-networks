@@ -1,6 +1,6 @@
 # https://pytorch.org/docs/2.4/generated/torch.optim.SGD.html
 name: SGD
-lr: ???
+lr: 0.001
 momentum: 0
 dampening: 0
 weight_decay: 0

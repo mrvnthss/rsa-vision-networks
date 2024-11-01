@@ -322,7 +322,7 @@ class ReprSimilarityConf:
 @dataclass
 class AdamConf:
     _target_: str = "torch.optim.adam.Adam"
-    lr: float = MISSING
+    lr: float = 0.001
     betas: Tuple[float] = (0.9, 0.999)
     eps: float = 1e-8
     weight_decay: float = 0
@@ -337,7 +337,7 @@ class AdamConf:
 @dataclass
 class SGDConf:
     _target_: str = "torch.optim.sgd.SGD"
-    lr: float = MISSING
+    lr: float = 0.001
     momentum: float = 0
     dampening: float = 0
     weight_decay: float = 0
@@ -370,7 +370,7 @@ class OptimizerConf:
 class CosineAnnealingLRConf:
     _target_: str = "torch.optim.lr_scheduler.CosineAnnealingLR"
     T_max: int = MISSING
-    eta_min: float = MISSING
+    eta_min: float = 0
     last_epoch: int = -1
 
 
@@ -385,7 +385,7 @@ class ExponentialLRConf:
 class StepLRConf:
     _target_: str = "torch.optim.lr_scheduler.StepLR"
     step_size: int = MISSING
-    gamma: float = MISSING
+    gamma: float = 0.1
     last_epoch: int = -1
 
 
@@ -409,17 +409,17 @@ class MainSchedulerConf:
 @dataclass
 class ConstantLRConf:
     _target_: str = "torch.optim.lr_scheduler.ConstantLR"
-    factor: float = MISSING
-    total_iters: int = MISSING
+    factor: float = 0.3333333333333333
+    total_iters: int = 5
     last_epoch: int = -1
 
 
 @dataclass
 class LinearLRConf:
     _target_: str = "torch.optim.lr_scheduler.LinearLR"
-    start_factor: float = MISSING
+    start_factor: float = 0.3333333333333333
     end_factor: float = 1.0
-    total_iters: int = MISSING
+    total_iters: int = 5
     last_epoch: int = -1
 
 

@@ -1,7 +1,7 @@
 # https://pytorch.org/docs/2.4/generated/torch.optim.lr_scheduler.ConstantLR.html
 name: ConstantLR
-warmup_decay: ???
-warmup_epochs: ???
+warmup_decay: 0.3333333333333333
+warmup_epochs: 5
 
 kwargs:
   _target_: torch.optim.lr_scheduler.ConstantLR

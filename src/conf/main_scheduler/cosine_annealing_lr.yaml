@@ -1,6 +1,6 @@
 # https://pytorch.org/docs/2.4/generated/torch.optim.lr_scheduler.CosineAnnealingLR.html
 name: CosineAnnealingLR
-lr_min: ???
+lr_min: 0
 
 kwargs:
   _target_: torch.optim.lr_scheduler.CosineAnnealingLR
