@@ -1,0 +1,12 @@
+# https://pytorch.org/docs/2.4/generated/torch.optim.lr_scheduler.CosineAnnealingWarmRestarts.html
+name: CosineAnnealingWarmRestarts
+restart_every: ???
+delay_restarts_by: 1
+lr_min: 0
+
+kwargs:
+  _target_: torch.optim.lr_scheduler.CosineAnnealingWarmRestarts
+  T_0: ${main_scheduler.restart_every}
+  T_mult: ${main_scheduler.delay_restarts_by}
+  eta_min: ${main_scheduler.lr_min}
+  last_epoch: -1

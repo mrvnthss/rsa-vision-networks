@@ -88,6 +88,7 @@ class OptimizerName(Enum):
 
 class MainSchedulerName(Enum):
     CosineAnnealingLR = "CosineAnnealingLR"
+    CosineAnnealingWarmRestarts = "CosineAnnealingWarmRestarts"
     ExponentialLR = "ExponentialLR"
     StepLR = "StepLR"
 
@@ -375,6 +376,15 @@ class CosineAnnealingLRConf:
 
 
 @dataclass
+class CosineAnnealingWarmRestartsConf:
+    _target_: str = "torch.optim.lr_scheduler.CosineAnnealingWarmRestarts"
+    T_0: int = MISSING
+    T_mult: int = 1
+    eta_min: float = 0
+    last_epoch: int = -1
+
+
+@dataclass
 class ExponentialLRConf:
     _target_: str = "torch.optim.lr_scheduler.ExponentialLR"
     gamma: float = MISSING
@@ -393,10 +403,13 @@ class StepLRConf:
 class MainSchedulerConf:
     name: MainSchedulerName = MISSING
     lr_min: Optional[float] = None
-    lr_step_size: Optional[float] = None
+    restart_every: Optional[int] = None
+    delay_restarts_by: Optional[int] = None
     lr_gamma: Optional[float] = None
+    lr_step_size: Optional[float] = None
     kwargs: Union[
         CosineAnnealingLRConf,
+        CosineAnnealingWarmRestartsConf,
         ExponentialLRConf,
         StepLRConf
     ] = MISSING
