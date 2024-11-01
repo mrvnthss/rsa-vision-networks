@@ -377,9 +377,10 @@ class CosineAnnealingLRConf:
 
 @dataclass
 class CosineAnnealingWarmRestartsConf:
-    _target_: str = "torch.optim.lr_scheduler.CosineAnnealingWarmRestarts"
+    _target_: str = "schedulers.cosine_annealing_warm_restarts.CosineAnnealingWarmRestarts"
     T_0: int = MISSING
     T_mult: int = 1
+    gamma: float = 1.0
     eta_min: float = 0
     last_epoch: int = -1
 
