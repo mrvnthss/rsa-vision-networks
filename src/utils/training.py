@@ -41,8 +41,8 @@ from tqdm import tqdm
 
 from src.config import ReproducibilityConf, TrainClassifierConf, TrainSimilarityConf, \
     TransformTrainConf, TransformValConf, CropScaleConf, CropRatioConf
+from src.schedulers.sequential_lr import SequentialLR
 from src.utils.classification_transforms import *
-from src.utils.sequential_lr import SequentialLR
 
 
 def evaluate_classifier(
