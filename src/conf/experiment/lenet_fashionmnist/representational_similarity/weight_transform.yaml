@@ -3,7 +3,7 @@
 # To run this experiment, execute the following command from the
 # "thesis-experiments/src/" directory:
 #
-#   >>> python train_similarity_cv.py experiment=lenet_fashionmnist/representational_similarity/grid_search
+#   >>> python train_similarity_cv.py experiment=lenet_fashionmnist/representational_similarity/weight_transform
 #
 
 
@@ -12,7 +12,7 @@
 # -----------------------
 
 experiment:
-  name: lenet_fashionmnist/representational_similarity/grid_search
+  name: lenet_fashionmnist/representational_similarity/weight_transform
   dir:  ../out/${experiment.name}/${now:%Y-%m-%d_%H-%M-%S}
   sub_dir: rsa_transform=${repr_similarity.rsa_transform},weight_rsa=${repr_similarity.weight_rsa_score}
 

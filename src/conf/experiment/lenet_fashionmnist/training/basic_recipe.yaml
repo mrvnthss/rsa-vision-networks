@@ -6,7 +6,7 @@
 # To run this experiment, execute the following command from the
 # "thesis-experiments/src/" directory:
 #
-#   >>> python train_classifier.py experiment=lenet_fashionmnist/training/standard_recipe
+#   >>> python train_classifier.py experiment=lenet_fashionmnist/training/basic_recipe
 #
 
 
@@ -22,7 +22,7 @@ defaults:
   - _self_
 
 experiment:
-  name: lenet_fashionmnist/training/standard_recipe
+  name: lenet_fashionmnist/training/basic_recipe
 
 reproducibility:
   torch_seed: 89

@@ -1,13 +1,13 @@
 # @package _global_
 
-# This configuration file can be used to run a grid search on the
-# momentum and weight decay parameters used to train the LeNet-5 model
-# on the FashionMNIST dataset.
+# This configuration file can be used to run a grid search on a total of
+# 4 parameters (flip probability, batch size, momentum, and weight
+# decay) used to train the LeNet-5 model on the FashionMNIST dataset.
 #
 # To run this experiment, execute the following command from the
 # "thesis-experiments/src/" directory:
 #
-#   >>> python train_classifier.py experiment=lenet_fashionmnist/grid_search/momentum_wd
+#   >>> python train_classifier.py experiment=lenet_fashionmnist/hparam_tuning/data_augmentation/horizontal_flipping
 #
 
 
@@ -16,9 +16,9 @@
 # -----------------------
 
 experiment:
-  name: lenet_fashionmnist/grid_search/momentum_wd
+  name: lenet_fashionmnist/hparam_tuning/data_augmentation/horizontal_flipping
   dir:  ../out/${experiment.name}/${now:%Y-%m-%d_%H-%M-%S}
-  sub_dir: momentum=${optimizer.momentum},wd=${optimizer.weight_decay}
+  sub_dir: flip_p=${transform.train.flip_prob},b=${dataloader.batch_size},momentum=${optimizer.momentum},wd=${optimizer.weight_decay}
 
 paths:
   checkpoints: ${experiment.dir}/${experiment.sub_dir}/checkpoints
@@ -31,8 +31,10 @@ hydra:
     subdir: ${experiment.sub_dir}/logs
   sweeper:
     params:
-      optimizer.momentum: 0.7, 0.8, 0.85, 0.9, 0.95, 0.99
-      optimizer.weight_decay: 1e-2, 1e-3, 1e-4, 1e-5, 1e-6
+      transform.train.flip_prob: 0.0, 0.5
+      dataloader.batch_size: 64, 128  # based on "batch_size_lr.yaml"
+      optimizer.momentum: 0.8, 0.85  # based on "momentum_wd.yaml"
+      optimizer.weight_decay: 1e-3, 1e-4  # based on "momentum_wd.yaml"
 
 
 # ---------------------
@@ -42,7 +44,7 @@ hydra:
 defaults:
   - override /model: lenet
   - override /dataset: fashionmnist
-  - override /transform/train: preprocessing
+  - override /transform/train: basic_augmentation
   - _self_
 
 reproducibility:
@@ -53,12 +55,18 @@ training:
   num_epochs: 100
 
 transform:
+  train:
+    crop_scale:
+      lower: 1.0
+      upper: 1.0
+    crop_ratio:
+      lower: 1.0
+      upper: 1.0
   val:
     resize_size: ${model.input_size}
 
 dataloader:
   val_split: 0.20
-  batch_size: 64  # based on "batch_size_lr.yaml"
   num_workers: 4
 
 optimizer:

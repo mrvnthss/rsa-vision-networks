@@ -1,13 +1,14 @@
 # @package _global_
 
-# This configuration file can be used to run a control experiment on the
-# crop ratio parameter used to train the LeNet-5 model on the
+# This configuration file can be used to run a grid search experiment to
+# find a suitable learning rate schedule (step size & decay parameter of
+# the StepLR scheduler) for training the LeNet-5 model on the
 # FashionMNIST dataset.
 #
 # To run this experiment, execute the following command from the
 # "thesis-experiments/src/" directory:
 #
-#   >>> python train_classifier.py experiment=lenet_fashionmnist/data_augmentation/random_cropping_control/ratio
+#   >>> python train_classifier.py experiment=lenet_fashionmnist/hparam_tuning/lr_schedule
 #
 
 
@@ -16,9 +17,9 @@
 # -----------------------
 
 experiment:
-  name: lenet_fashionmnist/data_augmentation/random_cropping_control/ratio
+  name: lenet_fashionmnist/hparam_tuning/lr_schedule
   dir:  ../out/${experiment.name}/${now:%Y-%m-%d_%H-%M-%S}
-  sub_dir: crop_scale.lower=${transform.train.crop_scale.lower},crop_ratio.lower=${transform.train.crop_ratio.lower},b=${dataloader.batch_size},momentum=${optimizer.momentum}
+  sub_dir: step_size=${main_scheduler.lr_step_size},gamma=${main_scheduler.lr_gamma}
 
 paths:
   checkpoints: ${experiment.dir}/${experiment.sub_dir}/checkpoints
@@ -31,10 +32,8 @@ hydra:
     subdir: ${experiment.sub_dir}/logs
   sweeper:
     params:
-      transform.train.crop_scale.lower: 0.7, 0.8, 0.9, 1.0  # subset of values from "random_cropping.yaml"
-      transform.train.crop_ratio: "{lower: 0.666666666666667, upper: 1.5},{lower: 0.75, upper: 1.3333333333333333},{lower: 0.8, upper: 1.25}"
-      dataloader.batch_size: 64, 128  # same as "random_cropping.yaml"
-      optimizer.momentum: 0.8, 0.85  # same as "random_cropping.yaml"
+      main_scheduler.lr_step_size: 10, 20, 30, 40, 50
+      main_scheduler.lr_gamma: 0.1, 0.5, 0.9
 
 
 # ---------------------
@@ -45,6 +44,7 @@ defaults:
   - override /model: lenet
   - override /dataset: fashionmnist
   - override /transform/train: basic_augmentation
+  - override /main_scheduler: step_lr
   - _self_
 
 reproducibility:
@@ -52,21 +52,27 @@ reproducibility:
   shuffle_seed: 858
 
 training:
-  num_epochs: 200  # same as "random_cropping.yaml"
+  num_epochs: 200
 
 transform:
   train:
     crop_scale:
+      lower: 0.8  # based on "random_cropping.yaml"
+      upper: 1.0
+    crop_ratio:
+      lower: 1.0
       upper: 1.0
   val:
     resize_size: ${model.input_size}
 
 dataloader:
   val_split: 0.20
+  batch_size: 64  # based on "batch_size_lr.yaml"
   num_workers: 4
 
 optimizer:
   lr: 0.01  # based on "batch_size_lr.yaml"
+  momentum: 0.8  # based on "momentum_wd.yaml"
   weight_decay: 1e-3  # based on "momentum_wd.yaml" & "horizontal_flipping.yaml"
 
 performance:

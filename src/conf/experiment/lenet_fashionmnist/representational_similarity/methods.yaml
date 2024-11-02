@@ -50,7 +50,7 @@ defaults:
   - _self_
 
 model:
-  load_weights_from: ../models/checkpoints/lenet_fashionmnist.pt
+  load_weights_from: ../models/lenet_fashionmnist_basic/checkpoint.pt
 
 reproducibility:
   torch_seed: 89

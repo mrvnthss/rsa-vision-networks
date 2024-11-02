@@ -1,13 +1,13 @@
 # @package _global_
 
 # This configuration file can be used to run a control experiment on the
-# lower bound of the crop scale parameter used to train the LeNet-5
-# model on the FashionMNIST dataset.
+# crop ratio parameter used to train the LeNet-5 model on the
+# FashionMNIST dataset.
 #
 # To run this experiment, execute the following command from the
 # "thesis-experiments/src/" directory:
 #
-#   >>> python train_classifier.py experiment=lenet_fashionmnist/data_augmentation/random_cropping_control/scale
+#   >>> python train_classifier.py experiment=lenet_fashionmnist/hparam_tuning/data_augmentation/random_cropping_ratio
 #
 
 
@@ -16,9 +16,9 @@
 # -----------------------
 
 experiment:
-  name: lenet_fashionmnist/data_augmentation/random_cropping_control/scale
+  name: lenet_fashionmnist/hparam_tuning/data_augmentation/random_cropping_ratio
   dir:  ../out/${experiment.name}/${now:%Y-%m-%d_%H-%M-%S}
-  sub_dir: crop_scale.lower=${transform.train.crop_scale.lower},b=${dataloader.batch_size},momentum=${optimizer.momentum}
+  sub_dir: crop_scale.lower=${transform.train.crop_scale.lower},crop_ratio.lower=${transform.train.crop_ratio.lower},b=${dataloader.batch_size},momentum=${optimizer.momentum}
 
 paths:
   checkpoints: ${experiment.dir}/${experiment.sub_dir}/checkpoints
@@ -31,7 +31,8 @@ hydra:
     subdir: ${experiment.sub_dir}/logs
   sweeper:
     params:
-      transform.train.crop_scale.lower: 0.2, 0.4  # lower values than "random_cropping.yaml"
+      transform.train.crop_scale.lower: 0.7, 0.8, 0.9, 1.0  # subset of values from "random_cropping.yaml"
+      transform.train.crop_ratio: "{lower: 0.666666666666667, upper: 1.5},{lower: 0.75, upper: 1.3333333333333333},{lower: 0.8, upper: 1.25}"
       dataloader.batch_size: 64, 128  # same as "random_cropping.yaml"
       optimizer.momentum: 0.8, 0.85  # same as "random_cropping.yaml"
 
@@ -56,9 +57,6 @@ training:
 transform:
   train:
     crop_scale:
-      upper: 1.0
-    crop_ratio:
-      lower: 1.0
       upper: 1.0
   val:
     resize_size: ${model.input_size}
