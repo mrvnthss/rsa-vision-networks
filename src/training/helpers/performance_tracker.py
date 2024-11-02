@@ -16,8 +16,6 @@ class PerformanceTracker:
         best_score: The best score observed during training.
         higher_is_better: A flag to indicate whether higher values of
           the metric being tracked reflect better performance.
-        is_tracking: A flag to indicate whether performance tracking is
-          enabled.
         latest_is_best: A flag to indicate whether the latest score of
           the metric being tracked is the best observed so far.
         logger: The logger instance to record logs.
@@ -83,7 +81,6 @@ class PerformanceTracker:
             )
 
         self.track_for_early_stopping = self.patience < inf
-        self.is_tracking = self.track_for_checkpointing or self.track_for_early_stopping
 
         self.best_epoch_idx = -inf
         self.best_score = -inf if self.higher_is_better else inf
@@ -104,14 +101,16 @@ class PerformanceTracker:
     def report_status(self) -> None:
         """Report the status of performance tracking during training."""
 
-        if not self.is_tracking:
+        best_score = f"{self.best_score:.3f}" if isfinite(self.best_score) else self.best_score
+
+        if not (self.track_for_checkpointing or self.track_for_early_stopping):
             self.logger.info(
-                "Performance tracking is disabled. Model performance will not be monitored for "
-                "checkpointing or early stopping."
+                "Model performance will be tracked during training, but results are not used to "
+                "inform checkpointing or early stopping. Current best score is %s.",
+                best_score
             )
             return
 
-        best_score = f"{self.best_score:.3f}" if isfinite(self.best_score) else self.best_score
         min_delta = f"{self.min_delta:.3f}"
 
         if self.track_for_early_stopping:

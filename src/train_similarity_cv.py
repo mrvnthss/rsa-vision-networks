@@ -199,12 +199,12 @@ def main(cfg: TrainSimilarityConf) -> None:
             lr_scheduler=lr_scheduler,
             run_id=fold_idx + 1
         )
-        trainer.train()
+        _ = trainer.train()
 
         # Remove hooks again
         trainer.remove_hooks()
 
-    # Remove initial model and optimizer state dicts after last fold
+    # Remove initial model, optimizer, and learning rate scheduler state dicts after last fold
     init_model_state_dict_path.unlink(missing_ok=True)
     init_optimizer_state_dict_path.unlink(missing_ok=True)
     if init_scheduler_state_dict_path is not None:

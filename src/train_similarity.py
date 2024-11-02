@@ -32,7 +32,7 @@ cs.store(name="train_similarity_conf", node=TrainSimilarityConf)
 
 
 @hydra.main(version_base=None, config_path="conf", config_name="train_similarity")
-def main(cfg: TrainSimilarityConf) -> None:
+def main(cfg: TrainSimilarityConf) -> float:
     """Train a model using custom representational similarity loss."""
 
     # Set target device
@@ -126,10 +126,12 @@ def main(cfg: TrainSimilarityConf) -> None:
         cfg=cfg,
         lr_scheduler=lr_scheduler
     )
-    trainer.train()
+    best_score, best_epoch_idx = trainer.train()
 
     # Remove hooks again
     trainer.remove_hooks()
+
+    return best_score
 
 
 if __name__ == "__main__":

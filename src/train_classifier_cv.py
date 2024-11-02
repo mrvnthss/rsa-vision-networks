@@ -187,7 +187,7 @@ def main(cfg: TrainClassifierConf) -> None:
             lr_scheduler=lr_scheduler,
             run_id=fold_idx + 1
         )
-        trainer.train()
+        _ = trainer.train()
 
     # Remove initial model and optimizer state dicts after last fold
     init_model_state_dict_path.unlink(missing_ok=True)

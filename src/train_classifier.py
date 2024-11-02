@@ -30,7 +30,7 @@ cs.store(name="train_classifier_conf", node=TrainClassifierConf)
 
 
 @hydra.main(version_base=None, config_path="conf", config_name="train_classifier")
-def main(cfg: TrainClassifierConf) -> None:
+def main(cfg: TrainClassifierConf) -> float:
     """Train a classification model in PyTorch."""
 
     # Set target device
@@ -113,7 +113,8 @@ def main(cfg: TrainClassifierConf) -> None:
         cfg=cfg,
         lr_scheduler=lr_scheduler
     )
-    trainer.train()
+    best_score, best_epoch_idx = trainer.train()
+    return best_score
 
 
 if __name__ == "__main__":

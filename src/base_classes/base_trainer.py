@@ -5,7 +5,7 @@ import logging
 import time
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import Any, Dict, Literal, Optional
+from typing import Any, Dict, Literal, Optional, Tuple
 
 import torch
 from omegaconf import DictConfig
@@ -304,7 +304,7 @@ class BaseTrainer(ABC):
                     f"but got {stage}."
                 )
 
-    def train(self) -> None:
+    def train(self) -> Tuple[float, int]:
         """Train the model for multiple epochs."""
 
         self.logger.info("Starting training loop ...")
@@ -316,21 +316,20 @@ class BaseTrainer(ABC):
                 self.lr_scheduler.step()
 
             # Update PerformanceTracker
-            if self.performance_tracker.is_tracking:
-                results = training_results if self.performance_metric["evaluate_on"] == "train" \
-                    else validation_results
+            results = training_results if self.performance_metric["evaluate_on"] == "train" \
+                else validation_results
 
-                if self.performance_metric["evaluation_metric"] not in results:
-                    raise ValueError(
-                        f"Metric '{self.performance_metric['evaluation_metric']}' not found in "
-                        f"training results. Please ensure that the metric is included in the "
-                        f"dictionary returned by the 'train_epoch' and 'eval_epoch' methods."
-                    )
-
-                self.performance_tracker.update(
-                    latest_score=results[self.performance_metric["evaluation_metric"]],
-                    epoch_idx=self.epoch_idx
+            if self.performance_metric["evaluation_metric"] not in results:
+                raise ValueError(
+                    f"Metric '{self.performance_metric['evaluation_metric']}' not found in "
+                    f"training results. Please ensure that the metric is included in the "
+                    f"dictionary returned by the 'train_epoch' and 'eval_epoch' methods."
                 )
+
+            self.performance_tracker.update(
+                latest_score=results[self.performance_metric["evaluation_metric"]],
+                epoch_idx=self.epoch_idx
+            )
 
             # Log results
             self._log_results(
@@ -347,8 +346,8 @@ class BaseTrainer(ABC):
                         "training now.",
                         self.performance_tracker.patience
                     )
-                    self._report_results()
-                    return
+                    best_score, best_epoch_idx = self._report_results()
+                    return best_score, best_epoch_idx
 
             # Save checkpoint of best performing model, if applicable
             if self.performance_tracker.track_for_checkpointing:
@@ -381,7 +380,8 @@ class BaseTrainer(ABC):
         # End of training
         self.experiment_tracker.close()
         self.logger.info("Training completed successfully.")
-        self._report_results()
+        best_score, best_epoch_idx = self._report_results()
+        return best_score, best_epoch_idx
 
     def train_epoch(self) -> Dict[str, float]:
         """Train the model for a single epoch.
@@ -526,7 +526,7 @@ class BaseTrainer(ABC):
             "  ".join(validation_results_formatted)
         )
 
-    def _report_results(self) -> None:
+    def _report_results(self) -> Tuple[float, int]:
         """Report and log the final results of training."""
 
         dataset_str = "training" if self.performance_metric["evaluate_on"] == "train" \
@@ -539,6 +539,7 @@ class BaseTrainer(ABC):
             dataset_str,
             self.performance_tracker.best_epoch_idx
         )
+        return self.performance_tracker.best_score, self.performance_tracker.best_epoch_idx
 
     def _update_training_sampler(self) -> None:
         """Update the sampler's epoch for deterministic shuffling."""
