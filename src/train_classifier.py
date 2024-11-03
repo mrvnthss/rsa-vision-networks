@@ -6,7 +6,7 @@ associated with this script is named "train_classifier.yaml".
 
 Typical usage example:
 
-  >>> python train_classifier.py experiment=lenet_fashionmnist/grid_search/batch_size_lr
+  >>> python train_classifier.py experiment=lenet_fashionmnist/hparam_tuning/lr_batch_size
 """
 
 
@@ -36,7 +36,7 @@ cs.store(name="train_classifier_conf", node=TrainClassifierConf)
 
 
 @hydra.main(version_base=None, config_path="conf", config_name="train_classifier")
-def main(cfg: TrainClassifierConf) -> float:
+def main(cfg: TrainClassifierConf) -> None:
     """Train a classification model in PyTorch."""
 
     # Set target device
@@ -119,8 +119,7 @@ def main(cfg: TrainClassifierConf) -> float:
         cfg=cfg,
         lr_scheduler=lr_scheduler
     )
-    best_score, best_epoch_idx = trainer.train()
-    return best_score
+    _ = trainer.train()
 
 
 if __name__ == "__main__":

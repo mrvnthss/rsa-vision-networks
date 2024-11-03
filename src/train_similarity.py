@@ -6,7 +6,7 @@ associated with this script is named "train_similarity.yaml".
 
 Typical usage example:
 
-  >>> python train_similarity.py experiment=lenet_fashionmnist/size_modifications/representational_similarity/standard_model
+  >>> python train_similarity.py experiment=lenet_fashionmnist/size_modifications/representational_similarity
 """
 
 
@@ -38,7 +38,7 @@ cs.store(name="train_similarity_conf", node=TrainSimilarityConf)
 
 
 @hydra.main(version_base=None, config_path="conf", config_name="train_similarity")
-def main(cfg: TrainSimilarityConf) -> float:
+def main(cfg: TrainSimilarityConf) -> None:
     """Train a model using custom representational similarity loss."""
 
     # Set target device
@@ -132,12 +132,10 @@ def main(cfg: TrainSimilarityConf) -> float:
         cfg=cfg,
         lr_scheduler=lr_scheduler
     )
-    best_score, best_epoch_idx = trainer.train()
+    _ = trainer.train()
 
     # Remove hooks again
     trainer.remove_hooks()
-
-    return best_score
 
 
 if __name__ == "__main__":

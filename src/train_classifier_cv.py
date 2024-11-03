@@ -6,7 +6,7 @@ associated with this script is named "train_classifier_cv.yaml".
 
 Typical usage example:
 
-  >>> python train_classifier_cv.py experiment=lenet_fashionmnist/grid_search/overfitting
+  >>> python train_classifier_cv.py experiment=lenet_fashionmnist/hparam_tuning/overfitting
 """
 
 

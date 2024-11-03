@@ -6,7 +6,7 @@ associated with this script is named "train_similarity_cv.yaml".
 
 Typical usage example:
 
-  >>> python train_similarity_cv.py experiment=lenet_fashionmnist/representational_similarity/grid_search
+  >>> python train_similarity_cv.py experiment=lenet_fashionmnist/representational_similarity/transform_weight
 """
 
 
