@@ -23,8 +23,14 @@ from torchmetrics import MetricCollection
 from src.config import TrainClassifierConf
 from src.dataloaders.stratified_k_fold_loader import StratifiedKFoldLoader
 from src.training.classification_trainer import ClassificationTrainer
-from src.utils.training import get_collate_fn, get_lr_scheduler, get_train_transform, \
-    get_val_transform, set_device, set_seeds
+from src.utils.training import (
+    get_collate_fn,
+    get_lr_scheduler,
+    get_train_transform,
+    get_val_transform,
+    set_device,
+    set_seeds
+)
 
 logger = logging.getLogger(__name__)
 
