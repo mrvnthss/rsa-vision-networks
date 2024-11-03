@@ -18,7 +18,7 @@
 experiment:
   name: lenet_fashionmnist/hparam_tuning/data_augmentation/random_cropping_ratio
   dir:  ../out/${experiment.name}/${now:%Y-%m-%d_%H-%M-%S}
-  sub_dir: crop_scale.lower=${transform.train.crop_scale.lower},crop_ratio.lower=${transform.train.crop_ratio.lower},b=${dataloader.batch_size},momentum=${optimizer.momentum}
+  sub_dir: b=${dataloader.batch_size},momentum=${optimizer.momentum},crop_scale.lower=${transform.train.crop_scale.lower},crop_ratio.lower=${transform.train.crop_ratio.lower}
 
 paths:
   checkpoints: ${experiment.dir}/${experiment.sub_dir}/checkpoints
@@ -31,10 +31,10 @@ hydra:
     subdir: ${experiment.sub_dir}/logs
   sweeper:
     params:
-      transform.train.crop_scale.lower: 0.7, 0.8, 0.9, 1.0  # subset of values from "random_cropping.yaml"
-      transform.train.crop_ratio: "{lower: 0.666666666666667, upper: 1.5},{lower: 0.75, upper: 1.3333333333333333},{lower: 0.8, upper: 1.25}"
       dataloader.batch_size: 64, 128  # same as "random_cropping.yaml"
       optimizer.momentum: 0.8, 0.85  # same as "random_cropping.yaml"
+      transform.train.crop_scale.lower: 0.7, 0.8, 0.9, 1.0  # subset of values from "random_cropping.yaml"
+      transform.train.crop_ratio: "{lower: 0.666666666666667, upper: 1.5},{lower: 0.75, upper: 1.3333333333333333},{lower: 0.8, upper: 1.25}"
 
 
 # ---------------------
@@ -66,7 +66,7 @@ dataloader:
   num_workers: 4
 
 optimizer:
-  lr: 0.01  # based on "batch_size_lr.yaml"
+  lr: 0.01  # based on "lr_batch_size.yaml"
   weight_decay: 1e-3  # based on "momentum_wd.yaml" & "horizontal_flipping.yaml"
 
 performance:

@@ -62,7 +62,7 @@ dataloader:
   num_workers: 4
 
 optimizer:
-  lr: 0.01  # based on "batch_size_lr.yaml"
+  lr: 0.01  # based on "lr_batch_size.yaml"
   momentum: 0.9
 
 performance:

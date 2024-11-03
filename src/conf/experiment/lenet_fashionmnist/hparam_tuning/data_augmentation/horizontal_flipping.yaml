@@ -18,7 +18,7 @@
 experiment:
   name: lenet_fashionmnist/hparam_tuning/data_augmentation/horizontal_flipping
   dir:  ../out/${experiment.name}/${now:%Y-%m-%d_%H-%M-%S}
-  sub_dir: flip_p=${transform.train.flip_prob},b=${dataloader.batch_size},momentum=${optimizer.momentum},wd=${optimizer.weight_decay}
+  sub_dir: b=${dataloader.batch_size},momentum=${optimizer.momentum},wd=${optimizer.weight_decay},flip_p=${transform.train.flip_prob}
 
 paths:
   checkpoints: ${experiment.dir}/${experiment.sub_dir}/checkpoints
@@ -31,10 +31,10 @@ hydra:
     subdir: ${experiment.sub_dir}/logs
   sweeper:
     params:
-      transform.train.flip_prob: 0.0, 0.5
-      dataloader.batch_size: 64, 128  # based on "batch_size_lr.yaml"
+      dataloader.batch_size: 64, 128  # based on "lr_batch_size.yaml"
       optimizer.momentum: 0.8, 0.85  # based on "momentum_wd.yaml"
       optimizer.weight_decay: 1e-3, 1e-4  # based on "momentum_wd.yaml"
+      transform.train.flip_prob: 0.0, 0.5
 
 
 # ---------------------
@@ -70,7 +70,7 @@ dataloader:
   num_workers: 4
 
 optimizer:
-  lr: 0.01  # based on "batch_size_lr.yaml"
+  lr: 0.01  # based on "lr_batch_size.yaml"
 
 performance:
   patience: 20

@@ -8,7 +8,7 @@
 # To run this experiment, execute the following command from the
 # "thesis-experiments/src/" directory:
 #
-#   >>> python train_classifier.py experiment=lenet_fashionmnist/hparam_tuning/lr_schedule
+#   >>> python train_classifier.py experiment=lenet_fashionmnist/hparam_tuning/lr_schedule_step_lr
 #
 
 
@@ -17,9 +17,9 @@
 # -----------------------
 
 experiment:
-  name: lenet_fashionmnist/hparam_tuning/lr_schedule
+  name: lenet_fashionmnist/hparam_tuning/lr_schedule_step_lr
   dir:  ../out/${experiment.name}/${now:%Y-%m-%d_%H-%M-%S}
-  sub_dir: step_size=${main_scheduler.lr_step_size},gamma=${main_scheduler.lr_gamma}
+  sub_dir: b=${dataloader.batch_size},momentum=${optimizer.momentum},step_size=${main_scheduler.lr_step_size},gamma=${main_scheduler.lr_gamma}
 
 paths:
   checkpoints: ${experiment.dir}/${experiment.sub_dir}/checkpoints
@@ -32,7 +32,9 @@ hydra:
     subdir: ${experiment.sub_dir}/logs
   sweeper:
     params:
-      main_scheduler.lr_step_size: 10, 20, 30, 40, 50
+      dataloader.batch_size: 64, 128  # based on "lr_batch_size.yaml"
+      optimizer.momentum: 0.8, 0.85  # based on "momentum_wd.yaml"
+      main_scheduler.lr_step_size: 10, 30, 50
       main_scheduler.lr_gamma: 0.1, 0.5, 0.9
 
 
@@ -56,23 +58,21 @@ training:
 
 transform:
   train:
-    crop_scale:
-      lower: 0.8  # based on "random_cropping.yaml"
+    crop_scale:  # based on "random_cropping.yaml"
+      lower: 0.9
       upper: 1.0
-    crop_ratio:
-      lower: 1.0
-      upper: 1.0
+    crop_ratio:  # based on "random_cropping_ratio.yaml"
+      lower: 0.75
+      upper: 1.3333333333333333
   val:
     resize_size: ${model.input_size}
 
 dataloader:
   val_split: 0.20
-  batch_size: 64  # based on "batch_size_lr.yaml"
   num_workers: 4
 
 optimizer:
-  lr: 0.01  # based on "batch_size_lr.yaml"
-  momentum: 0.8  # based on "momentum_wd.yaml"
+  lr: 0.01  # based on "lr_batch_size.yaml"
   weight_decay: 1e-3  # based on "momentum_wd.yaml" & "horizontal_flipping.yaml"
 
 performance:

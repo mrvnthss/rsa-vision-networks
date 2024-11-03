@@ -58,11 +58,11 @@ transform:
 
 dataloader:
   val_split: 0.20
-  batch_size: 64  # based on "batch_size_lr.yaml"
+  batch_size: 64  # based on "lr_batch_size.yaml"
   num_workers: 4
 
 optimizer:
-  lr: 0.01  # based on "batch_size_lr.yaml"
+  lr: 0.01  # based on "lr_batch_size.yaml"
 
 performance:
   patience: 20
