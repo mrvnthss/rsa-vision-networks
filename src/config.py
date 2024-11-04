@@ -97,6 +97,16 @@ class WarmupSchedulerName(Enum):
     LinearLR = "LinearLR"
 
 
+#---------------
+# OPTUNA CHOICES
+#---------------
+
+class OptunaParamType(Enum):
+    categorical = "categorical"
+    float = "float"
+    int = "int"
+
+
 # --------------------
 # MODEL CONFIGURATIONS
 # --------------------
@@ -450,6 +460,55 @@ class ExperimentConf:
     sub_dir: Optional[str] = None
 
 
+# ---------------------
+# OPTUNA CONFIGURATIONS
+# ---------------------
+
+@dataclass
+class OptunaCategoricalConf:
+    choices: Union[
+        List[bool],
+        List[int],
+        List[float],
+        List[str]
+    ] = MISSING
+
+
+@dataclass
+class OptunaFloatConf:
+    low: float = MISSING
+    high: float = MISSING
+    step: Optional[float] = None
+    log: bool = False
+
+
+@dataclass
+class OptunaIntConf:
+    low: int = MISSING
+    high: int = MISSING
+    step: int = 1
+    log: bool = False
+
+
+@dataclass
+class OptunaParamConf:
+    name: str = MISSING
+    type: OptunaParamType = MISSING
+    vals: Union[
+        OptunaCategoricalConf,
+        OptunaFloatConf,
+        OptunaIntConf
+    ] = MISSING
+
+
+@dataclass
+class OptunaConf:
+    study_name: str = MISSING
+    minimize: bool = MISSING
+    n_trials: int = MISSING
+    params: List[OptunaParamConf] = MISSING
+
+
 # ------------------------------
 # REPRODUCIBILITY CONFIGURATIONS
 # ------------------------------
@@ -457,6 +516,7 @@ class ExperimentConf:
 @dataclass
 class ReproducibilityConf:
     torch_seed: int = MISSING
+    optuna_seed: int = MISSING
     shuffle_seed: int = MISSING
     split_seed: int = MISSING
     cudnn_deterministic: bool = MISSING
@@ -584,6 +644,7 @@ class TrainClassifierConf(DictConfig):
     main_scheduler: Optional[MainSchedulerConf] = None
     warmup_scheduler: Optional[WarmupSchedulerConf] = None
     experiment: ExperimentConf = MISSING
+    optuna: Optional[OptunaConf] = None
     reproducibility: ReproducibilityConf = MISSING
     training: TrainingConf = MISSING
     performance: PerformanceConf = MISSING

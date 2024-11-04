@@ -11,8 +11,14 @@ Functions:
         an image classification task (training).
     * get_val_transform(transform_val_params): Get the transform for an
         image classification task (validation).
+    * log_study_results(logger, study): Log the results of an Optuna
+        study.
+    * log_trial_parameters(logger, trial): Log the hyperparameter values
+        of an Optuna trial.
     * set_device(): Set the device to use for training.
     * set_seeds(repr_params): Set random seeds for reproducibility.
+    * suggest_trial_parameters(cfg, trial): Suggest hyperparameters for
+        an Optuna trial.
 """
 
 
@@ -22,17 +28,24 @@ __all__ = [
     "get_lr_scheduler",
     "get_train_transform",
     "get_val_transform",
+    "log_study_results",
+    "log_trial_parameters",
     "set_device",
-    "set_seeds"
+    "set_seeds",
+    "suggest_trial_parameters"
 ]
 
 import random
+from logging import Logger
 from typing import Any, Callable, Dict, List, Optional, Union
 
 import numpy as np
 import torch
 import torchvision.transforms.v2 as T
 from hydra.utils import instantiate
+from omegaconf import OmegaConf
+from optuna.study import Study
+from optuna.trial import FrozenTrial, Trial, TrialState
 from torch import nn
 from torch.optim.lr_scheduler import LRScheduler
 from torch.utils.data import default_collate
@@ -40,16 +53,22 @@ from torchmetrics import MetricCollection
 from tqdm import tqdm
 
 from src.config import (
+    CropScaleConf,
+    CropRatioConf,
+    OptunaCategoricalConf,
+    OptunaFloatConf,
+    OptunaIntConf,
     ReproducibilityConf,
     TrainClassifierConf,
     TrainSimilarityConf,
     TransformTrainConf,
-    TransformValConf,
-    CropScaleConf,
-    CropRatioConf
+    TransformValConf
 )
 from src.schedulers.sequential_lr import SequentialLR
-from src.utils.classification_transforms import *
+from src.utils.classification_transforms import (
+    ClassificationTransformsTrain,
+    ClassificationTransformsVal
+)
 
 
 def evaluate_classifier(
@@ -255,6 +274,51 @@ def get_val_transform(
     return transform
 
 
+def log_study_results(
+        logger: Logger,
+        study: Study
+) -> None:
+    """Log the results of an Optuna study.
+
+    Args:
+        logger: The logger instance to record logs.
+        study: The Optuna study object.
+    """
+
+    pruned_trials = study.get_trials(deepcopy=False, states=[TrialState.PRUNED])
+    complete_trials = study.get_trials(deepcopy=False, states=[TrialState.COMPLETE])
+    best_trial = study.best_trial
+
+    logger.info("OPTUNA STUDY FINISHED:")
+    logger.info("    Number of finished trials: %d", len(study.trials))
+    logger.info("    Number of pruned trials: %d", len(pruned_trials))
+    logger.info("    Number of complete trials: %d", len(complete_trials))
+
+    logger.info("BEST TRIAL:")
+    logger.info("    Run ID: %d", best_trial.number + 1)
+    logger.info("    Value:  %.4f", best_trial.value)
+    log_trial_parameters(logger, best_trial)
+
+
+def log_trial_parameters(
+        logger: Logger,
+        trial: Union[Trial, FrozenTrial]
+) -> None:
+    """Log the hyperparameter values of an Optuna trial.
+
+    Args:
+        logger: The logger instance to record logs.
+        trial: The Optuna trial object.
+    """
+
+    trial_params = trial.params
+    max_len = max(len(str(k)) for k in trial_params.keys())
+    logger.info("TRIAL PARAMETERS:")
+    for k, v in trial_params.items():
+        v = round(v, 4) if isinstance(v, float) else v
+        logger.info("    %s %s", (k + ":").ljust(max_len + 1), v)
+
+
 def set_device() -> torch.device:
     """Set the device to use for training.
 
@@ -283,6 +347,32 @@ def set_seeds(repr_params: ReproducibilityConf) -> None:
     torch.cuda.manual_seed_all(repr_params.torch_seed)
     torch.backends.cudnn.deterministic = repr_params.cudnn_deterministic
     torch.backends.cudnn.benchmark = repr_params.cudnn_benchmark
+
+
+def suggest_trial_parameters(
+        cfg: TrainClassifierConf,
+        trial: Trial
+) -> None:
+    """Suggest hyperparameters for an Optuna trial.
+
+    Args:
+        cfg: The training configuration to update.
+        trial: The Optuna trial object.
+    """
+
+    suggest_fns = {
+        "categorical": _suggest_categorical,
+        "float": _suggest_float,
+        "int": _suggest_int
+    }
+
+    for param in cfg.optuna.params:
+        suggest_fns[param.type](
+            cfg=cfg,
+            trial=trial,
+            name=param.name,
+            vals=param.vals
+        )
 
 
 def _get_mixup_cutmix(
@@ -366,3 +456,106 @@ def _get_warmup_epochs(
     if "warmup_scheduler" not in cfg or cfg.warmup_scheduler is None:
         return 0
     return cfg.warmup_scheduler.warmup_epochs
+
+
+def _suggest_categorical(
+        cfg: TrainClassifierConf,
+        trial: Trial,
+        name: str,
+        vals: OptunaCategoricalConf
+) -> None:
+    """Suggest a categorical value for a hyperparameter.
+
+    Args:
+        cfg: The training configuration to update.
+        trial: The Optuna trial object.
+        name: The name of the hyperparameter whose value is to be
+          suggested and subsequently to be updated in the training
+          configuration.
+        vals: The configuration specifying the values to sample from.
+    """
+
+    suggestion = trial.suggest_categorical(
+        name=name,
+        choices=vals.choices
+    )
+    OmegaConf.update(
+        cfg=cfg,
+        key=name,
+        value=suggestion
+    )
+
+
+def _suggest_float(
+        cfg: TrainClassifierConf,
+        trial: Trial,
+        name: str,
+        vals: OptunaFloatConf
+) -> None:
+    """Suggest a float value for a hyperparameter.
+
+    Args:
+        cfg: The training configuration to update.
+        trial: The Optuna trial object.
+        name: The name of the hyperparameter whose value is to be
+          suggested and subsequently to be updated in the training
+          configuration.
+        vals: The configuration specifying the range of values to sample
+          from.
+    """
+
+    step = None if "step" not in vals else vals.step
+    log = False if "log" not in vals else vals.log
+    suggestion = trial.suggest_float(
+        name=name,
+        low=vals.low,
+        high=vals.high,
+        step=step,
+        log=log
+    )
+    OmegaConf.update(
+        cfg=cfg,
+        key=name,
+        value=suggestion
+    )
+    if name == "transform.train.crop_ratio.lower":
+        inv_suggestion = 1.0 / suggestion
+        OmegaConf.update(
+            cfg=cfg,
+            key="transform.train.crop_ratio.upper",
+            value=inv_suggestion
+        )
+
+
+def _suggest_int(
+        cfg: TrainClassifierConf,
+        trial: Trial,
+        name: str,
+        vals: OptunaIntConf
+) -> None:
+    """Suggest an integer value for a hyperparameter.
+
+    Args:
+        cfg: The training configuration to update.
+        trial: The Optuna trial object.
+        name: The name of the hyperparameter whose value is to be
+          suggested and subsequently to be updated in the training
+          configuration.
+        vals: The configuration specifying the range of values to sample
+          from.
+    """
+
+    step = 1 if "step" not in vals else vals.step
+    log = False if "log" not in vals else vals.log
+    suggestion = trial.suggest_int(
+        name=name,
+        low=vals.low,
+        high=vals.high,
+        step=step,
+        log=log
+    )
+    OmegaConf.update(
+        cfg=cfg,
+        key=name,
+        value=suggestion
+    )

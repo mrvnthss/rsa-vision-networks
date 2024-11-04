@@ -5,6 +5,7 @@ from typing import Dict, Literal, Optional
 
 import torch
 from omegaconf import DictConfig
+from optuna.trial import Trial
 from torch import nn
 from torchmetrics import MetricCollection
 from typing_extensions import override
@@ -41,6 +42,7 @@ class ClassificationTrainer(BaseTrainer):
         start_time: A timestamp indicating the start of processing a
           mini-batch.
         train_loader: The dataloader providing training samples.
+        trial: The Optuna trial object.
         val_loader: The dataloader providing validation samples.
 
     Methods:
@@ -69,7 +71,8 @@ class ClassificationTrainer(BaseTrainer):
             device: torch.device,
             cfg: DictConfig,
             lr_scheduler: Optional[torch.optim.lr_scheduler.LRScheduler] = None,
-            run_id: Optional[int] = None
+            run_id: Optional[int] = None,
+            trial: Optional[Trial] = None
     ) -> None:
         """Initialize the ClassificationTrainer instance.
 
@@ -91,9 +94,10 @@ class ClassificationTrainer(BaseTrainer):
             cfg: The training configuration.
             lr_scheduler: The scheduler used to adjust the learning rate
               during training.
-            run_id: Optional run ID to distinguish multiple runs using
-              the same configuration.  Used to save checkpoints and
-              event files in separate directories.
+            run_id: Run ID to distinguish multiple runs using the same
+              configuration.  Used to save checkpoints and event files
+              in separate directories.
+            trial: The Optuna trial object.
         """
 
         # MetricTracker
@@ -114,7 +118,8 @@ class ClassificationTrainer(BaseTrainer):
             device=device,
             cfg=cfg,
             lr_scheduler=lr_scheduler,
-            run_id=run_id
+            run_id=run_id,
+            trial=trial
         )
 
     @override

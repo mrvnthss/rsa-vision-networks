@@ -1,0 +1,99 @@
+defaults:
+  - model: ???
+  - dataset: ???
+  - transform/train: ???
+  - transform/val: preprocessing
+  - criterion: cross_entropy
+  - optimizer: sgd
+  - main_scheduler: null  # optional, null to disable
+  - warmup_scheduler: null  # optional, null to disable
+  - performance/metrics: classification
+  - _self_
+  - experiment: ???
+
+
+# ----------
+# EXPERIMENT
+# ----------
+
+experiment:
+  name: ???
+  dir: ../out/${experiment.name}/${now:%Y-%m-%d_%H-%M-%S}
+
+
+#---------------------
+# OPTUNA CONFIGURATION
+#---------------------
+
+optuna:
+  study_name: ${experiment.name}/${now:%Y-%m-%d_%H-%M-%S}
+  minimize: true
+  n_trials: ???
+  params: ???
+
+
+# ---------------
+# REPRODUCIBILITY
+# ---------------
+
+reproducibility:
+  torch_seed: ???
+  optuna_seed: 123
+  shuffle_seed: ???  # controls shuffling of the training set
+  split_seed: 42  # controls split of the dataset into training and validation sets
+  cudnn_deterministic: true
+  cudnn_benchmark: false
+
+
+# -----------------------
+# TRAINING & DATA LOADING
+# -----------------------
+
+training:
+  num_epochs: ???
+  resume_from: null  # checkpoint to resume training from, null to start training from scratch
+
+transform:
+  val:
+    resize_size: ???
+
+dataloader:
+  val_split: 0.20  # fraction of the dataset to use as validation set
+  batch_size: ???
+  num_workers: ???
+
+
+# -----------
+# PERFORMANCE
+# -----------
+
+performance:
+  evaluation_metric: Loss  # either "Loss" or one of the keys in the ``metrics`` dict
+  higher_is_better: false
+  min_delta: 0.0
+  evaluate_on: val  # either "train" or "val"
+  patience: 20  # patience for early stopping, null to disable
+  keep_previous_best_score: true  # whether to load previous best score from checkpoint when resuming training
+
+
+# ----------------
+# LOGGING & SAVING
+# ----------------
+
+checkpoints:
+  save_frequency: 5  # null to disable regular saves
+  save_best_model: true
+  delete_previous: true
+
+tensorboard:
+  updates_per_epoch:
+    train: 10  # number of TensorBoard updates per epoch during training, null to disable
+    val: 10  # number of TensorBoard updates per epoch during validation, null to disable
+
+paths:
+  checkpoints: ${experiment.dir}/checkpoints
+  tensorboard: ${experiment.dir}/tensorboard
+
+hydra:
+  run:
+    dir: ${experiment.dir}/logs

@@ -7,8 +7,10 @@ from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import Any, Dict, Literal, Optional, Tuple
 
+import optuna
 import torch
 from omegaconf import DictConfig
+from optuna.trial import Trial
 from torch import nn
 from tqdm import tqdm
 
@@ -44,6 +46,7 @@ class BaseTrainer(ABC):
         start_time: A timestamp indicating the start of processing a
           mini-batch.
         train_loader: The dataloader providing training samples.
+        trial: The Optuna trial object.
         val_loader: The dataloader providing validation samples.
 
     Methods:
@@ -72,7 +75,8 @@ class BaseTrainer(ABC):
             device: torch.device,
             cfg: DictConfig,
             lr_scheduler: Optional[torch.optim.lr_scheduler.LRScheduler] = None,
-            run_id: Optional[int] = None
+            run_id: Optional[int] = None,
+            trial: Optional[Trial] = None
     ) -> None:
         """Initialize the BaseTrainer instance.
 
@@ -103,9 +107,10 @@ class BaseTrainer(ABC):
             cfg: The training configuration.
             lr_scheduler: The scheduler used to adjust the learning rate
               during training.
-            run_id: Optional run ID to distinguish multiple runs using
-              the same configuration.  Used to save checkpoints and
-              event files in separate directories.
+            run_id: Run ID to distinguish multiple runs using the same
+              configuration.  Used to save checkpoints and event files
+              in separate directories.
+            trial: The Optuna trial object.
         """
 
         self.model = model
@@ -114,6 +119,7 @@ class BaseTrainer(ABC):
         self.val_loader = val_loader
         self.device = device
         self.lr_scheduler = lr_scheduler
+        self.trial = trial
 
         self.logger = logging.getLogger(__name__)
 
@@ -331,11 +337,24 @@ class BaseTrainer(ABC):
                 epoch_idx=self.epoch_idx
             )
 
-            # Log results
+            # Log results (console & Optuna, if applicable)
             self._log_results(
                 training_results=training_results,
                 validation_results=validation_results
             )
+            # NOTE: Optuna uses the same metric that is being tracked by the PerformanceTracker!
+            if self.trial is not None:
+                # Report intermediate results to Optuna and check for pruning
+                self.trial.report(
+                    results[self.performance_metric["evaluation_metric"]],
+                    self.epoch_idx
+                )
+                if self.trial.should_prune():
+                    self.experiment_tracker.close()
+                    self.logger.info("Trial was pruned, stopping training now.")
+                    _ = self._report_results()
+                    if self.trial.should_prune():
+                        raise optuna.exceptions.TrialPruned()
 
             # Check for early stopping
             if self.performance_tracker.track_for_early_stopping:
