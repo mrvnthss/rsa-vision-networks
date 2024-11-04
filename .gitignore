@@ -194,3 +194,6 @@ data/
 
 # Exclude logs and checkpoints directories
 out/
+
+# Exclude database storing Optuna study results
+optuna_studies.sqlite3
