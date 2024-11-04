@@ -155,7 +155,7 @@ def main(cfg: TrainSimilarityConf) -> None:
     # Iterate over individual folds
     for fold_idx in range(cfg.training.num_folds):
         logger.info(
-            "CROSS-VALIDATION RUN %0*d/%d",
+            "CROSS-VALIDATION RUN [%0*d/%d]",
             len(str(cfg.training.num_folds)), fold_idx + 1, cfg.training.num_folds
         )
 
