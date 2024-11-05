@@ -107,6 +107,16 @@ class OptunaParamType(Enum):
     int = "int"
 
 
+class OptunaSamplerName(Enum):
+    RandomSampler = "RandomSampler"
+    TPESampler = "TPESampler"
+
+
+class OptunaPrunerName(Enum):
+    MedianPruner = "MedianPruner"
+    SuccessiveHalvingPruner = "SuccessiveHalvingPruner"
+
+
 # --------------------
 # MODEL CONFIGURATIONS
 # --------------------
@@ -502,11 +512,79 @@ class OptunaParamConf:
 
 
 @dataclass
+class RandomSamplerConf:
+    _target_: str = "optuna.samplers._random.RandomSampler"
+    seed: Optional[int] = None
+
+
+@dataclass
+class TPESamplerConf:
+    _target_: str = "optuna.samplers._tpe.sampler.TPESampler"
+    consider_prior: bool = True
+    prior_weight: float = 1.0
+    consider_magic_clip: bool = True
+    consider_endpoints: bool = False
+    n_startup_trials: int = 10
+    n_ei_candidates: int = 24
+    seed: Optional[int] = None
+    multivariate: bool = False
+    group: bool = False
+    warn_independent_sampling: bool = True
+    constant_liar: bool = False
+
+
+@dataclass
+class OptunaSamplerConf:
+    name: OptunaSamplerName = MISSING
+    n_startup_trials: Optional[int] = None
+    multivariate: Optional[bool] = None
+    kwargs: Union[
+        RandomSamplerConf,
+        TPESamplerConf
+    ] = MISSING
+
+
+@dataclass
+class MedianPrunerConf:
+    _target_: str = "optuna.pruners._median.MedianPruner"
+    n_startup_trials: int = 5
+    n_warmup_steps: int = 0
+    interval_steps: int = 1
+    n_min_trials: int = 1
+
+
+@dataclass
+class SuccessiveHalvingPrunerConf:
+    _target_: str = "optuna.pruners._successive_halving.SuccessiveHalvingPruner"
+    min_resource: Union[str, int] = "auto"
+    reduction_factor: int = 4
+    min_early_stopping_rate: int = 0
+    bootstrap_count: int = 0
+
+
+@dataclass
+class OptunaPrunerConf:
+    name: OptunaPrunerName = MISSING
+    n_startup_trials: Optional[int] = None
+    n_warmup_steps: Optional[int] = None
+    n_min_trials: Optional[int] = None
+    min_resource: Optional[Union[str, int]] = None
+    reduction_factor: Optional[int] = None
+    min_early_stopping_rate: Optional[int] = None
+    kwargs: Union[
+        MedianPrunerConf,
+        SuccessiveHalvingPrunerConf
+    ] = MISSING
+
+
+@dataclass
 class OptunaConf:
     study_name: str = MISSING
     minimize: bool = MISSING
     n_trials: int = MISSING
     params: List[OptunaParamConf] = MISSING
+    sampler: OptunaSamplerConf = MISSING
+    pruner: OptunaPrunerConf = MISSING
 
 
 # ------------------------------

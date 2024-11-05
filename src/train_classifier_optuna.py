@@ -6,18 +6,16 @@ associated with this script is named "train_classifier_optuna.yaml".
 
 Typical usage example:
 
-  >>> python train_classifier_optuna.py experiment=lenet_fashionmnist/hparam_tuning/optuna/step_lr
+  >>> python train_classifier_optuna.py experiment=lenet_fashionmnist/hparam_tuning/optuna/step_lr_random
 """
 
 
 import logging
-from pathlib import Path
 
 import hydra
 import optuna
 from hydra.core.config_store import ConfigStore
 from hydra.utils import instantiate
-from optuna.samplers import TPESampler
 from optuna.trial import Trial
 from torchmetrics import MetricCollection
 
@@ -143,15 +141,17 @@ def main(cfg: TrainClassifierConf) -> None:
 
         return best_score
 
-    # Run Optuna study
+    # Suppress Optuna logging
     optuna.logging.set_verbosity(optuna.logging.CRITICAL)
-    direction = "minimize" if cfg.optuna.minimize else "maximize"
+
+    # Run Optuna study
     logger.info("Creating new Optuna study with name %s ...", cfg.optuna.study_name)
     study = optuna.create_study(
         storage="sqlite:///../optuna_studies.sqlite3",
-        sampler=TPESampler(seed=cfg.reproducibility.optuna_seed),
+        sampler=instantiate(cfg.optuna.sampler.kwargs),
+        pruner=instantiate(cfg.optuna.pruner.kwargs),
         study_name=cfg.optuna.study_name,
-        direction=direction
+        direction=("minimize" if cfg.optuna.minimize else "maximize")
     )
     study.optimize(
         func=objective,
@@ -160,12 +160,6 @@ def main(cfg: TrainClassifierConf) -> None:
 
     # Log results
     log_study_results(logger, study)
-
-    # Save study results to CSV file
-    log_dir = Path(cfg.experiment.dir) / "logs"
-    log_dir.mkdir(parents=True, exist_ok=True)
-    results_df = study.trials_dataframe()
-    results_df.to_csv(log_dir / "optuna_study.csv", index=False)
 
 
 if __name__ == "__main__":

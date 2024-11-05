@@ -1,0 +1,12 @@
+# https://optuna.readthedocs.io/en/v4.0.0/reference/generated/optuna.pruners.SuccessiveHalvingPruner.html
+name: SuccessiveHalvingPruner
+min_resource: auto
+reduction_factor: 4
+min_early_stopping_rate: 0
+
+kwargs:
+  _target_: optuna.pruners._successive_halving.SuccessiveHalvingPruner
+  min_resource: ${optuna.pruner.min_resource}
+  reduction_factor: ${optuna.pruner.reduction_factor}
+  min_early_stopping_rate: ${optuna.pruner.min_early_stopping_rate}
+  bootstrap_count: 0

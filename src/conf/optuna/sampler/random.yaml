@@ -1,0 +1,6 @@
+# https://optuna.readthedocs.io/en/v4.0.0/reference/samplers/generated/optuna.samplers.RandomSampler.html
+name: RandomSampler
+
+kwargs:
+  _target_: optuna.samplers._random.RandomSampler
+  seed: ${reproducibility.optuna_seed}

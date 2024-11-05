@@ -1,0 +1,18 @@
+# https://optuna.readthedocs.io/en/v4.0.0/reference/samplers/generated/optuna.samplers.TPESampler.html
+name: TPESampler
+n_startup_trials: 10
+multivariate: false
+
+kwargs:
+  _target_: optuna.samplers._tpe.sampler.TPESampler
+  consider_prior: true
+  prior_weight: 1.0
+  consider_magic_clip: true
+  consider_endpoints: false
+  n_startup_trials: ${optuna.sampler.n_startup_trials}
+  n_ei_candidates: 24
+  seed: ${reproducibility.optuna_seed}
+  multivariate: ${optuna.sampler.multivariate}
+  group: false
+  warn_independent_sampling: true
+  constant_liar: false
