@@ -7,6 +7,8 @@ Functions:
         file to determine training results.
     * parse_log_dir(log_dir, parse_fn, ...): Parse a (parent) directory
         of log files.
+    * parse_optuna_study(log_file_path, mode): Parse a log file
+        corresponding to an Optuna study.
     * parse_tb_data(log_dir, extract_hparams=True, drop_run_id=True):
         Parse data stored in TensorBoard event files.
 """
@@ -16,6 +18,7 @@ __all__ = [
     "get_training_durations",
     "get_training_results",
     "parse_log_dir",
+    "parse_optuna_study",
     "parse_tb_data"
 ]
 
@@ -71,7 +74,7 @@ def get_training_durations(
         timestamp = datetime.strptime(
             re.match(timestamp_pattern, run_lines[0]).group(0), "[%Y-%m-%d %H:%M:%S,%f]"
         )
-        data.append({"run_id": run_id + 1, "timestamp": timestamp})
+        data.append({"run_id": run_id, "timestamp": timestamp})
 
         # Individual epochs
         for line in run_lines[1:]:
@@ -80,7 +83,7 @@ def get_training_durations(
                 timestamp = datetime.strptime(
                     re.match(timestamp_pattern, line).group(0), "[%Y-%m-%d %H:%M:%S,%f]"
                 )
-                data.append({"run_id": run_id + 1, "timestamp": timestamp})
+                data.append({"run_id": run_id, "timestamp": timestamp})
 
     # Convert to DataFrame
     df = pd.DataFrame(data)
@@ -141,17 +144,17 @@ def get_training_results(
     training_runs = _extract_training_runs(log_file_path)
 
     # Define patterns to match against
-    epoch_pattern = r"EPOCH \[(\d+)/\d+\]\s+TRAIN: (.+?)\s+VAL: (.+)"
     results_pattern = (
         r"Best performing model achieved a score of ([\d.]+) \((.+)\) on the "
         r"(training|validation) set after (\d+) epochs of training."
     )
+    epoch_pattern = r"EPOCH \[(\d+)/\d+\]\s+TRAIN: (.+?)\s+VAL: (.+)"
 
     data = []
     for run_id, run_lines in training_runs.items():
         # Get number of epochs trained (best performing model)
         run_dict = {
-            "run_id": run_id + 1,
+            "run_id": run_id,
             "Epochs": int(re.search(results_pattern, run_lines[-1]).group(4))
         }
 
@@ -284,6 +287,91 @@ def parse_log_dir(
     return combined_df
 
 
+def parse_optuna_study(
+        log_file_path: str,
+        mode: Literal["train", "val"]
+) -> pd.DataFrame:
+    """Parse a log file corresponding to an Optuna study.
+
+    Args:
+        log_file_path: The full path to the log file.
+        mode: Whether to extract results for the training or validation
+          set.
+
+    Returns:
+        A DataFrame containing the results of the best performing model
+        for each trial along with the hyperparameters used in these
+        trials.
+    """
+
+    # Extract individual trials from log file
+    study_trials = _extract_optuna_trials(log_file_path)
+
+    # Define patterns to match against
+    trial_pruned_msg = "Trial was pruned, stopping training now."
+    results_pattern = (
+        r"Best performing model achieved a score of ([\d.]+) \((.+)\) on the "
+        r"(training|validation) set after (\d+) epochs of training."
+    )
+    hparam_pattern = r"\[INFO\] -\s{5}(\S+):\s+([\d.]+)"
+    epoch_pattern = r"EPOCH \[(\d+)/\d+\]\s+TRAIN: (.+?)\s+VAL: (.+)"
+
+    data = []
+    hparam_names = set()
+    for trial_id, trial_lines in study_trials.items():
+        # Get number of epochs trained (best performing model) and check whether trial was pruned
+        study_dict = {
+            "trial_id": trial_id,
+            "Epochs": int(re.search(results_pattern, trial_lines[-1]).group(4)),
+            "pruned": trial_pruned_msg in trial_lines[-2]
+        }
+
+        # Extract trial parameters
+        # NOTE: First hyperparameter always appears in the third line of each block of log messages
+        params_dict = {}
+        for line in trial_lines[2:]:
+            match = re.search(hparam_pattern, line)
+            if match:
+                key = match.group(1)
+                value = match.group(2)
+                try:
+                    value = int(value)
+                except ValueError:
+                    try:
+                        value = float(value)
+                    except ValueError:
+                        pass
+                params_dict[key] = value
+            else:
+                break
+        study_dict.update(params_dict)
+        hparam_names.update(params_dict.keys())
+
+        # Extract trial results
+        for line in trial_lines:
+            match = re.search(epoch_pattern, line)
+            if match:
+                epoch = int(match.group(1))
+                if epoch == study_dict["Epochs"]:
+                    metrics = match.group(2 if mode == "train" else 3).split("  ")
+                    for metric in metrics:
+                        k, v = metric.split(": ")
+                        study_dict[k] = float(v)
+
+        data.append(study_dict)
+
+    # Convert to DataFrame and reorder columns
+    df = pd.DataFrame(data)
+    hparam_names = list(hparam_names)
+    hparam_names.sort()
+    col_order = ["trial_id", "pruned", *hparam_names]
+    remaining_columns = [
+        col for col in df.columns if col not in [*col_order, "Epochs"]
+    ]
+    col_order.extend([*remaining_columns, "Epochs"])
+    return df[col_order]
+
+
 def parse_tb_data(
         log_dir: str,
         extract_hparams: bool = True,
@@ -374,6 +462,44 @@ def _extract_hparams(run_dir: str) -> Dict[str, Union[int, float, str]]:
     return params_dict
 
 
+def _extract_optuna_trials(log_file_path: str) -> Dict[int, List[str]]:
+    """Extract individual trials from an Optuna study log file.
+
+    Args:
+        log_file_path: The full path to the log file.
+
+    Returns:
+        A dictionary mapping trial indices (starting at 1) to a list of
+        lines of the log file corresponding to that trial.
+    """
+
+    # Read in lines of log file
+    with open(log_file_path, "r", encoding="utf-8") as file:
+        log_lines = file.readlines()
+
+    # Get indices of lines corresponding to starts of individual trials
+    trial_pattern = r"OPTUNA TRIAL \[\d+/\d+\]"
+    start_indices = [
+        idx for idx, line in enumerate(log_lines)
+        if re.search(trial_pattern, line)
+    ]
+
+    # Get indices of lines corresponding to ends of individual trials
+    end_indices = [idx - 1 for idx in start_indices[1:]]
+    last_trial = [
+        idx for idx, line in enumerate(log_lines)
+        if "OPTUNA STUDY FINISHED:" in line
+    ]
+    end_indices.append(last_trial[0] - 1)
+
+    # Split log lines into individual trials
+    study_trials = {}
+    for run_idx, (start_idx, end_idx) in enumerate(zip(start_indices, end_indices)):
+        study_trials[run_idx + 1] = log_lines[start_idx:end_idx + 1]
+
+    return study_trials
+
+
 def _extract_run_dir(log_file_path: str) -> str:
     """Extract the name of the directory specifying a run configuration.
 
@@ -407,8 +533,8 @@ def _extract_training_runs(log_file_path: str) -> Dict[int, List[str]]:
         log_file_path: The full path to the log file.
 
     Returns:
-        A dictionary mapping run indices to a list of lines of the log
-        file corresponding to that run.
+        A dictionary mapping run indices (starting at 1) to a list of
+        lines of the log file corresponding to that run.
     """
 
     # Read in lines of log file
@@ -435,7 +561,6 @@ def _extract_training_runs(log_file_path: str) -> Dict[int, List[str]]:
     # Split log lines into individual training runs
     training_runs = {}
     for run_idx, (start_idx, end_idx) in enumerate(zip(start_indices, end_indices)):
-        single_run = log_lines[start_idx:end_idx + 1]
-        training_runs[run_idx] = single_run
+        training_runs[run_idx + 1] = log_lines[start_idx:end_idx + 1]
 
     return training_runs
