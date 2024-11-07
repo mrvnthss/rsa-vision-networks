@@ -1,4 +1,8 @@
 # https://optuna.readthedocs.io/en/v4.0.0/reference/generated/optuna.pruners.MedianPruner.html
+# NOTE: The ``n_warmup_steps`` parameter behaves differently to how it is described in the official
+#       documentation.  Here, it specifies the number of steps that have to be completed before the
+#       first pruning check is performed.  See the ``BaseTrainer`` class for an explanation of why
+#       this is the case.
 name: MedianPruner
 n_startup_trials: 5
 n_warmup_steps: 0

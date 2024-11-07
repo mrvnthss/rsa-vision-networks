@@ -345,11 +345,17 @@ class BaseTrainer(ABC):
             # NOTE: Optuna uses the same metric that is being tracked by the PerformanceTracker!
             if self.trial is not None:
                 # Report intermediate results to Optuna and check for pruning
-                # NOTE: Optuna pruners expect the ``step`` parameter to start at 0, while
+                # NOTE: Optuna (v4.0.0) pruners expect the ``step`` parameter to start at 0, while
                 #       ``self.epoch_idx`` starts at 1!
+                # NOTE: However, the implementation of the ``SuccessiveHalvingPruner`` performs
+                #       checks at the wrong steps (https://github.com/optuna/optuna/issues/5750).
+                #       This mistake can be remedied by passing 1-based ``step`` values to the
+                #       ``report`` method, as done below.  Be aware that this also has consequences
+                #       on the ``MedianPruner`` class.  These consequences are noted down in
+                #       src/conf/optuna/pruner/median.yaml.
                 self.trial.report(
                     value=results[self.performance_metric["evaluation_metric"]],
-                    step=self.epoch_idx - 1
+                    step=self.epoch_idx  # 1-based step values!
                 )
                 if self.trial.should_prune():
                     self.experiment_tracker.close()
