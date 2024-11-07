@@ -345,16 +345,17 @@ class BaseTrainer(ABC):
             # NOTE: Optuna uses the same metric that is being tracked by the PerformanceTracker!
             if self.trial is not None:
                 # Report intermediate results to Optuna and check for pruning
+                # NOTE: Optuna pruners expect the ``step`` parameter to start at 0, while
+                #       ``self.epoch_idx`` starts at 1!
                 self.trial.report(
-                    results[self.performance_metric["evaluation_metric"]],
-                    self.epoch_idx
+                    value=results[self.performance_metric["evaluation_metric"]],
+                    step=self.epoch_idx - 1
                 )
                 if self.trial.should_prune():
                     self.experiment_tracker.close()
                     self.logger.info("Trial was pruned, stopping training now.")
                     _ = self._report_results()
-                    if self.trial.should_prune():
-                        raise optuna.exceptions.TrialPruned()
+                    raise optuna.exceptions.TrialPruned()
 
             # Check for early stopping
             if self.performance_tracker.track_for_early_stopping:
