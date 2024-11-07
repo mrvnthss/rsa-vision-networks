@@ -2,11 +2,12 @@
 name: MedianPruner
 n_startup_trials: 5
 n_warmup_steps: 0
+interval_steps: 1
 n_min_trials: 1
 
 kwargs:
   _target_: optuna.pruners._median.MedianPruner
   n_startup_trials: ${optuna.pruner.n_startup_trials}
   n_warmup_steps: ${optuna.pruner.n_warmup_steps}
-  interval_steps: 1
+  interval_steps: ${optuna.pruner.interval_steps}
   n_min_trials: ${optuna.pruner.n_min_trials}

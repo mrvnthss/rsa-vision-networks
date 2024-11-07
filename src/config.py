@@ -567,6 +567,7 @@ class OptunaPrunerConf:
     name: OptunaPrunerName = MISSING
     n_startup_trials: Optional[int] = None
     n_warmup_steps: Optional[int] = None
+    interval_steps: Optional[int] = None
     n_min_trials: Optional[int] = None
     min_resource: Optional[Union[str, int]] = None
     reduction_factor: Optional[int] = None
