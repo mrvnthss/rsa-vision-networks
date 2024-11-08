@@ -3,8 +3,10 @@
 Functions:
     * create_sprite(images, n_rows, n_cols, by_row=True): Combine
         individual images into a sprite.
-    * load_class_samples(data_dir, num_samples_per_class, ...): Load a
-        fixed number of samples from each class in the dataset.
+    * load_class_samples_as_array(data_dir, ...): Load a fixed number of
+        samples from each class in the dataset.
+    * load_class_samples_as_dict(data_dir, ...): Load a fixed number of
+        samples from each class in the dataset.
     * visualize_crop(img, crop_scale, ...): Visualize a random crop of
         an image.
 """
@@ -12,12 +14,13 @@ Functions:
 
 __all__ = [
     "create_sprite",
-    "load_class_samples",
+    "load_class_samples_as_array",
+    "load_class_samples_as_dict",
     "visualize_crop"
 ]
 
 from pathlib import Path
-from typing import Tuple
+from typing import Dict, List, Tuple
 
 import numpy as np
 import torch
@@ -53,10 +56,8 @@ def create_sprite(
         The sprite made up of the individual images.
     """
 
-    if images.ndim == 3:
-        num_images, height, width, channels = (*images.shape, 1)
-    else:
-        num_images, height, width, channels = images.shape
+    num_images, height, width = images.shape[:3]
+    channels = images.shape[3] if images.ndim == 4 else 1
 
     sprite = np.squeeze(
         np.zeros((height * n_rows, width * n_cols, channels), dtype=np.uint8)
@@ -72,7 +73,7 @@ def create_sprite(
     return sprite
 
 
-def load_class_samples(
+def load_class_samples_as_array(
         data_dir: str,
         num_samples_per_class: int,
         interleave_classes: bool = False,
@@ -80,6 +81,9 @@ def load_class_samples(
         random_seed: int = 42
 ) -> np.ndarray:
     """Load a fixed number of samples from each class in the dataset.
+
+    Note:
+        This function assumes that all images have the same shape.
 
     Args:
         data_dir: The path to the directory containing the processed
@@ -97,6 +101,62 @@ def load_class_samples(
         consisting of the individual images.
     """
 
+    # Load samples from each class
+    samples = load_class_samples_as_dict(
+        data_dir=data_dir,
+        num_samples_per_class=num_samples_per_class,
+        train=train,
+        random_seed=random_seed
+    )
+
+    # Determine dimension and shape of final output array
+    img = samples[next(iter(samples))][0]
+    height, width = img.shape[:2]
+    channels = img.shape[2] if img.ndim == 3 else 1
+
+    # Create empty NumPy array to collect all samples
+    samples_np = np.squeeze(
+        np.empty((num_samples_per_class * len(samples), height, width, channels), dtype=np.uint8)
+    )
+
+    # Combine images from dictionary of lists into NumPy array
+    if interleave_classes:
+        for img_idx in range(num_samples_per_class):
+            for class_idx, class_name in enumerate(samples):
+                samples_np[
+                    img_idx * len(samples) + class_idx
+                ] = samples[class_name][img_idx]
+    else:
+        for class_idx, class_name in enumerate(samples):
+            for img_idx in range(num_samples_per_class):
+                samples_np[
+                    class_idx * num_samples_per_class + img_idx
+                ] = samples[class_name][img_idx]
+
+    return samples_np
+
+
+def load_class_samples_as_dict(
+        data_dir: str,
+        num_samples_per_class: int,
+        train: bool = True,
+        random_seed: int = 42
+) -> Dict[str, List[np.ndarray]]:
+    """Load a fixed number of samples from each class in the dataset.
+
+    Args:
+        data_dir: The path to the directory containing the processed
+          dataset.
+        num_samples_per_class: The number of samples to load per class.
+        train: Whether to load images from the training split (True) or
+          the test split (False).
+        random_seed: The random seed to ensure reproducibility.
+
+    Returns:
+        A dictionary mapping names of classes to lists of images from
+        that class.
+    """
+
     # Use seeded rng for reproducibility
     rng = np.random.default_rng(random_seed)
 
@@ -106,37 +166,14 @@ def load_class_samples(
     for class_dir in data_dir.iterdir():
         if not class_dir.is_dir():
             continue
-        class_name = class_dir.name
+        class_name = str(class_dir.name)
         img_paths = list(class_dir.iterdir())
         selected_indices = rng.choice(len(img_paths), num_samples_per_class, replace=False)
-        samples[class_name] = np.array([
+        samples[class_name] = [
             np.array(Image.open(img_paths[idx])) for idx in selected_indices
-        ])
+        ]
 
-    # Determine dimension and shape of output array
-    img = samples[next(iter(samples))][0]  # first image of first class
-    if img.ndim == 2:
-        height, width, channels = (*img.shape, 1)
-    else:
-        height, width, channels = img.shape
-
-    samples_np = np.squeeze(
-        np.empty((num_samples_per_class * len(samples), height, width, channels), dtype=np.uint8)
-    )
-
-    # Combine images from dictionary of lists into NumPy array
-    if interleave_classes:
-        for img_idx in range(num_samples_per_class):
-            for class_idx, class_name in enumerate(samples):
-                samples_np[img_idx * len(samples) + class_idx] = samples[class_name][img_idx]
-    else:
-        for class_idx, class_name in enumerate(samples):
-            for img_idx in range(num_samples_per_class):
-                samples_np[
-                    class_idx * num_samples_per_class + img_idx
-                    ] = samples[class_name][img_idx]
-
-    return samples_np
+    return samples
 
 
 def visualize_crop(
@@ -173,17 +210,16 @@ def visualize_crop(
     # Create transform
     random_resized_crop = RandomResizedCrop(
         size=img.size,
-        # size=int(np.round((crop_scale * img.size[0]**2)**0.5)),
-        scale=2*(crop_scale, ),
-        ratio=2*(crop_ratio, )
+        scale=(crop_scale, crop_scale),
+        ratio=(crop_ratio, crop_ratio)
     )
 
     # Get crop parameters (for visualization purposes)
     torch.manual_seed(seed)
     row, col, height, width = random_resized_crop.get_params(
         img,
-        scale=2*(crop_scale, ),
-        ratio=2*(crop_ratio, )
+        scale=(crop_scale, crop_scale),
+        ratio=(crop_ratio, crop_ratio)
     )
 
     # Highlight region to be cropped in original image
