@@ -13,7 +13,14 @@ from torch.optim.optimizer import Optimizer
 
 
 class CosineAnnealingWarmRestarts(LRScheduler):
-    """A modification of PyTorch's CosineAnnealingWarmRestarts class."""
+    """A modification of PyTorch's CosineAnnealingWarmRestarts class.
+
+    Note:
+        This class differs from the one in PyTorch by incorporating an
+        additional ``gamma`` parameter that is used to decay the initial
+        learning rate at every restart.  The default value of 1.0 yields
+        the same behavior as PyTorch's implementation.
+    """
 
     def __init__(
             self,
