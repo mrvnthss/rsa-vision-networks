@@ -40,7 +40,7 @@ optuna:
 
 reproducibility:
   torch_seed: ???
-  optuna_seed: 123
+  optuna_seed: ???
   shuffle_seed: ???  # controls shuffling of the training set
   split_seed: 42  # controls split of the dataset into training and validation sets
   cudnn_deterministic: true
