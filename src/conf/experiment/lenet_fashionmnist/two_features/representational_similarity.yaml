@@ -1,0 +1,107 @@
+# @package _global_
+
+# To run this experiment, execute the following command from the
+# "thesis-experiments/src/" directory:
+#
+#   >>> python train_similarity.py experiment=lenet_fashionmnist/two_features/representational_similarity
+#
+
+
+# -----------------------
+# MULTI-RUN CONFIGURATION
+# -----------------------
+
+experiment:
+  name: lenet_fashionmnist/two_features/representational_similarity
+  dir:  ../out/${experiment.name}/${now:%Y-%m-%d_%H-%M-%S}
+  sub_dir: compute=${compute.name},compare=${compare.name},compute.cntr_actv=${compute.cntr_actv}
+
+paths:
+  checkpoints: ${experiment.dir}/${experiment.sub_dir}/checkpoints
+  tensorboard: ${experiment.dir}/${experiment.sub_dir}/tensorboard
+
+hydra:
+  mode: MULTIRUN
+  sweep:
+    dir: ${experiment.dir}
+    subdir: ${experiment.sub_dir}/logs
+  sweeper:
+    params:
+      +compute: "{name: euclidean, cntr_actv: false, nrml_dstn: true, dstn_type: squared},\
+                 {name: euclidean, cntr_actv: true, nrml_dstn: true, dstn_type: squared},\
+                 {name: correlation, cntr_actv: null, nrml_dstn: null, dstn_type: null},\
+                 {name: cosine, cntr_actv: null, nrml_dstn: null, dstn_type: null}"
+      +compare: "{name: cosine, dffr: null, rglr: null, rglr_strn: null},\
+                 {name: spearman, dffr: true, rglr: l2, rglr_strn: 0.005},\
+                 {name: correlation, dffr: null, rglr: null, rglr_strn: null}"
+
+
+# ---------------------
+# GENERAL CONFIGURATION
+# ---------------------
+
+defaults:
+  - override /model: lenet_two_features
+  - override /dataset: fashionmnist
+  - override /transform/train: basic_augmentation
+  - override /main_scheduler: step_lr
+  - override /repr_similarity/compute_rdm: null
+  - override /repr_similarity/compare_rdm: null
+  - _self_
+
+model:
+  load_weights_from: ../out/lenet_fashionmnist/two_features/training/2024-11-10_18-22-29/checkpoints/best_performing.pt
+
+reproducibility:
+  torch_seed: 89
+  shuffle_seed: 858
+
+training:
+  num_epochs: 120
+
+transform:
+  train:
+    crop_scale:
+      lower: 0.9
+      upper: 1.0
+    crop_ratio:
+      lower: 0.75
+      upper: 1.3333333333333333
+  val:
+    resize_size: ${model.input_size}
+
+dataloader:
+  val_split: 0.20
+  batch_size: 64
+  num_workers: 4
+
+repr_similarity:
+  hooks:
+    train: net.10  # penultimate layer (after ReLU)
+    ref: net.10  # penultimate layer (after ReLU)
+  compute_rdm:
+    name: ${compute.name}
+    kwargs:
+      center_activations: ${compute.cntr_actv}
+      normalize_distances: ${compute.nrml_dstn}
+      distance_type: ${compute.dstn_type}
+  compare_rdm:
+    name: ${compare.name}
+    kwargs:
+      differentiable: ${compare.dffr}
+      regularization: ${compare.rglr}
+      regularization_strength: ${compare.rglr_strn}
+  weight_rsa_score: 0.75
+  rsa_transform: abs
+
+optimizer:
+  lr: 0.1
+  momentum: 0.8
+  weight_decay: 1e-3
+
+main_scheduler:
+  lr_step_size: 30
+  lr_gamma: 0.1
+
+performance:
+  patience: null

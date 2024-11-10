@@ -17,6 +17,7 @@ from omegaconf import DictConfig, MISSING
 class ModelName(Enum):
     LeNet = "LeNet"
     LeNetModified = "LeNetModified"
+    LeNetTwoFeatures = "LeNetTwoFeatures"
     VGG = "VGG"
 
 
@@ -135,6 +136,12 @@ class LeNetModifiedConf:
 
 
 @dataclass
+class LeNetTwoFeaturesConf:
+    _target_: str = "models.lenet_two_features.LeNetTwoFeatures"
+    num_classes: int = MISSING
+
+
+@dataclass
 class VGGConf:
     _target_: str = "models.vgg.VGG"
     num_layers: VGGNumLayers = MISSING
@@ -153,6 +160,7 @@ class ModelConf:
     kwargs: Union[
         LeNetConf,
         LeNetModifiedConf,
+        LeNetTwoFeaturesConf,
         VGGConf
     ] = MISSING
 
