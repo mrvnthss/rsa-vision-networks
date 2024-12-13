@@ -69,8 +69,8 @@ model:
   load_weights_from: ../out/lenet_fashionmnist/size_modifications/training/2024-10-11_13-19-28/conv_1=${widths.conv_1},conv_2=${widths.conv_2},fc=${widths.fc}/checkpoints/best_performing.pt
 
 reproducibility:
-  torch_seed: 89
-  shuffle_seed: 858
+  torch_seed: 89  # 773 (used to re-train a single configuration)
+  shuffle_seed: 858  # 85 (used to re-train a single configuration)
 
 training:
   num_epochs: 120
