@@ -285,7 +285,11 @@ def _compute_rdm_cosine(
 
     Note:
         This function returns only the upper triangular matrix of the
-        computed RDM in vectorized form (row-major order).
+        computed RDM in vectorized form (row-major order).  Also,
+        similar to correlation distance, the cosine similarity is
+        transformed into a distance measure by replacing the cosine
+        similarity x (taking values in [-1, 1]) by 1 - x (taking values
+        in [0, 2]).
 
     Args:
         activations: The matrix of activations from which to compute the
@@ -304,7 +308,7 @@ def _compute_rdm_cosine(
         normalized_activations.T
     )
 
-    return _get_upper_tri_matrix(rdm)
+    return 1 - _get_upper_tri_matrix(rdm)
 
 
 def _compute_rdm_euclidean(
