@@ -14,10 +14,12 @@ Functions:
 
 __all__ = [
     "compute_hpi",
-    "compute_marginal_gamma_set_pdfs"
+    "compute_marginal_gamma_set_pdfs",
+    "plot_marginal_pdfs"
 ]
 
 import warnings
+from collections import Counter
 from typing import Dict, List, Optional, Tuple, Union
 
 import matplotlib.pyplot as plt
@@ -45,6 +47,71 @@ INDIE_FLOWER = load_font(
    font_url="https://github.com/google/fonts/blob/main/ofl/indieflower/IndieFlower-Regular.ttf?raw=true"
 )
 MIN_GAMMA_SET_TRIALS = 2  # see line 3 of Algorithm 1 in Watanabe et al. (2023)
+
+
+class _DiscreteDensity:
+    """Wrapper class for discrete probability mass functions.
+
+    Attributes:
+        probabilities: Dictionary mapping discrete values to their
+          probabilities.
+
+    Methods:
+        score_samples(X): Compute the log-likelihood of each sample
+          under the model.
+    """
+
+    def __init__(
+            self,
+            values: np.ndarray
+    ) -> None:
+        """Initialize the ``_DiscreteDensity`` instance.
+
+        Args:
+            values: 1-D array of discrete values to compute the PMF for.
+        """
+
+        # Compute probability mass function from observed values
+        unique_values = np.unique(values)
+        value_counts = Counter(values)
+        total_values = len(values)
+
+        # NOTE: All probabilities stored in ``self.probabilities`` are strictly positive, as
+        #       ``unique_values`` only contains values that were observed at least once so that
+        #       ``value_counts[value]`` >= 1.
+        self.probabilities = {
+            value: value_counts[value] / total_values for value in unique_values
+        }
+
+    def score_samples(
+            self,
+            X: np.ndarray
+    ) -> np.ndarray:
+        """Compute the log-likelihood of each sample under the model.
+
+        Args:
+            X: A 1-D array of points to query.
+
+        Returns:
+            Log-likelihood of each sample in ``X``.
+
+        Raises:
+            ValueError: If ``X`` is not a 1-D array.
+        """
+
+        if X.ndim != 1:
+            raise ValueError(
+                f"'X' must be a 1-D array, but got shape {X.shape}."
+            )
+
+        log_dens = np.array([
+            np.log(self.probabilities[x])
+            if x in self.probabilities
+            else -np.inf
+            for x in X
+        ])
+
+        return log_dens
 
 
 class _KernelDensity:
@@ -113,6 +180,9 @@ class _KernelDensity:
 
         Returns:
             Log-likelihood of each sample in ``X``.
+
+        Raises:
+            ValueError: If ``X`` is not a 1-D array.
         """
 
         if X.ndim != 1:
@@ -145,6 +215,14 @@ class _KernelDensity:
               fit the ``base_kde``.
             grid_size: Number of values at which to sample the KDE to
               compute the normalization factor.
+
+        Returns:
+            The normalization constant computed using the trapezoidal
+            rule to ensure that the estimated density integrates to 1
+            over the domain specified by ``bounds``.
+
+        Raises:
+            ValueError: If invalid bounds are provided.
         """
 
         if bounds.ndim != 1 or bounds.size != 2:
@@ -185,6 +263,7 @@ def compute_hpi(
         study: optuna.study.Study,
         gamma_prime: float,
         gamma: Optional[float] = None,
+        compute_local_hpi: bool = False,
         params: Optional[List[str]] = None,
         normalize: bool = False,
         grid_size: int = 1000
@@ -199,6 +278,10 @@ def compute_hpi(
         gamma: Quantile to define the binary function in the global
           space.  Corresponds to gamma in Eqn. (16) of Watanabe et al.
           (2023).  If None, gamma is set to 1.0.
+        compute_local_hpi: Whether to compute local HPIs.  If False,
+          global HPIs are computed by replacing the marginal gamma-set
+          PDFs in the denominator of Eqn. (16) of Watanabe et al. (2023)
+          with the uniform distribution over the parameter's domain.
         params: List of parameter names to compute importances for.  If
           None, importances are computed for all parameters found in the
           study.
@@ -217,51 +300,78 @@ def compute_hpi(
     if grid_size <= 0:
         raise ValueError(f"'grid_size' must be positive, but got {grid_size}.")
 
-    # Compute size of gamma-sets
-    dists = _get_distributions(study, params)
-    trials = _get_filtered_trials(
-        study,
-        params=(params if params is not None else list(dists.keys())),
-        target=None
-    )
-    local_num_trials = int(np.ceil(gamma_prime * len(trials)))
-    global_num_trials = int(np.ceil(gamma * len(trials)))
-
-    if local_num_trials == global_num_trials:
-        warnings.warn(
-            f"Gamma-sets contain same {local_num_trials} trials. Unable to determine importances. "
-            f"Consider adjusting 'gamma' ({gamma}) and 'gamma_prime' ({gamma_prime})."
+    # Compute size of gamma-sets to check whether they differ (local HPI only)
+    if compute_local_hpi:
+        dists = _get_distributions(study, params)
+        trials = _get_filtered_trials(
+            study,
+            params=(params if params is not None else list(dists.keys())),
+            target=None
         )
-        return {}
+        local_num_trials = int(np.ceil(gamma_prime * len(trials)))
+        global_num_trials = int(np.ceil(gamma * len(trials)))
 
+        if local_num_trials == global_num_trials:
+            warnings.warn(
+                f"Gamma-sets contain same {local_num_trials} trials. Unable to determine "
+                f"importances. Consider adjusting 'gamma' ({gamma}) and 'gamma_prime' "
+                f"({gamma_prime})."
+            )
+            return {}
+
+    # Marginal gamma'-set PDFs
     local_kdes_dict = compute_marginal_gamma_set_pdfs(
         study=study,
         gamma=gamma_prime,
         params=params,
         normalize=normalize
     )
-    global_kdes_dict = compute_marginal_gamma_set_pdfs(
-        study=study,
-        gamma=gamma,
-        params=params,
-        normalize=normalize
-    )
+
+    # Marginal gamma-set PDFs (only necessary for local HPIs, else replaced by uniform dist.)
+    if compute_local_hpi:
+        global_kdes_dict = compute_marginal_gamma_set_pdfs(
+            study=study,
+            gamma=gamma,
+            params=params,
+            normalize=normalize
+        )
 
     # Compute HPIs according to Eqn. (16) of Watanabe et al. (2023)
     hpi_dict = {}
     hpi_total = 0.0
 
-    for param_name, global_kde in global_kdes_dict.items():
-        # Create grid in the original domain to evaluate KDEs
-        x_min, x_max = _get_bounds(global_kde["dist"])
-        if global_kde["kde"].is_log_scale:
-            grid = np.geomspace(x_min, x_max, grid_size)
+    for param_name, local_kde in local_kdes_dict.items():
+        # Create grid in the original domain on which to evaluate KDEs
+        dist: BaseDistribution = local_kde["dist"]
+        kde = local_kde["kde"]
+
+        is_categorical = isinstance(dist, CategoricalDistribution)
+        is_log_scale = kde.is_log_scale if isinstance(kde, _KernelDensity) else False
+
+        if is_categorical:
+            dist: CategoricalDistribution
+            grid = np.array(dist.choices)
         else:
-            grid = np.linspace(x_min, x_max, grid_size)
+            x_min, x_max = _get_bounds(dist)
+            grid = (
+                np.geomspace(x_min, x_max, grid_size)
+                if is_log_scale
+                else np.linspace(x_min, x_max, grid_size)
+            )
 
         # Evaluate KDEs computed according to Eqn. (14) of Watanabe et al. (2023)
-        local_pdf = np.exp(local_kdes_dict[param_name]["kde"].score_samples(grid))
-        global_pdf = np.exp(global_kde["kde"].score_samples(grid)) + EPS
+        local_pdf = np.exp(local_kde["kde"].score_samples(grid))
+
+        if compute_local_hpi:
+            # Evaluate marginal gamma-set PDFs
+            global_pdf = np.exp(global_kdes_dict[param_name]["kde"].score_samples(grid)) + EPS
+        else:
+            # Evaluate uniform distribution over the parameter's domain
+            if is_categorical:
+                denominator = len(dist.choices)
+            else:
+                denominator = x_max - x_min
+            global_pdf = np.ones_like(grid) / denominator
 
         # Compute HPI according to Eqn. (16) of Watanabe et al. (2023)
         hpi = global_pdf @ ((local_pdf / global_pdf - 1) ** 2)
@@ -282,7 +392,9 @@ def compute_marginal_gamma_set_pdfs(
         gamma: float,
         params: Optional[List[str]] = None,
         normalize: bool = False
-) -> dict[str, dict[str, Union[BaseDistribution, float, _KernelDensity, np.ndarray]]]:
+) -> dict[str, dict[str, Union[
+    BaseDistribution, float, _DiscreteDensity, _KernelDensity, np.ndarray
+]]]:
     """Compute marginal gamma-set PDFs from an Optuna study.
 
     Args:
@@ -363,40 +475,44 @@ def compute_marginal_gamma_set_pdfs(
         )  # 1-D array of observed values
 
     # Estimate marginal gamma-set PDFs
-    # TODO: Handle categorical distributions properly!
     kdes_dict = {}
     for param_name, dist in non_single_dists.items():
-        # Check whether parameter was sampled from a log-scaled domain
-        if isinstance(dist, (FloatDistribution, IntDistribution)):
-            is_log_scale = dist.log
-        else:
-            is_log_scale = False
-
-        # Get observed values and bounds for the parameter (both are 1-D arrays)
+        # Get observed values of parameter
         values = param_values_dict[param_name]
-        bounds = _get_bounds(dist)
 
-        # Fit KDE on observed values
-        kde = KernelDensity(
-            bandwidth=_scott_bandwidth(
-                np.log(values) if is_log_scale else values
-            ),
-            kernel="gaussian"
-        )
-        kde.fit(
-            (np.log(values) if is_log_scale else values)[:, np.newaxis]
-        )
+        # Fit KDE to observed values, properly accounting for categorical parameters
+        if isinstance(dist, CategoricalDistribution):
+            kde = _DiscreteDensity(values)
+        else:
+            dist: Union[FloatDistribution, IntDistribution]
 
+            # Determine whether parameter was sampled from a log-scaled domain
+            is_log_scale = dist.log
+
+            # Initialize and fit KDE on observed values
+            base_kde = KernelDensity(
+                bandwidth=_scott_bandwidth(
+                    np.log(values) if is_log_scale else values
+                ),
+                kernel="gaussian"
+            )
+            base_kde.fit(
+                (np.log(values) if is_log_scale else values)[:, np.newaxis]
+            )
+
+            kde = _KernelDensity(
+                base_kde=base_kde,
+                is_log_scale=is_log_scale,
+                bounds=_get_bounds(dist),
+                normalize=normalize
+            )
+
+        # Collect results in dictionary
         kdes_dict[param_name] = {
             "dist": dist,
             "gamma": gamma,
-            "kde": _KernelDensity(
-                base_kde=kde,
-                is_log_scale=is_log_scale,
-                bounds=bounds,
-                normalize=normalize
-            ),
-            "vals": values  # observed values in gamma-set, not transformed
+            "kde": kde,
+            "vals": values
         }
 
     return kdes_dict
@@ -407,6 +523,7 @@ def plot_marginal_pdfs(
         study: optuna.study.Study,
         gamma_prime: float,
         gamma: Optional[float] = None,
+        plot_against_uniform: bool = False,
         params: Optional[List[str]] = None,
         params_aliases: List[str] = None,
         normalize: bool = False,
@@ -424,6 +541,10 @@ def plot_marginal_pdfs(
         gamma: Quantile to define the binary function in the global
           space.  Corresponds to gamma in Eqn. (16) of Watanabe et al.
           (2023).  If None, gamma is set to 1.0.
+        plot_against_uniform: Whether to plot the marginal gamma'-set
+          PDFs against the uniform distribution over the parameter's
+          domain.  If False, the PDFs are plotted against the marginal
+          gamma-set PDFs.
         params: List of parameter names for which to plot marginal
           gamma-set PDFs.  If None, PDFs are plotted for all parameters
           found in the study.
@@ -449,24 +570,29 @@ def plot_marginal_pdfs(
     if grid_size <= 0:
         raise ValueError(f"'grid_size' must be positive, but got {grid_size}.")
 
-    # Compute marginal gamma-set PDFs
+    # Compute marginal gamma'-set PDFs
     local_kdes_dict = compute_marginal_gamma_set_pdfs(
         study=study,
         gamma=gamma_prime,
         params=params,
         normalize=normalize
     )
-    global_kdes_dict = compute_marginal_gamma_set_pdfs(
-        study=study,
-        gamma=gamma,
-        params=params,
-        normalize=normalize
-    )
-    # Compute HPIs
+
+    # Compute marginal gamma-set PDFs only if necessary
+    if not plot_against_uniform:
+        global_kdes_dict = compute_marginal_gamma_set_pdfs(
+            study=study,
+            gamma=gamma,
+            params=params,
+            normalize=normalize
+        )
+
+    # Compute (local or global) HPIs
     hpi_dict = compute_hpi(
         study=study,
         gamma_prime=gamma_prime,
         gamma=gamma,
+        compute_local_hpi=not plot_against_uniform,
         params=params,
         normalize=normalize,
         grid_size=grid_size
@@ -484,7 +610,7 @@ def plot_marginal_pdfs(
         fig_layout = (1, num_plots)
 
     if fig_size is None:
-        fig_size = (4.0 * fig_layout[1], 2.25 * fig_layout[0])  # approx. 16:9 aspect ratio
+        fig_size = (4.0 * fig_layout[1], 3.0 * fig_layout[0])  # approx. 4:3 aspect ratio
 
     with sns.axes_style({
         "axes.edgecolor": get_color("anthracite", tint=0.2),
@@ -503,21 +629,45 @@ def plot_marginal_pdfs(
             axes = axes.reshape(-1, 1)
 
         # Plot individual PDFs
-        for idx, (param_name, local_kde) in enumerate(local_kdes_dict.items()):
-            # Create grid in the original domain to evaluate KDEs
-            x_min, x_max = _get_bounds(local_kde["dist"])
-            is_log_scale = local_kde["kde"].is_log_scale
-            grid = (
-                np.geomspace(x_min, x_max, grid_size)
-                if is_log_scale
-                else np.linspace(x_min, x_max, grid_size)
-            )
+        if params is None:
+            params = list(local_kdes_dict.keys())
+        for idx, param_name in enumerate(params):
+            # Create grid in the original domain on which to evaluate KDEs
+            dist: BaseDistribution = local_kdes_dict[param_name]["dist"]
+            kde = local_kdes_dict[param_name]["kde"]
 
-            # Get values of gamma-sets and evaluate KDEs
-            local_vals = local_kde["vals"]
-            global_vals = global_kdes_dict[param_name]["vals"]
-            local_pdf = np.exp(local_kde["kde"].score_samples(grid))
-            global_pdf = np.exp(global_kdes_dict[param_name]["kde"].score_samples(grid))
+            is_categorical = isinstance(dist, CategoricalDistribution)
+            is_log_scale = kde.is_log_scale if isinstance(kde, _KernelDensity) else False
+
+            if is_categorical:
+                dist: CategoricalDistribution
+                grid = np.array(dist.choices)
+            else:
+                x_min, x_max = _get_bounds(dist)
+                grid = (
+                    np.geomspace(x_min, x_max, grid_size)
+                    if is_log_scale
+                    else np.linspace(x_min, x_max, grid_size)
+                )
+
+            # Evaluate marginal gamma'-set PDF on grid
+            local_pdf = np.exp(kde.score_samples(grid))
+
+            # Evaluate marginal gamma-set PDF / uniform distribution on grid
+            if plot_against_uniform:  # uniform distribution
+                denominator = x_max - x_min if not is_categorical else len(dist.choices)
+                global_pdf = np.ones_like(grid) / denominator
+            else:  # marginal gamma-set PDF
+                global_pdf = np.exp(global_kdes_dict[param_name]["kde"].score_samples(grid))
+
+            # NOTE: ``local_vals`` and ``global_vals`` are only used for plotting rug plots, which
+            #       are redundant for discrete distributions.
+            if is_categorical:
+                local_vals, global_vals = None, None
+            else:
+                local_vals = local_kdes_dict[param_name]["vals"]
+                global_vals = global_kdes_dict[param_name]["vals"] if not plot_against_uniform \
+                    else None
 
             # Plot PDFs
             ax: plt.Axes = axes_flattened[idx]
@@ -526,15 +676,17 @@ def plot_marginal_pdfs(
                 grid=grid,
                 local_pdf=local_pdf,
                 global_pdf=global_pdf,
+                is_categorical=is_categorical,
+                is_log_scale=is_log_scale,
                 local_vals=local_vals,
-                global_vals=global_vals,
-                is_log_scale=is_log_scale
+                global_vals=global_vals
             )
 
             # Set title for subplot
             _alias = params_aliases[idx] if params_aliases is not None else param_name
             subplot_title = f"{_alias} ({hpi_dict[param_name] * 100:.1f}%)"
-            ax.set_title(subplot_title, size=10)
+            # TODO: Fontsize of subplot titles should change with number of subplots
+            ax.set_title(subplot_title, size=12)
 
         # Hide empty subplots
         for idx in range(len(local_kdes_dict), len(axes_flattened)):
@@ -542,12 +694,13 @@ def plot_marginal_pdfs(
             ax.set_visible(False)
 
         # Add labels to outer subplots
+        # TODO: Fontsize of axis labels should change with number of subplots
         for row in range(fig_layout[0]):
             ax: plt.Axes = axes[row, 0]
-            ax.set_ylabel("Density", font=INDIE_FLOWER, size=12)
+            ax.set_ylabel("Density", font=INDIE_FLOWER, size=14)
         for col in range(fig_layout[1]):
             ax: plt.Axes = axes[-1, col]
-            ax.set_xlabel("Parameter Values", font=INDIE_FLOWER, size=12)
+            ax.set_xlabel("Parameter Values", font=INDIE_FLOWER, size=14)
 
         plt.tight_layout()
 
@@ -556,18 +709,18 @@ def plot_marginal_pdfs(
         #       well for plots with 1 to 3 columns, and 1 to 4 rows.
         h_adjust = 0.06 if fig_layout[1] == 1 else 0.035 / (fig_layout[1] - 1)
         v_adjust = -0.05 if fig_layout[0] == 1 else -0.05 / (fig_layout[0] - 1)
+        labels = [fr"$\gamma = {gamma_prime}$", fr"$u(\mathcal{{X}}_d)$"] if plot_against_uniform \
+            else [fr"$\gamma' = {gamma_prime}$", fr"$\gamma = {gamma}$"]
         fig.legend(
             handles=[
                 plt.Line2D([0], [0], color=get_color("red")),
                 plt.Line2D([0], [0], color="black", linestyle="--")
             ],
-            labels=[
-                fr"$\gamma' = {gamma_prime}$",
-                fr"$\gamma = {gamma}$"
-            ],
+            labels=labels,
             loc="center",
             bbox_to_anchor=(0.5 + h_adjust, v_adjust),
-            ncol=2
+            ncol=2,
+            fontsize=12
         )
 
     return fig, axes
@@ -635,9 +788,10 @@ def _plot_pdf(
         grid: np.ndarray,
         local_pdf: np.ndarray,
         global_pdf: np.ndarray,
-        local_vals: np.ndarray,
-        global_vals: np.ndarray,
-        is_log_scale: bool
+        is_categorical: bool,
+        is_log_scale: bool,
+        local_vals: Optional[np.ndarray] = None,
+        global_vals: Optional[np.ndarray] = None
 ) -> None:
     """Plot local and global marginal gamma-set PDFs.
 
@@ -646,81 +800,141 @@ def _plot_pdf(
         grid: Grid of points at which the PDFs are evaluated.
         local_pdf: Local marginal gamma-set PDF.
         global_pdf: Global marginal gamma-set PDF.
-        local_vals: Values belonging the local gamma-set.
-        global_vals: Values belonging the global gamma-set.
+        is_categorical: Whether the parameter is categorical.
         is_log_scale: Whether the parameter was sampled from a
           log-scaled domain.
+        local_vals: Values belonging to the local gamma-set.  These will
+          be visualized by a rug plot.  Redundant for categorical
+          parameters.
+        global_vals: Values belonging to the global gamma-set.  These
+          will be visualized by a rug plot.  Redundant for categorical
+          parameters.
     """
 
-    # Plot shaded area where local_pdf > global_pdf
-    ax.fill_between(
-        grid,
-        global_pdf,
-        local_pdf,
-        where=(local_pdf > global_pdf),
-        color=get_color("red"),
-        alpha=0.2,
-        interpolate=True
-    )
+    # Set y-axis to always start at 0.0 and end slightly above max. density value
+    y_upper = max(np.max(local_pdf), np.max(global_pdf)) * 1.1
+    ax.set_ylim(bottom=0.0, top=y_upper)
 
-    # Find boundaries of filled regions and highlight by vertical lines
-    diff = local_pdf - global_pdf
-    crossings = np.where(np.diff(diff > 0))[0]
-    max_density = max(np.max(local_pdf), np.max(global_pdf))
+    if is_categorical:
+        # Settings for bar plots
+        x = np.arange(len(grid))
+        width = 0.35
 
-    for idx in crossings:
-        # Linear interpolation to find more precise crossing point
-        x0, x1 = grid[idx], grid[idx + 1]
-        y0, y1 = diff[idx], diff[idx + 1]
-        x_cross = x0 - y0 * (x1 - x0) / (y1 - y0)
+        if np.allclose(global_pdf, 1.0 / len(grid)):  # uniform distribution as comparison
+            uniform_height = 1.0 / len(grid)
 
-        # Find the y-value at the intersection (can use either PDF since they intersect here)
-        y_cross = np.interp(x_cross, grid, local_pdf)
+            # Plot shaded area where local_pdf > uniform_height
+            excess_heights = np.maximum(local_pdf - uniform_height, 0)
+            mask = excess_heights > 0
+            if np.any(mask):
+                ax.bar(
+                    x[mask],
+                    excess_heights[mask],
+                    1.5 * width,
+                    bottom=uniform_height,
+                    color=get_color("red", tint=0.8),
+                    linewidth=0
+                )
 
-        ax.axvline(
-            x=x_cross,
-            ymin=0,
-            ymax=y_cross / (max_density * 1.1),  # convert to axis coordinates
+            # Plot local PMF and uniform distribution
+            ax.bar(x, local_pdf, 1.5 * width, facecolor="none", edgecolor=get_color("red"))
+            ax.axhline(y=uniform_height, color="black", linestyle="--")
+        else:  # global PMF as comparison
+
+            # Plot shaded area where local_pdf > global_pdf
+            excess_heights = np.maximum(local_pdf - global_pdf, 0)
+            mask = excess_heights > 0
+            if np.any(mask):
+                ax.bar(
+                    x[mask] - width / 2,
+                    excess_heights[mask],
+                    width,
+                    bottom=global_pdf[mask],
+                    color=get_color("red", tint=0.8),
+                    linewidth=0
+                )
+
+            # Plot local PMF and global PMF
+            ax.bar(x - width / 2, local_pdf, width, facecolor="none", edgecolor=get_color("red"))
+            ax.bar(
+                x + width / 2,
+                global_pdf,
+                width,
+                facecolor="none",
+                edgecolor="black",
+                linestyle="--"
+            )
+
+        # Set x-axis ticks and labels
+        ax.set_xticks(x)
+        ax.set_xticklabels(grid)
+    else:  # non-categorical parameters
+        # Plot shaded area where local_pdf > global_pdf
+        ax.fill_between(
+            grid,
+            global_pdf,
+            local_pdf,
+            where=(local_pdf > global_pdf),
             color=get_color("red"),
-            linestyle=":"
+            alpha=0.2,
+            interpolate=True
         )
 
-    # Check whether shading extends to the boundaries, and highlight if necessary
-    if diff[0] > 0:  # Shading starts at left boundary
-        x_left = grid[0]
-        y_left = local_pdf[0]
-        ax.axvline(
-            x=x_left.item(),
-            ymin=0,
-            ymax=y_left / (max_density * 1.1),
-            color=get_color("red"),
-            linestyle=":"
-        )
+        # Find boundaries of filled regions and highlight by vertical lines
+        diff = local_pdf - global_pdf
+        crossings = np.where(np.diff(diff > 0))[0]
 
-    if diff[-1] > 0:  # Shading extends to right boundary
-        x_right = grid[-1]
-        y_right = local_pdf[-1]
-        ax.axvline(
-            x=x_right.item(),
-            ymin=0,
-            ymax=y_right / (max_density * 1.1),
-            color=get_color("red"),
-            linestyle=":"
-        )
+        for idx in crossings:
+            # Linear interpolation to find more precise crossing point
+            x0, x1 = grid[idx], grid[idx + 1]
+            y0, y1 = diff[idx], diff[idx + 1]
+            x_cross = x0 - y0 * (x1 - x0) / (y1 - y0)
 
-    # Plot PDFs and highlight individual values
-    sns.lineplot(x=grid, y=global_pdf, ax=ax, color="black", linestyle='--')
-    sns.rugplot(x=global_vals, ax=ax, color="black")
-    sns.lineplot(x=grid, y=local_pdf, ax=ax, color=get_color("red"))
-    sns.rugplot(x=local_vals, ax=ax, color=get_color("red"))
+            # Find the y-value at the intersection (can use either PDF since they intersect here)
+            y_cross = np.interp(x_cross, grid, local_pdf)
+
+            ax.axvline(
+                x=x_cross,
+                ymin=0,
+                ymax=y_cross / y_upper,  # convert to axis coordinates
+                color=get_color("red"),
+                linestyle=":"
+            )
+
+        # Check whether shading extends to the boundaries, and highlight if necessary
+        if diff[0] > 0:  # Shading starts at left boundary
+            x_left = grid[0]
+            y_left = local_pdf[0]
+            ax.axvline(
+                x=x_left.item(),
+                ymin=0,
+                ymax=y_left / y_upper,  # convert to axis coordinates
+                color=get_color("red"),
+                linestyle=":"
+            )
+
+        if diff[-1] > 0:  # Shading extends to right boundary
+            x_right = grid[-1]
+            y_right = local_pdf[-1]
+            ax.axvline(
+                x=x_right.item(),
+                ymin=0,
+                ymax=y_right / y_upper,  # convert to axis coordinates
+                color=get_color("red"),
+                linestyle=":"
+            )
+
+        # Plot PDFs and highlight individual values
+        sns.lineplot(x=grid, y=global_pdf, ax=ax, color="black", linestyle='--')
+        sns.rugplot(x=global_vals, ax=ax, color="black")
+        sns.lineplot(x=grid, y=local_pdf, ax=ax, color=get_color("red"))
+        sns.rugplot(x=local_vals, ax=ax, color=get_color("red"))
 
     # Control plot aesthetics
     if is_log_scale:
         ax.set_xscale("log")
-    ax.tick_params(axis="both", color=get_color("anthracite", tint=0.2))
-
-    # Set y-axis to start at 0.0 and end slightly above max. density value
-    ax.set_ylim(bottom=0.0, top=max_density * 1.1)
+    # TODO: Fontsize of tick labels should change with number of subplots
+    ax.tick_params(axis="both", color=get_color("anthracite", tint=0.2), labelsize=12)
 
 
 def _scott_bandwidth(X: np.ndarray) -> float:
