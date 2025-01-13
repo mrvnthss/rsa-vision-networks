@@ -146,10 +146,12 @@ def main(cfg: TrainClassifierConf) -> None:
 
     # Run Optuna study
     logger.info("Creating new Optuna study with name %s ...", cfg.optuna.study_name)
+    pruner = instantiate(cfg.optuna.pruner.kwargs) if "pruner" in cfg.optuna \
+        else optuna.pruners.NopPruner()
     study = optuna.create_study(
         storage="sqlite:///../optuna_studies.sqlite3",
         sampler=instantiate(cfg.optuna.sampler.kwargs),
-        pruner=instantiate(cfg.optuna.pruner.kwargs),
+        pruner=pruner,
         study_name=cfg.optuna.study_name,
         direction=("minimize" if cfg.optuna.minimize else "maximize")
     )

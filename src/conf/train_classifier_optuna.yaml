@@ -9,7 +9,7 @@ defaults:
   - warmup_scheduler: null  # optional, null to disable
   - performance/metrics: classification
   - optuna/sampler: tpe  # Optuna default
-  - optuna/pruner: median  # Optuna default
+  - optuna/pruner: median  # Optuna default, null to disable pruning
   - _self_
   - experiment: ???
 
