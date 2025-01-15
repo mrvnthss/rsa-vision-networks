@@ -1,0 +1,104 @@
+# @package _global_
+
+# This configuration file can be used to perform hyperparameter tuning
+# using the Optuna hyperparameter optimization framework in order to
+# train the LeNet-5 model on the FashionMNIST dataset.
+#
+# To run this experiment, execute the following command from the
+# "thesis-experiments/src/" directory:
+#
+#   >>> python train_classifier_optuna.py experiment=lenet_fashionmnist/hparam_tuning/optuna/step_lr_tpe_sha
+#
+
+
+# --------------------
+# OPTUNA CONFIGURATION
+# --------------------
+
+optuna:
+  n_trials: 500
+  params:
+    - name: optimizer.lr
+      type: float
+      vals:
+        low: 1e-2  # modified from "step_lr_random.yaml"
+        high: 1e-1
+        log: true
+    - name: dataloader.batch_size
+      type: categorical
+      vals:
+        choices: [64, 128, 256]  # modified from "step_lr_random.yaml"
+    - name: optimizer.momentum
+      type: float
+      vals:
+        low: 0.5  # modified from "step_lr_random.yaml"
+        high: 0.95
+    - name: optimizer.weight_decay
+      type: float
+      vals:
+        low: 1e-4  # modified from "step_lr_random.yaml"
+        high: 1e-2
+        log: true
+    - name: transform.train.crop_scale.lower
+      type: float
+      vals:
+        low: 0.8  # modified from "step_lr_random.yaml"
+        high: 1.0
+    - name: transform.train.crop_ratio.lower
+      type: float
+      vals:
+        low: 0.75
+        high: 0.9  # modified from "step_lr_random.yaml"
+    - name: main_scheduler.lr_step_size
+      type: int
+      vals:
+        low: 20  # modified from "step_lr_random.yaml"
+        high: 40  # modified from "step_lr_random.yaml"
+    - name: main_scheduler.lr_gamma
+      type: float
+      vals:
+        low: 0.1
+        high: 0.8  # modified from "step_lr_random.yaml"
+  sampler:
+    n_startup_trials: 10
+  pruner:
+    min_resource: 10
+    reduction_factor: 3  # checks after 10, 30, 90, ... trials
+    min_early_stopping_rate: 0
+
+
+# ----------------------
+# TRAINING CONFIGURATION
+# ----------------------
+
+defaults:
+  - override /model: lenet
+  - override /dataset: fashionmnist
+  - override /transform/train: basic_augmentation
+  - override /main_scheduler: step_lr
+  - override /optuna/sampler: tpe
+  - override /optuna/pruner: successive_halving
+  - _self_
+
+experiment:
+  name: lenet_fashionmnist/hparam_tuning/optuna/step_lr_tpe_sha
+
+reproducibility:
+  torch_seed: 89
+  optuna_seed: 123
+  shuffle_seed: 858
+
+training:
+  num_epochs: 500
+
+transform:
+  val:
+    resize_size: ${model.input_size}
+
+dataloader:
+  val_split: 0.20
+  num_workers: 4
+
+performance:
+  min_delta: 1e-2  # 0 in "grid_search.yaml" and prev. experiments
+  patience: 20  # same as in "grid_search.yaml"
