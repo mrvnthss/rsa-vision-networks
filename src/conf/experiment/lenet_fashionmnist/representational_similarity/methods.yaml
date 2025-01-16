@@ -32,7 +32,7 @@ hydra:
                  {name: correlation, cntr_actv: null, nrml_dstn: null, dstn_type: null},\
                  {name: cosine, cntr_actv: null, nrml_dstn: null, dstn_type: null}"
       +compare: "{name: cosine, dffr: null, rglr: null, rglr_strn: null},\
-                 {name: spearman, dffr: true, rglr: l2, rglr_strn: 0.005},\
+                 {name: spearman, dffr: true, rglr: l2, rglr_strn: 1e-4},\
                  {name: correlation, dffr: null, rglr: null, rglr_strn: null}"
 
 
