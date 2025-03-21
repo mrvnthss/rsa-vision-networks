@@ -68,16 +68,16 @@ class FashionMNIST(ImageFolder):
     }
 
     classes = [
-        "Bag",
-        "Boot",  # Ankle boot
-        "Coat",
-        "Dress",
+        "T-Shirt",  # T-shirt/top
+        "Trouser",
         "Pullover",
+        "Dress",
+        "Coat",
         "Sandal",
         "Shirt",
         "Sneaker",
-        "T-Shirt",  # T-shirt/top
-        "Trouser",
+        "Bag",
+        "Boot"  # Ankle boot
     ]
 
     def __init__(
