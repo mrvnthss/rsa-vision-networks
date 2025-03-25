@@ -1,7 +1,7 @@
 # @package _global_
 
 # To run this experiment, execute the following command from the
-# "thesis-experiments/src/" directory:
+# "rsa-vision-networks/src/" directory:
 #
 #   >>> python train_similarity.py experiment=lenet_fashionmnist/size_modifications/representational_similarity
 #

@@ -5,7 +5,7 @@
 # experiments/lenet_fashionmnist/grid_search/baseline_final.yaml.
 #
 # To run this experiment, execute the following command from the
-# "thesis-experiments/src/" directory:
+# "rsa-vision-networks/src/" directory:
 #
 #   >>> python train_classifier_cv.py experiment=lenet_fashionmnist/hparam_tuning/grid_search_cv
 #

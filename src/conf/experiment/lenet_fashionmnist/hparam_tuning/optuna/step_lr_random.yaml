@@ -5,7 +5,7 @@
 # train the LeNet-5 model on the FashionMNIST dataset.
 #
 # To run this experiment, execute the following command from the
-# "thesis-experiments/src/" directory:
+# "rsa-vision-networks/src/" directory:
 #
 #   >>> python train_classifier_optuna.py experiment=lenet_fashionmnist/hparam_tuning/optuna/step_lr_random
 #

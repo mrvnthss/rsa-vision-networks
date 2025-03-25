@@ -5,7 +5,7 @@
 # on the FashionMNIST dataset.
 #
 # To run this experiment, execute the following command from the
-# "thesis-experiments/src/" directory:
+# "rsa-vision-networks/src/" directory:
 #
 #   >>> python train_classifier.py experiment=lenet_fashionmnist/hparam_tuning/momentum_wd
 #
