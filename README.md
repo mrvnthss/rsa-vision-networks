@@ -1,6 +1,6 @@
 # rsa-vision-networks
 
-[![Python](https://img.shields.io/badge/Python-3.11-3776AB.svg?style=flat&logo=python&logoColor=white)](https://www.python.org)
+[![Python](https://img.shields.io/badge/Python-3.11.9-3776AB.svg?style=flat&logo=python&logoColor=white)](https://www.python.org)
 [![Poetry](https://img.shields.io/endpoint?url=https://python-poetry.org/badge/v0.json)](https://python-poetry.org/)
 [![PyTorch](https://img.shields.io/badge/PyTorch_2.4.1-EE4C2C?logo=pytorch&logoColor=white)](https://pytorch.org/get-started/locally/)
 [![GitHub License](https://img.shields.io/github/license/mrvnthss/brightness-discrimination-2afc?color=9a2333)](https://opensource.org/license/mit/)
@@ -25,34 +25,45 @@ This section will guide you through setting up the project locally.
 
 ### Prerequisites
 
-- Python 3.11 or higher
+- Python 3.11.9 (or higher)
+- Poetry 2.1.0 (or higher)
 - Git (optional, for cloning the repository)
 
 ### Installing Poetry
 
 This project uses Poetry for dependency management. If you don't have Poetry installed, you can install it using one of the following methods:
 
-**Linux, macOS, Windows (WSL)**:
+#### Linux, macOS, Windows (WSL)
 ```
-curl -sSL https://install.python-poetry.org | python3 -
-```
-
-**Windows (PowerShell)**:
-```
-(Invoke-WebRequest -Uri https://install.python-poetry.org -UseBasicParsing).Content | py -
+curl -sSL https://install.python-poetry.org | python3 - --version 2.1.0
 ```
 
-**Alternative methods**:
-- Using `pip` &rarr; `pip install poetry`
-- Using Homebrew (macOS) &rarr; `brew install poetry`
-- Using Scoop (Windows) &rarr; `scoop install poetry`
+#### Windows (PowerShell)
+```
+(Invoke-WebRequest -Uri https://install.python-poetry.org -UseBasicParsing).Content | py - --version 2.1.0
+```
 
-Verify your installation:
+#### Adding Poetry to `$PATH`
+
+The official installer creates a `poetry` wrapper in a platform-specific directory:
+
+- Unix &rarr; `$HOME/.local/bin`
+- Windows &rarr; `%APPDATA%\Python\Scripts`
+
+In order to invoke Poetry as `poetry`, you can add the appropriate directory to your `$PATH` variable. Once Poetry is properly installed and in your `$PATH`, run
 ```
 poetry --version
 ```
+to check that everything is working as expected.
 
 For detailed installation instructions and troubleshooting, visit the [Poetry documentation](https://python-poetry.org/docs/#installation).
+
+#### Configuring Poetry
+
+Configure Poetry to not create its own virtual environments:
+```
+poetry config virtualenvs.create false
+```
 
 ### Installation
 
@@ -62,17 +73,25 @@ For detailed installation instructions and troubleshooting, visit the [Poetry do
    cd rsa-vision-networks
    ```
 
-2. Install dependencies using Poetry:
+2. Set up a virtual environment using your preferred tool, e.g., using [pyenv](https://github.com/pyenv/pyenv) and the [pyenv-virtualenv](https://github.com/pyenv/pyenv-virtualenv) plugin:
+   ```
+   pyenv install 3.11.9
+   pyenv-virtualenv 3.11.9 rsa-vision-networks-3.11.9
+   pyenv local rsa-vision-networks-3.11.9
+   ```
+
+3. Activate the virtual environment:
+   ```
+   pyenv activate
+   ```
+   **Note**: If the [pyenv-virtualenv](https://github.com/pyenv/pyenv-virtualenv) plugin has been set up in the shell configuration (i.e., `eval "$(pyenv virtualenv-init -)"` is included in the configuration file), the virtual environment will automatically be activated once it has been set up as outlined in the steps above.
+
+4. Install dependencies using Poetry:
    ```
    poetry install
    ```
 
-   This will create a virtual environment and install all required dependencies specified in `pyproject.toml`.
-
-3. Activate the virtual environment:
-   ```
-   poetry shell
-   ```
+   This will install all required dependencies listed in `pyproject.toml` using the exact versions specified in the `poetry.lock` file.
 
 ## Project Structure
 
